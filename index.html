@@ -11,13 +11,17 @@
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <style>
     @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+    @keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
     .animate-fade-in { animation: fadeIn 0.22s ease-out both; }
+    .spin { display:inline-block; animation: spin 0.7s linear infinite; }
     details > summary { list-style: none; cursor: pointer; user-select: none; }
     details > summary::-webkit-details-marker { display: none; }
     details[open] .details-arrow { transform: rotate(180deg); }
     .pb-safe { padding-bottom: max(env(safe-area-inset-bottom, 12px), 12px); }
     .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
     * { -webkit-tap-highlight-color: transparent; }
+    .nearby-dd-opt:first-child { border-radius: 1rem 1rem 0 0; }
+    .nearby-dd-opt:last-child  { border-radius: 0 0 1rem 1rem; }
   </style>
 </head>
 <body class="bg-[#080f1c] text-slate-100 font-sans antialiased">
@@ -91,6 +95,25 @@
   <!-- Main content -->
   <main id="app-main" class="flex-1 overflow-y-auto pb-28 px-4 pt-4 space-y-4"></main>
 
+  <!-- Sticky countdown widget (visible across all tabs when timer running) -->
+  <div id="sticky-cd" class="hidden fixed z-20 left-0 right-0" style="max-width:448px;margin:0 auto;left:50%;transform:translateX(-50%);width:100%;bottom:calc(56px + env(safe-area-inset-bottom,0px))">
+    <div class="mx-3 mb-1 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden">
+      <div class="flex items-center gap-3 px-4 py-3">
+        <div class="shrink-0">
+          <div id="sticky-zone" class="text-xs text-slate-500 font-semibold">Z2 · 60 min</div>
+          <div id="sticky-time" class="text-2xl font-black font-mono tabular-nums leading-none" style="color:#34d399">--:--</div>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="h-2.5 bg-slate-800 rounded-full overflow-hidden">
+            <div id="sticky-bar" class="h-full rounded-full transition-all duration-1000" style="width:100%;background:#34d399"></div>
+          </div>
+          <div id="sticky-valid" class="text-xs text-slate-500 mt-1 truncate">Jízdenka platí</div>
+        </div>
+        <button onclick="cancelCountdown()" class="shrink-0 w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-xl transition cursor-pointer text-lg">✕</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Bottom nav -->
   <nav class="fixed bottom-0 left-0 right-0 z-30 bg-slate-900/95 border-t border-slate-800 backdrop-blur pb-safe" style="max-width:448px;margin:0 auto;left:50%;transform:translateX(-50%);width:100%">
     <div id="tab-buttons" class="flex items-center justify-around px-1 pt-1.5 pb-1"></div>
@@ -98,7 +121,7 @@
 </div>
 
 <!-- Toast -->
-<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-slate-800 text-slate-100 text-xs font-semibold px-4 py-2 rounded-full shadow-xl opacity-0 transition-opacity duration-300 pointer-events-none whitespace-nowrap"></div>
+<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-slate-800 text-slate-100 text-sm font-semibold px-5 py-3 rounded-2xl shadow-xl opacity-0 transition-opacity duration-300 pointer-events-none max-w-[320px] text-center"></div>
 
 <!-- ===== PLACES MODAL ===== -->
 <div id="places-modal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm" onclick="if(event.target===this)closePlacesModal()">
@@ -116,13 +139,13 @@
         <div class="relative">
           <input id="modal-home-search" type="text" placeholder="Hledat adresu ubytování…"
             oninput="nominatimSearch('modal-home-search','modal-home-results')"
-            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-yellow-500 transition">
+            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-yellow-500 transition">
           <div id="modal-home-results" class="hidden absolute left-0 right-0 top-full mt-0.5 bg-slate-800 border border-slate-700 rounded-lg overflow-hidden z-20 shadow-xl max-h-48 overflow-y-auto"></div>
         </div>
         <input id="modal-home-name" type="text" placeholder="Název (např. Hotel Douro)"
-          class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-slate-600 transition">
+          class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-slate-600 transition">
         <input id="modal-home-address" type="text" placeholder="Plná adresa"
-          class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-slate-600 transition">
+          class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-slate-600 transition">
         <div class="grid grid-cols-2 gap-2">
           <input id="modal-home-lat" type="number" step="0.00001" placeholder="Lat (vyplní vyhledávání)"
             class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-400 font-mono focus:outline-none">
@@ -151,7 +174,7 @@
             class="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-slate-600 transition">
         </div>
         <input id="modal-poi-address" type="text" placeholder="Plná adresa (vyplní vyhledávání)"
-          class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-slate-600 transition">
+          class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-slate-600 transition">
         <div class="grid grid-cols-2 gap-2">
           <input id="modal-poi-lat" type="number" step="0.00001" placeholder="Lat"
             class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-400 font-mono focus:outline-none">
@@ -850,20 +873,32 @@ function renderOverview(city) {
       </div>
     </div>
     <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4">
-      <div class="flex items-center justify-between">
-        <h3 class="text-base font-extrabold text-slate-300">🗺️ Okolí</h3>
-        <div class="flex items-center gap-2">
-          <select id="nearby-location-select" onchange="document.getElementById('nearby-results').innerHTML='';document.querySelectorAll('.nearby-cat-btn').forEach(b=>b.classList.remove('ring-2','ring-yellow-400','text-yellow-400'))" class="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none cursor-pointer max-w-[145px] truncate">
-            <option value="home">🏠 Ubytování</option>
-          </select>
+      <div class="flex items-center justify-between gap-2">
+        <h3 class="text-base font-extrabold text-slate-300 shrink-0">🗺️ Okolí</h3>
+        <div class="flex items-center gap-2 min-w-0">
+          <!-- Custom dropdown (nahrazuje nativní select) -->
+          <div class="relative min-w-0" id="nearby-dd-wrap">
+            <button onclick="toggleNearbyDd(event)" id="nearby-dd-btn"
+              class="flex items-center gap-1.5 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 cursor-pointer w-full">
+              <span id="nearby-dd-label" class="truncate max-w-[120px]">🏠 Ubytování</span>
+              <svg id="nearby-dd-arrow" class="w-4 h-4 shrink-0 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="nearby-dd-menu" class="hidden absolute right-0 top-full mt-1 bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl z-40 w-64 max-h-60 overflow-y-auto">
+              <!-- populated by populateNearbyDd() -->
+            </div>
+          </div>
           <button onclick="openPlacesModal()" class="shrink-0 text-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-yellow-400 px-3 py-2 rounded-xl cursor-pointer transition" title="Správa míst">⚙️</button>
         </div>
       </div>
-      <div class="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1">
-        <button onclick="fetchNearby(this,'supermarket')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🛒</span><span class="text-sm font-bold">Super.</span></button>
-        <button onclick="fetchNearby(this,'cafe')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">☕</span><span class="text-sm font-bold">Kavárny</span></button>
-        <button onclick="fetchNearby(this,'fast_food')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🍔</span><span class="text-sm font-bold">Fast food</span></button>
-        <button onclick="fetchNearby(this,'bar')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🍺</span><span class="text-sm font-bold">Bary</span></button>
+      <!-- Scroll fade wrapper -->
+      <div class="relative">
+        <div class="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1" style="scrollbar-width:none">
+          <button onclick="fetchNearby(this,'supermarket')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🛒</span><span class="text-sm font-bold">Super.</span></button>
+          <button onclick="fetchNearby(this,'cafe')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">☕</span><span class="text-sm font-bold">Kavárny</span></button>
+          <button onclick="fetchNearby(this,'fast_food')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🍔</span><span class="text-sm font-bold">Fast food</span></button>
+          <button onclick="fetchNearby(this,'bar')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🍺</span><span class="text-sm font-bold">Bary</span></button>
+        </div>
+        <div class="absolute right-0 top-0 bottom-1 w-10 bg-gradient-to-l from-slate-900/60 to-transparent pointer-events-none rounded-r-2xl"></div>
       </div>
       <div id="nearby-results" class="space-y-2"></div>
     </div>` : '';
@@ -1336,16 +1371,22 @@ function cancelCountdown() {
 }
 
 function renderCountdown() {
-  const start = parseInt(localStorage.getItem('porto_mhd_cd_start') || '0');
-  const zone  = localStorage.getItem('porto_mhd_cd_zone') || 'z2';
-  const display = document.getElementById('countdown-display');
-  const buttons = document.getElementById('countdown-buttons');
+  const start    = parseInt(localStorage.getItem('porto_mhd_cd_start') || '0');
+  const zone     = localStorage.getItem('porto_mhd_cd_zone') || 'z2';
+  const display  = document.getElementById('countdown-display');
+  const buttons  = document.getElementById('countdown-buttons');
+  const stickyEl = document.getElementById('sticky-cd');
   if (!display || !buttons) return;
 
   if (!start) {
-    display.classList.add('hidden'); buttons.classList.remove('hidden'); return;
+    display.classList.add('hidden');
+    buttons.classList.remove('hidden');
+    stickyEl?.classList.add('hidden');
+    return;
   }
-  display.classList.remove('hidden'); buttons.classList.add('hidden');
+  display.classList.remove('hidden');
+  buttons.classList.add('hidden');
+  stickyEl?.classList.remove('hidden');
 
   const duration  = COUNTDOWN_MS[zone];
   const elapsed   = Date.now() - start;
@@ -1355,39 +1396,59 @@ function renderCountdown() {
   const barEl   = document.getElementById('countdown-bar');
   const labelEl = document.getElementById('countdown-zone-label');
   const untilEl = document.getElementById('countdown-valid-until');
+  const stickyTime  = document.getElementById('sticky-time');
+  const stickyZone  = document.getElementById('sticky-zone');
+  const stickyBar   = document.getElementById('sticky-bar');
+  const stickyValid = document.getElementById('sticky-valid');
   if (!timeEl) return;
 
-  labelEl.textContent = zone === 'z2' ? 'Z2 · 60 min' : 'Z4 · 75 min';
-  barEl.style.width = ((remaining / duration) * 100) + '%';
+  const zoneLabel = zone === 'z2' ? 'Z2 · 60 min' : 'Z4 · 75 min';
+  labelEl.textContent = zoneLabel;
+  if (stickyZone) stickyZone.textContent = zoneLabel;
+  const pct = ((remaining / duration) * 100) + '%';
+  barEl.style.width = pct;
+  if (stickyBar) stickyBar.style.width = pct;
 
   if (remaining === 0) {
     timeEl.textContent = 'VYPRŠELA!';
     timeEl.className = 'text-3xl font-black text-center tracking-tight text-red-400 font-mono animate-pulse';
     barEl.className = 'h-full rounded-full bg-red-600';
     untilEl.textContent = 'Jízdenka neplatí — pípni znovu.';
+    if (stickyTime) { stickyTime.textContent = 'VYPRŠELA!'; stickyTime.style.color = '#f87171'; }
+    if (stickyBar) stickyBar.style.background = '#ef4444';
+    if (stickyValid) stickyValid.textContent = 'Pípni znovu!';
     if (elapsed > duration + 60000) cancelCountdown();
     return;
   }
 
   const mins = Math.floor(remaining / 60000);
   const secs = Math.floor((remaining % 60000) / 1000);
-  timeEl.textContent = String(mins).padStart(2,'0') + ':' + String(secs).padStart(2,'0');
+  const timeStr = String(mins).padStart(2,'0') + ':' + String(secs).padStart(2,'0');
+  timeEl.textContent = timeStr;
+  if (stickyTime) stickyTime.textContent = timeStr;
 
+  let color;
   if (remaining > 15 * 60000) {
+    color = '#34d399';
     timeEl.className = 'text-4xl font-black text-center tracking-tight text-emerald-400 font-mono tabular-nums';
     barEl.className = 'h-full rounded-full transition-all duration-1000 bg-emerald-500';
   } else if (remaining > 5 * 60000) {
+    color = '#fbbf24';
     timeEl.className = 'text-4xl font-black text-center tracking-tight text-yellow-400 font-mono tabular-nums';
     barEl.className = 'h-full rounded-full transition-all duration-1000 bg-yellow-500';
   } else {
+    color = '#f87171';
     timeEl.className = 'text-4xl font-black text-center tracking-tight text-red-400 font-mono tabular-nums animate-pulse';
     barEl.className = 'h-full rounded-full transition-all duration-1000 bg-red-500';
   }
+  if (stickyTime) stickyTime.style.color = color;
+  if (stickyBar) stickyBar.style.background = color;
 
   try {
     const validUntil = new Date(start + duration);
     const t = new Intl.DateTimeFormat('cs-CZ', { timeZone:'Europe/Lisbon', hour:'2-digit', minute:'2-digit', hour12:false }).format(validUntil);
     untilEl.textContent = 'Platí do: ' + t + ' (portug. čas)';
+    if (stickyValid) stickyValid.textContent = 'Platí do ' + t;
   } catch(e) { untilEl.textContent = ''; }
 }
 
@@ -1420,9 +1481,9 @@ async function loadArrivals(key) {
   const btn = document.getElementById('dep-btn-' + key);
   if (!container || !btn) return;
 
-  btn.textContent = '⟳'; btn.disabled = true;
+  btn.innerHTML = '<span class="spin">⟳</span> Načítám…'; btn.disabled = true;
   container.classList.remove('hidden');
-  container.innerHTML = '<p style="font-size:11px;color:#64748b;text-align:center;padding:8px 0">Načítám odjezdy…</p>';
+  container.innerHTML = '<p style="font-size:14px;color:#64748b;text-align:center;padding:12px 0">Načítám odjezdy…</p>';
   clearTimeout(window.depRefreshTimers[key]);
 
   const results = await Promise.all(
@@ -1436,8 +1497,8 @@ async function loadArrivals(key) {
 
   const allFailed = results.every(r => !r.ok);
   if (allFailed) {
-    container.innerHTML = '<div style="padding:6px 2px;text-align:center"><p style="font-size:11px;color:#f87171">Nepodařilo se načíst (' + (results[0]?.err || 'CORS/síť') + ').</p><p style="font-size:10px;color:#475569;margin-top:4px">Použij záložní odkaz pro otevření STCP webu.</p></div>';
-    btn.textContent = '↺ Zkusit znovu'; btn.disabled = false; return;
+    container.innerHTML = '<div style="padding:10px 4px;text-align:center"><p style="font-size:14px;color:#f87171;font-weight:600">Nepodařilo se načíst</p><p style="font-size:12px;color:#475569;margin-top:4px">(' + (results[0]?.err || 'CORS/síť') + ')</p></div>';
+    btn.innerHTML = '↺ Zkusit znovu'; btn.disabled = false; return;
   }
 
   const all = [];
@@ -1445,28 +1506,28 @@ async function loadArrivals(key) {
   all.sort((a, b) => a.arrival_minutes - b.arrival_minutes);
 
   if (all.length === 0) {
-    container.innerHTML = '<p style="font-size:11px;color:#64748b;text-align:center;padding:8px 0">Žádné spoje v příštích 60 min.</p>';
+    container.innerHTML = '<p style="font-size:14px;color:#64748b;text-align:center;padding:12px 0">Žádné spoje v příštích 60 min.</p>';
   } else {
     const rows = all.slice(0, 6).map(a => {
       const mins = a.arrival_minutes;
       const minsStr = mins <= 0 ? 'Přijíždí!' : mins + ' min';
       const minsColor = mins <= 0 ? '#34d399' : mins <= 3 ? '#34d399' : mins <= 6 ? '#fbbf24' : '#94a3b8';
       const delayHtml = (a.status === 'DELAYED' && a.delay_minutes > 0.5)
-        ? ' <span style="color:#f87171;font-size:9px">+' + Math.round(a.delay_minutes) + '\'</span>' : '';
-      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 4px;border-bottom:1px solid rgba(51,65,85,0.5)">'
-        + '<div style="display:flex;align-items:center;gap:7px">'
-        + '<span style="background:#1e293b;color:#fbbf24;font-weight:900;font-size:12px;padding:2px 6px;border-radius:5px;min-width:30px;text-align:center;font-family:monospace">' + (a.route_short_name || a.route_long_name) + '</span>'
-        + '<div><div style="font-size:11px;color:#e2e8f0;font-weight:600">' + a.trip_headsign + '</div>'
-        + '<div style="font-size:9px;color:' + a.dirColor + ';margin-top:1px">' + a.dirLabel + '</div></div></div>'
-        + '<span style="font-weight:900;font-size:14px;color:' + minsColor + ';font-family:monospace;white-space:nowrap">' + minsStr + delayHtml + '</span>'
+        ? ' <span style="color:#f87171;font-size:11px">+' + Math.round(a.delay_minutes) + '\'</span>' : '';
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 8px;border-bottom:1px solid rgba(51,65,85,0.5)">'
+        + '<div style="display:flex;align-items:center;gap:10px">'
+        + '<span style="background:#1e293b;color:#fbbf24;font-weight:900;font-size:15px;padding:4px 8px;border-radius:8px;min-width:38px;text-align:center;font-family:monospace">' + (a.route_short_name || a.route_long_name) + '</span>'
+        + '<div><div style="font-size:14px;color:#e2e8f0;font-weight:600">' + a.trip_headsign + '</div>'
+        + '<div style="font-size:11px;color:' + a.dirColor + ';margin-top:2px">' + a.dirLabel + '</div></div></div>'
+        + '<span style="font-weight:900;font-size:17px;color:' + minsColor + ';font-family:monospace;white-space:nowrap">' + minsStr + delayHtml + '</span>'
         + '</div>';
     }).join('');
     const t = new Date().toLocaleTimeString('cs-CZ', { hour:'2-digit', minute:'2-digit' });
-    container.innerHTML = '<div style="background:rgba(2,6,23,0.4);border:1px solid rgba(51,65,85,0.4);border-radius:8px;overflow:hidden;margin-bottom:2px">'
-      + '<div style="padding:2px 4px">' + rows + '</div>'
-      + '<div style="font-size:9px;color:#334155;text-align:right;padding:3px 8px">Aktualizováno ' + t + ' · auto-refresh 30 s</div></div>';
+    container.innerHTML = '<div style="background:rgba(2,6,23,0.4);border:1px solid rgba(51,65,85,0.4);border-radius:12px;overflow:hidden;margin-bottom:4px">'
+      + '<div style="padding:0 4px">' + rows + '</div>'
+      + '<div style="font-size:11px;color:#334155;text-align:right;padding:4px 12px">Aktualizováno ' + t + ' · auto-refresh 30 s</div></div>';
   }
-  btn.textContent = '↺ Obnovit'; btn.disabled = false;
+  btn.innerHTML = '↺ Obnovit'; btn.disabled = false;
   window.depRefreshTimers[key] = setTimeout(() => loadArrivals(key), 30000);
 }
 
@@ -1678,15 +1739,17 @@ function applyPlaces() {
     STOPS_GEO.push({ id: 'poi_' + i, name: p.emoji + ' ' + p.name, dir: p.address, lat: p.lat, lng: p.lng, lines: null });
   });
 
-  // Update nearby location selector
-  const nearbySel = document.getElementById('nearby-location-select');
-  if (nearbySel) {
-    const prev = nearbySel.value;
-    nearbySel.innerHTML = '<option value="home">🏠 ' + h.name + '</option>'
-      + pois.filter(p => p.lat && p.lng).map((p, i) =>
-        '<option value="poi_' + i + '">' + p.emoji + ' ' + p.name + '</option>'
-      ).join('');
-    if ([...nearbySel.options].some(o => o.value === prev)) nearbySel.value = prev;
+  // Update nearby custom dropdown
+  const ddOpts = [{ val: 'home', label: '🏠 ' + h.name }]
+    .concat(pois.filter(p => p.lat && p.lng).map((p, i) => ({ val: 'poi_' + i, label: p.emoji + ' ' + p.name })));
+  populateNearbyDd(ddOpts);
+  if (!ddOpts.some(o => o.val === _nearbyDdVal)) {
+    _nearbyDdVal = 'home';
+    const lbl = document.getElementById('nearby-dd-label');
+    if (lbl) lbl.textContent = '🏠 ' + h.name;
+  } else {
+    const cur = ddOpts.find(o => o.val === _nearbyDdVal);
+    if (cur) { const lbl = document.getElementById('nearby-dd-label'); if (lbl) lbl.textContent = cur.label; }
   }
 
   // Refresh modal UI if open
@@ -1798,9 +1861,58 @@ const NEARBY_CFG = {
   bar:         { tag: '"amenity"="bar"',        label: 'Bar',         radius: 600  }
 };
 
+// ===========================
+// NEARBY CUSTOM DROPDOWN
+// ===========================
+let _nearbyDdVal = 'home';
+
+function toggleNearbyDd(e) {
+  e && e.stopPropagation();
+  const menu  = document.getElementById('nearby-dd-menu');
+  const arrow = document.getElementById('nearby-dd-arrow');
+  if (!menu) return;
+  const opening = menu.classList.contains('hidden');
+  menu.classList.toggle('hidden');
+  if (arrow) arrow.style.transform = opening ? 'rotate(180deg)' : '';
+  if (opening) {
+    setTimeout(() => {
+      document.addEventListener('click', function close(ev) {
+        if (!document.getElementById('nearby-dd-wrap')?.contains(ev.target)) {
+          menu.classList.add('hidden');
+          if (arrow) arrow.style.transform = '';
+        }
+        document.removeEventListener('click', close);
+      });
+    }, 0);
+  }
+}
+
+function selectNearbyLoc(val, label) {
+  _nearbyDdVal = val;
+  const lbl = document.getElementById('nearby-dd-label');
+  if (lbl) lbl.textContent = label;
+  document.getElementById('nearby-dd-menu')?.classList.add('hidden');
+  const arrow = document.getElementById('nearby-dd-arrow');
+  if (arrow) arrow.style.transform = '';
+  document.getElementById('nearby-results').innerHTML = '';
+  document.querySelectorAll('.nearby-cat-btn').forEach(b => b.classList.remove('ring-2','ring-yellow-400','text-yellow-400'));
+}
+
+function populateNearbyDd(options) {
+  const menu = document.getElementById('nearby-dd-menu');
+  if (!menu) return;
+  menu.innerHTML = options.map(opt => {
+    const active = opt.val === _nearbyDdVal;
+    return `<button onclick="selectNearbyLoc('${opt.val}', ${JSON.stringify(opt.label)})"
+      class="nearby-dd-opt w-full text-left px-4 py-3.5 text-sm hover:bg-slate-700 flex items-center gap-2 transition ${active ? 'text-yellow-400 font-bold bg-slate-700/50' : 'text-slate-200'}">
+      <span class="truncate">${opt.label}</span>
+      ${active ? '<svg class="w-4 h-4 shrink-0 ml-auto" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>' : ''}
+    </button>`;
+  }).join('');
+}
+
 async function fetchNearby(btn, category) {
-  const sel = document.getElementById('nearby-location-select');
-  const val = sel ? sel.value : 'home';
+  const val = _nearbyDdVal;
   let lat, lng;
   if (val === 'home') {
     const h = loadHome(); lat = h.lat; lng = h.lng;
@@ -1836,13 +1948,13 @@ async function fetchNearby(btn, category) {
       return;
     }
     results.innerHTML = places.map(p =>
-      '<div class="flex items-center justify-between p-2 rounded-lg bg-slate-950/40">'
-      + '<div class="truncate mr-2">'
-      + '<span class="text-slate-100 font-bold text-xs block truncate">' + p.name + '</span>'
-      + '<span class="text-slate-500 text-[10px] font-mono">' + p.dist + ' m · ~' + Math.ceil(p.dist / 75) + ' min</span>'
+      '<div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/40 gap-3">'
+      + '<div class="truncate flex-1">'
+      + '<span class="text-slate-100 font-bold text-sm block truncate">' + p.name + '</span>'
+      + '<span class="text-slate-500 text-xs font-mono">' + p.dist + ' m · ~' + Math.ceil(p.dist / 75) + ' min chůze</span>'
       + '</div>'
       + '<a href="https://www.google.com/maps/search/?api=1&query=' + p.elat + ',' + p.elng + '" target="_blank" rel="noopener" '
-      + 'class="shrink-0 bg-slate-700 hover:bg-slate-600 text-yellow-400 text-[10px] px-2.5 py-1.5 rounded-md font-bold transition">Mapa</a>'
+      + 'class="shrink-0 bg-slate-700 hover:bg-slate-600 active:scale-95 text-yellow-400 text-sm px-3 py-2 rounded-xl font-bold transition">Mapa</a>'
       + '</div>'
     ).join('');
   } catch {
