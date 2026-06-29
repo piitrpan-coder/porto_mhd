@@ -67,24 +67,24 @@
   <!-- Header -->
   <header id="app-header" class="sticky top-0 z-30 bg-slate-900/95 border-b border-slate-800 backdrop-blur pt-safe px-4 py-3">
     <div class="flex items-center justify-between">
-      <button onclick="showCityPicker()" class="flex items-center space-x-1.5 text-slate-400 hover:text-slate-200 transition cursor-pointer active:scale-90">
+      <button onclick="showCityPicker()" class="flex items-center space-x-2 text-slate-400 hover:text-slate-200 transition cursor-pointer active:scale-90">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
         </svg>
-        <span class="text-xs font-medium">Města</span>
+        <span class="text-sm font-semibold">Města</span>
       </button>
       <div class="flex items-center space-x-2">
-        <span id="city-emoji" class="text-xl"></span>
-        <h1 id="city-name-header" class="text-base font-black"></h1>
+        <span id="city-emoji" class="text-2xl"></span>
+        <h1 id="city-name-header" class="text-lg font-black"></h1>
       </div>
       <div class="flex items-center space-x-1.5">
-        <div id="connection-status" class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-        <span id="connection-status-text" class="text-[11px] text-green-400 font-medium">Online</span>
+        <div id="connection-status" class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></div>
+        <span id="connection-status-text" class="text-sm text-green-400 font-semibold">Online</span>
       </div>
     </div>
-    <div class="flex items-center justify-between mt-1">
-      <span id="city-time" class="text-[11px] font-mono text-slate-500"></span>
-      <span id="city-date" class="text-[11px] text-slate-600"></span>
+    <div class="flex items-center justify-between mt-1.5">
+      <span id="city-time" class="text-sm font-mono text-slate-400"></span>
+      <span id="city-date" class="text-sm text-slate-500"></span>
     </div>
   </header>
 
@@ -199,10 +199,10 @@ const CITIES = [
       'Ubytování: Rua Paulo Gama 551, Lordelo do Ouro'
     ],
     overviewItems: [
-      { label:'2 karty Andante Azul', detail:'Každá karta 0,60 € – kup na letišti v automatech', time:'Z2 + Z4', badge:'Nutnost', badgeColor:'#ef4444' },
-      { label:'Z4 – od letiště', detail:'Metro E + Bus 204 z Casa da Música → domů', time:'3,00 €/jízda · 75 min', badge:'Letiště', badgeColor:'#9333ea' },
-      { label:'Z2 – po Portu', detail:'Autobusy 200, 207, 209 v rámci Porta', time:'1,85 €/jízda · 60 min', badge:'Město', badgeColor:'#2563eb' },
-      { label:'Bus 204', detail:'Casa da Música → Prédios de Lordelo', time:'12–20 min intervaly', badge:'Klíčová', badgeColor:'#fbbf24' }
+      { icon:'💳', label:'2 karty Andante Azul', detail:'Každá karta 0,60 € – kup na letišti v automatech', time:'Z2 + Z4', badge:'Nutnost', badgeColor:'#ef4444' },
+      { icon:'✈️', label:'Z4 – od letiště', detail:'Metro E + Bus 204 z Casa da Música → domů', time:'3,00 €/jízda · 75 min', badge:'Letiště', badgeColor:'#9333ea' },
+      { icon:'🚌', label:'Z2 – po Portu', detail:'Autobusy 200, 207, 209 v rámci Porta', time:'1,85 €/jízda · 60 min', badge:'Město', badgeColor:'#2563eb' },
+      { icon:'🚏', label:'Bus 204', detail:'Casa da Música → Prédios de Lordelo', time:'12–20 min intervaly', badge:'Klíčová', badgeColor:'#fbbf24' }
     ],
     tipBullets: [
       'Kup 2 karty Andante Azul (po 0,60 €) hned na letišti u automatů u metra',
@@ -791,84 +791,106 @@ function renderTabContent(tabId, city) {
 
 function renderOverview(city) {
   const arrivals = city.arrivalBullets.map(b => `
-    <li class="flex items-start gap-2.5">
-      <span class="w-2 h-2 rounded-full shrink-0 mt-1.5" style="background:${city.color}"></span>
-      <span class="text-sm text-slate-300 leading-relaxed">${b}</span>
+    <li class="flex items-start gap-3">
+      <span class="w-2.5 h-2.5 rounded-full shrink-0 mt-1.5" style="background:${city.color}"></span>
+      <span class="text-base text-slate-300 leading-relaxed">${b}</span>
     </li>`).join('');
 
   const cards = city.overviewItems.map(item => `
-    <div class="bg-slate-900/60 rounded-xl p-4 border border-slate-800">
-      <div class="flex items-center justify-between gap-2 mb-1">
-        <span class="text-sm font-bold text-slate-100">${item.label}</span>
-        <span class="text-xs font-bold px-2 py-0.5 rounded-full shrink-0" style="background:${item.badgeColor}22;color:${item.badgeColor}">${item.badge}</span>
+    <div class="bg-slate-900/60 rounded-2xl p-5 border border-slate-800 flex items-center gap-4">
+      <span class="text-3xl shrink-0">${item.icon || '🚌'}</span>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-start justify-between gap-2 mb-1">
+          <span class="text-base font-black text-slate-100 leading-snug">${item.label}</span>
+          <span class="text-xs font-bold px-2.5 py-1 rounded-full shrink-0" style="background:${item.badgeColor}25;color:${item.badgeColor}">${item.badge}</span>
+        </div>
+        <p class="text-sm text-slate-400 leading-relaxed">${item.detail}</p>
+        <p class="text-xs text-slate-600 mt-1">${item.time}</p>
       </div>
-      <p class="text-xs text-slate-400 leading-relaxed">${item.detail}</p>
-      <p class="text-[11px] text-slate-600 mt-0.5">${item.time}</p>
     </div>`).join('');
 
   const tips = city.tipBullets.map(t => `
-    <li class="flex items-start gap-2.5">
-      <span class="text-sm shrink-0">💡</span>
-      <span class="text-sm text-slate-300 leading-relaxed">${t}</span>
+    <li class="flex items-start gap-3">
+      <span class="text-lg shrink-0 mt-0.5">💡</span>
+      <span class="text-base text-slate-300 leading-relaxed">${t}</span>
     </li>`).join('');
 
+  const chevron = `<svg class="w-5 h-5 text-slate-500 shrink-0 details-arrow transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>`;
+
   const portoExtra = city.extras === 'porto' ? `
-    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+    <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4">
       <div class="flex items-center gap-4">
-        <span id="weather-icon" class="text-5xl leading-none">🌡️</span>
+        <span id="weather-icon" class="text-6xl leading-none">🌡️</span>
         <div class="flex-1">
           <div class="flex items-baseline gap-2">
-            <span id="weather-temp" class="text-4xl font-black text-slate-100">–°C</span>
-            <span id="weather-wind" class="text-xs text-slate-400 font-mono">– km/h</span>
+            <span id="weather-temp" class="text-5xl font-black text-slate-100">–°C</span>
+            <span id="weather-wind" class="text-sm text-slate-400 font-mono">– km/h</span>
           </div>
-          <div class="flex items-center gap-1.5 mt-0.5">
+          <div class="flex items-center gap-2 mt-1">
             <span class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Porto počasí</span>
-            <span id="weather-desc" class="text-sm text-slate-300 font-medium">načítám…</span>
+            <span id="weather-desc" class="text-sm text-slate-300 font-semibold">načítám…</span>
           </div>
         </div>
       </div>
-      <div class="grid grid-cols-2 gap-2">
-        <div class="bg-slate-800/60 rounded-lg p-3 flex items-center gap-3">
-          <span id="fc-icon-1" class="text-2xl">🌡️</span>
-          <div><span class="text-xs text-slate-500 uppercase tracking-wider block">zítra</span><span id="fc-temp-1" class="text-sm font-bold text-slate-200">–°C</span></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-slate-800/60 rounded-xl p-4 flex items-center gap-3">
+          <span id="fc-icon-1" class="text-3xl">🌡️</span>
+          <div>
+            <span class="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Zítra</span>
+            <span id="fc-temp-1" class="text-xl font-black text-slate-200">–°C</span>
+          </div>
         </div>
-        <div class="bg-slate-800/60 rounded-lg p-3 flex items-center gap-3">
-          <span id="fc-icon-2" class="text-2xl">🌡️</span>
-          <div><span class="text-xs text-slate-500 uppercase tracking-wider block">pozítří</span><span id="fc-temp-2" class="text-sm font-bold text-slate-200">–°C</span></div>
+        <div class="bg-slate-800/60 rounded-xl p-4 flex items-center gap-3">
+          <span id="fc-icon-2" class="text-3xl">🌡️</span>
+          <div>
+            <span class="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Pozítří</span>
+            <span id="fc-temp-2" class="text-xl font-black text-slate-200">–°C</span>
+          </div>
         </div>
       </div>
     </div>
-    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+    <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4">
       <div class="flex items-center justify-between">
-        <h3 class="text-sm uppercase font-extrabold text-slate-400 tracking-wider">🗺️ Okolí</h3>
+        <h3 class="text-base font-extrabold text-slate-300">🗺️ Okolí</h3>
         <div class="flex items-center gap-2">
-          <select id="nearby-location-select" onchange="document.getElementById('nearby-results').innerHTML='';document.querySelectorAll('.nearby-cat-btn').forEach(b=>b.classList.remove('ring-1','ring-yellow-400','text-yellow-400'))" class="bg-slate-800 border border-slate-700/60 rounded-md px-2 py-1 text-xs text-slate-200 focus:outline-none cursor-pointer max-w-[130px] truncate">
+          <select id="nearby-location-select" onchange="document.getElementById('nearby-results').innerHTML='';document.querySelectorAll('.nearby-cat-btn').forEach(b=>b.classList.remove('ring-2','ring-yellow-400','text-yellow-400'))" class="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none cursor-pointer max-w-[145px] truncate">
             <option value="home">🏠 Ubytování</option>
           </select>
-          <button onclick="openPlacesModal()" class="shrink-0 text-base bg-slate-800 hover:bg-slate-700 border border-slate-700 text-yellow-400 px-2 py-1 rounded-md font-bold cursor-pointer transition" title="Správa míst">⚙️</button>
+          <button onclick="openPlacesModal()" class="shrink-0 text-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-yellow-400 px-3 py-2 rounded-xl cursor-pointer transition" title="Správa míst">⚙️</button>
         </div>
       </div>
-      <div class="grid grid-cols-4 gap-2">
-        <button onclick="fetchNearby(this,'supermarket')" class="nearby-cat-btn bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-3 rounded-xl transition cursor-pointer select-none font-semibold flex flex-col items-center gap-1"><span class="text-2xl leading-none">🛒</span><span class="text-[11px]">Super.</span></button>
-        <button onclick="fetchNearby(this,'cafe')" class="nearby-cat-btn bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-3 rounded-xl transition cursor-pointer select-none font-semibold flex flex-col items-center gap-1"><span class="text-2xl leading-none">☕</span><span class="text-[11px]">Kavárny</span></button>
-        <button onclick="fetchNearby(this,'fast_food')" class="nearby-cat-btn bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-3 rounded-xl transition cursor-pointer select-none font-semibold flex flex-col items-center gap-1"><span class="text-2xl leading-none">🍔</span><span class="text-[11px]">Fast food</span></button>
-        <button onclick="fetchNearby(this,'bar')" class="nearby-cat-btn bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-3 rounded-xl transition cursor-pointer select-none font-semibold flex flex-col items-center gap-1"><span class="text-2xl leading-none">🍺</span><span class="text-[11px]">Bary</span></button>
+      <div class="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1">
+        <button onclick="fetchNearby(this,'supermarket')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🛒</span><span class="text-sm font-bold">Super.</span></button>
+        <button onclick="fetchNearby(this,'cafe')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">☕</span><span class="text-sm font-bold">Kavárny</span></button>
+        <button onclick="fetchNearby(this,'fast_food')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🍔</span><span class="text-sm font-bold">Fast food</span></button>
+        <button onclick="fetchNearby(this,'bar')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🍺</span><span class="text-sm font-bold">Bary</span></button>
       </div>
       <div id="nearby-results" class="space-y-2"></div>
     </div>` : '';
 
   return `
     ${portoExtra}
-    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
-      <h2 class="text-lg font-black" style="color:${city.color}">${city.emoji} ${city.welcome.title}</h2>
-      <p class="text-sm text-slate-400">${city.welcome.subtitle}</p>
-      <ul class="space-y-2.5">${arrivals}</ul>
-    </div>
-    <div class="grid grid-cols-2 gap-3">${cards}</div>
-    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
-      <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-500">💡 Tipy & Triky</h3>
-      <ul class="space-y-2.5">${tips}</ul>
-    </div>`;
+    <details class="bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden" open>
+      <summary class="flex items-center justify-between px-5 py-4 cursor-pointer select-none">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">${city.emoji}</span>
+          <div>
+            <div class="text-lg font-black" style="color:${city.color}">${city.welcome.title}</div>
+            <div class="text-sm text-slate-500">${city.welcome.subtitle}</div>
+          </div>
+        </div>
+        ${chevron}
+      </summary>
+      <ul class="px-5 pb-5 space-y-4 border-t border-slate-800 pt-4">${arrivals}</ul>
+    </details>
+    <div class="space-y-3">${cards}</div>
+    <details class="bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden">
+      <summary class="flex items-center justify-between px-5 py-4 cursor-pointer select-none">
+        <span class="text-base font-extrabold uppercase tracking-wider text-slate-400">💡 Tipy & Triky</span>
+        ${chevron}
+      </summary>
+      <ul class="px-5 pb-5 space-y-4 border-t border-slate-800 pt-4">${tips}</ul>
+    </details>`;
 }
 
 function renderRoutes(city) {
@@ -877,91 +899,91 @@ function renderRoutes(city) {
   let extra = '';
   if (city.id === 'porto') {
     extra = `
-      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
-        <h3 class="text-xs uppercase font-extrabold text-yellow-400 tracking-wider">📡 Live odjezdy STCP</h3>
-        <div class="space-y-2">
+      <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4">
+        <h3 class="text-base uppercase font-extrabold text-yellow-400 tracking-wider">📡 Live odjezdy STCP</h3>
+        <div class="space-y-3">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-xs font-bold text-slate-100">Prédios de Lordelo</p>
-              <p class="text-[10px] text-slate-500">LRD1/LRD2 · linky 204 · 207 · 209</p>
+              <p class="text-base font-bold text-slate-100">Prédios de Lordelo</p>
+              <p class="text-sm text-slate-500">LRD1/LRD2 · linky 204 · 207 · 209</p>
             </div>
             <button id="dep-btn-lordelo" onclick="loadArrivals('lordelo')"
-              class="text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-yellow-400 hover:bg-slate-700 transition cursor-pointer">
+              class="text-sm font-bold px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-yellow-400 hover:bg-slate-700 transition cursor-pointer">
               ↺ Načíst
             </button>
           </div>
           <div id="dep-lordelo" class="hidden"></div>
         </div>
-        <div class="space-y-2 border-t border-slate-800 pt-3">
+        <div class="space-y-3 border-t border-slate-800 pt-4">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-xs font-bold text-slate-100">Planetário</p>
-              <p class="text-[10px] text-slate-500">PLNT1/PLNT2 · linky 200 · 207 · 209 · 1M</p>
+              <p class="text-base font-bold text-slate-100">Planetário</p>
+              <p class="text-sm text-slate-500">PLNT1/PLNT2 · linky 200 · 207 · 209 · 1M</p>
             </div>
             <button id="dep-btn-planetario" onclick="loadArrivals('planetario')"
-              class="text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-yellow-400 hover:bg-slate-700 transition cursor-pointer">
+              class="text-sm font-bold px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-yellow-400 hover:bg-slate-700 transition cursor-pointer">
               ↺ Načíst
             </button>
           </div>
           <div id="dep-planetario" class="hidden"></div>
         </div>
       </div>
-      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2">
-        <h3 class="text-xs uppercase font-extrabold text-yellow-400 tracking-wider">📍 Nejbližší zastávka</h3>
+      <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-3">
+        <h3 class="text-base uppercase font-extrabold text-yellow-400 tracking-wider">📍 Nejbližší zastávka</h3>
         <button id="locate-btn" onclick="locateMeNow()"
-          class="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-bold text-yellow-400 transition cursor-pointer active:scale-98">
+          class="w-full flex items-center justify-center gap-2 py-4 px-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-base font-bold text-yellow-400 transition cursor-pointer active:scale-98">
           <span>📍</span><span>Zjistit polohu</span>
         </button>
         <div id="locate-result" class="hidden"></div>
       </div>`;
   } else if (city.id === 'lagos') {
     extra = `
-      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2">
-        <h3 class="text-xs uppercase font-extrabold text-cyan-400 tracking-wider">📍 Moje poloha</h3>
+      <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-3">
+        <h3 class="text-base uppercase font-extrabold text-cyan-400 tracking-wider">📍 Moje poloha</h3>
         <button id="locate-btn-lagos" onclick="locateMeLagos()"
-          class="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-bold text-cyan-400 transition cursor-pointer active:scale-98">
+          class="w-full flex items-center justify-center gap-2 py-4 px-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-base font-bold text-cyan-400 transition cursor-pointer active:scale-98">
           <span>📍</span><span>Zobrazit moji polohu v Google Maps</span>
         </button>
-        <div id="locate-result-lagos" class="hidden text-xs text-slate-300 leading-relaxed"></div>
+        <div id="locate-result-lagos" class="hidden text-sm text-slate-300 leading-relaxed"></div>
       </div>`;
   }
 
   return `
-    <h2 class="text-lg font-black text-slate-100">🗺️ Trasy</h2>
+    <h2 class="text-xl font-black text-slate-100">🗺️ Trasy</h2>
     ${cards}
     ${extra}`;
 }
 
 function renderRouteCard(route, city) {
   const warning = route.warning
-    ? `<div class="text-[11px] text-red-400 font-bold bg-red-950/30 border border-red-900/40 rounded-lg px-3 py-1.5">${route.warning}</div>`
+    ? `<div class="text-sm text-red-400 font-bold bg-red-950/30 border border-red-900/40 rounded-xl px-4 py-3">${route.warning}</div>`
     : '';
   const btn1 = route.mapsUrl
-    ? `<a href="${route.mapsUrl}" target="_blank" class="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-bold transition cursor-pointer" style="color:${city.color}">
-        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+    ? `<a href="${route.mapsUrl}" target="_blank" class="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-sm font-bold transition cursor-pointer" style="color:${city.color}">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
         <span>${route.mapsLabel || 'Google Maps'}</span>
        </a>` : '';
   const btn2 = route.mapsUrl2
-    ? `<a href="${route.mapsUrl2}" target="_blank" class="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-bold transition cursor-pointer" style="color:${city.color}">
-        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+    ? `<a href="${route.mapsUrl2}" target="_blank" class="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-sm font-bold transition cursor-pointer" style="color:${city.color}">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
         <span>${route.mapsLabel2}</span>
        </a>` : '';
   const btns = (btn1 || btn2) ? `<div class="flex gap-2 flex-wrap">${btn1}${btn2}</div>` : '';
 
   return `
-    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2">
-      <div class="flex items-start justify-between gap-2">
+    <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-3">
+      <div class="flex items-start justify-between gap-3">
         <div>
-          <div class="flex items-center gap-1.5 flex-wrap">
-            <span class="text-xs font-bold text-slate-300">${route.from}</span>
-            <svg class="w-3 h-3 text-slate-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-            <span class="text-xs font-black text-slate-100">${route.to}</span>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-sm font-bold text-slate-400">${route.from}</span>
+            <svg class="w-4 h-4 text-slate-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            <span class="text-lg font-black text-slate-100">${route.to}</span>
           </div>
-          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full mt-1 inline-block" style="background:${route.badgeColor}22;color:${route.badgeColor}">${route.badge}</span>
+          <span class="text-xs font-bold px-2.5 py-1 rounded-full mt-2 inline-block" style="background:${route.badgeColor}25;color:${route.badgeColor}">${route.badge}</span>
         </div>
-        <span class="text-xs font-black shrink-0 mt-0.5" style="color:${city.color}">${route.duration}</span>
+        <span class="text-base font-black shrink-0" style="color:${city.color}">${route.duration}</span>
       </div>
-      <p class="text-xs text-slate-400 leading-relaxed">${route.description}</p>
+      <p class="text-sm text-slate-400 leading-relaxed">${route.description}</p>
       ${warning}
       ${btns}
     </div>`;
@@ -971,17 +993,17 @@ function renderInfo(city) {
   const sections = city.infoSections.map(sec => {
     if (sec.type !== 'accordion') return '';
     return `
-      <details class="bg-slate-900/60 rounded-xl border border-slate-800 overflow-hidden group">
-        <summary class="flex items-center justify-between px-4 py-3 cursor-pointer select-none">
-          <span class="text-xs font-bold text-slate-100 pr-2">${sec.title}</span>
-          <svg class="w-4 h-4 text-slate-500 shrink-0 details-arrow transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+      <details class="bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden group">
+        <summary class="flex items-center justify-between px-5 py-4 cursor-pointer select-none">
+          <span class="text-base font-bold text-slate-100 pr-3">${sec.title}</span>
+          <svg class="w-5 h-5 text-slate-500 shrink-0 details-arrow transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
           </svg>
         </summary>
-        <div class="px-4 pb-4 text-xs text-slate-300 leading-relaxed border-t border-slate-800 pt-3">${sec.body}</div>
+        <div class="px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-slate-800 pt-4">${sec.body}</div>
       </details>`;
   }).join('');
-  return `<h2 class="text-lg font-black text-slate-100">📖 Tahák</h2>${sections}`;
+  return `<h2 class="text-xl font-black text-slate-100">📖 Tahák</h2>${sections}`;
 }
 
 function renderBeaches(city) {
@@ -989,42 +1011,42 @@ function renderBeaches(city) {
     if (sec.type === 'beach-card') {
       const stats = sec.stats.map(s => `
         <div class="text-center">
-          <div class="text-[10px] text-slate-500 mb-0.5">${s.label}</div>
-          <div class="text-xs font-bold text-slate-200">${s.value}</div>
+          <div class="text-xs text-slate-500 mb-1">${s.label}</div>
+          <div class="text-sm font-bold text-slate-200">${s.value}</div>
         </div>`).join('');
       const mapsBtn = sec.mapsUrl
-        ? `<a href="${sec.mapsUrl}" target="_blank" class="w-full flex items-center justify-center gap-1 py-1.5 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-bold text-cyan-400 transition cursor-pointer">
+        ? `<a href="${sec.mapsUrl}" target="_blank" class="w-full flex items-center justify-center gap-2 py-3 px-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-sm font-bold text-cyan-400 transition cursor-pointer">
             <span>📍</span><span>Otevřít v Mapách</span>
            </a>` : '';
       return `
-        <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
-          <div class="flex items-start justify-between gap-2">
+        <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4">
+          <div class="flex items-start justify-between gap-3">
             <div>
-              <h3 class="text-sm font-black text-slate-100">${sec.name}</h3>
-              <p class="text-[10px] text-slate-500 mt-0.5">${sec.access}</p>
+              <h3 class="text-lg font-black text-slate-100">${sec.name}</h3>
+              <p class="text-sm text-slate-500 mt-0.5">${sec.access}</p>
             </div>
-            <span class="text-[10px] font-black px-2 py-0.5 rounded-full shrink-0" style="background:${sec.badgeColor}22;color:${sec.badgeColor}">${sec.badge}</span>
+            <span class="text-xs font-black px-2.5 py-1 rounded-full shrink-0" style="background:${sec.badgeColor}25;color:${sec.badgeColor}">${sec.badge}</span>
           </div>
-          <p class="text-xs text-slate-300 leading-relaxed">${sec.description}</p>
-          <div class="grid grid-cols-3 gap-2 bg-slate-950/40 rounded-lg p-2">${stats}</div>
+          <p class="text-sm text-slate-300 leading-relaxed">${sec.description}</p>
+          <div class="grid grid-cols-3 gap-2 bg-slate-950/40 rounded-xl p-3">${stats}</div>
           ${mapsBtn}
         </div>`;
     }
     if (sec.type === 'flag-legend') {
       return `
-        <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2">
-          <h3 class="text-xs uppercase font-extrabold text-slate-500 tracking-wider">🏖️ Vlajky na plážích</h3>
-          <div class="space-y-2.5">
-            <div class="flex items-center gap-3"><span class="w-5 h-5 rounded-sm shrink-0 bg-green-500"></span><span class="text-xs text-slate-300"><strong>Zelená</strong> – koupání povoleno, záchranáři přítomni</span></div>
-            <div class="flex items-center gap-3"><span class="w-5 h-5 rounded-sm shrink-0 bg-yellow-400"></span><span class="text-xs text-slate-300"><strong>Žlutá</strong> – opatrnost, podmínky proměnlivé</span></div>
-            <div class="flex items-center gap-3"><span class="w-5 h-5 rounded-sm shrink-0 bg-red-500"></span><span class="text-xs text-slate-300"><strong>Červená</strong> – koupání zakázáno, nebezpečné vlny</span></div>
-            <div class="flex items-center gap-3"><span class="w-5 h-5 rounded-sm shrink-0 bg-purple-500"></span><span class="text-xs text-slate-300"><strong>Fialová</strong> – výskyt nebezpečných živočichů (medúzy apod.)</span></div>
+        <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-3">
+          <h3 class="text-sm uppercase font-extrabold text-slate-500 tracking-wider">🏖️ Vlajky na plážích</h3>
+          <div class="space-y-3">
+            <div class="flex items-center gap-3"><span class="w-6 h-6 rounded shrink-0 bg-green-500"></span><span class="text-sm text-slate-300"><strong>Zelená</strong> – koupání povoleno, záchranáři přítomni</span></div>
+            <div class="flex items-center gap-3"><span class="w-6 h-6 rounded shrink-0 bg-yellow-400"></span><span class="text-sm text-slate-300"><strong>Žlutá</strong> – opatrnost, podmínky proměnlivé</span></div>
+            <div class="flex items-center gap-3"><span class="w-6 h-6 rounded shrink-0 bg-red-500"></span><span class="text-sm text-slate-300"><strong>Červená</strong> – koupání zakázáno, nebezpečné vlny</span></div>
+            <div class="flex items-center gap-3"><span class="w-6 h-6 rounded shrink-0 bg-purple-500"></span><span class="text-sm text-slate-300"><strong>Fialová</strong> – výskyt nebezpečných živočichů (medúzy apod.)</span></div>
           </div>
         </div>`;
     }
     return '';
   }).join('');
-  return `<h2 class="text-lg font-black text-slate-100">🏖️ Pláže</h2>${sections}`;
+  return `<h2 class="text-xl font-black text-slate-100">🏖️ Pláže</h2>${sections}`;
 }
 
 function renderMap(city) {
@@ -1048,16 +1070,16 @@ function renderMap(city) {
 
 function renderWallet(city) {
   return `
-    <h2 class="text-lg font-black text-slate-100">💳 Andante Peněženka</h2>
+    <h2 class="text-xl font-black text-slate-100">💳 Andante Peněženka</h2>
 
     <!-- Z2 -->
-    <div id="wallet-z2-card" class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+    <div id="wallet-z2-card" class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4">
       <div class="flex items-center justify-between">
         <div>
-          <h3 class="text-sm font-black text-slate-100">Zóna Z2</h3>
-          <p class="text-[10px] text-slate-500">1,85 €/jízda · platnost 60 min</p>
+          <h3 class="text-lg font-black text-slate-100">Zóna Z2</h3>
+          <p class="text-sm text-slate-500">1,85 €/jízda · platnost 60 min</p>
         </div>
-        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400">Z2</span>
+        <span class="text-sm font-bold px-3 py-1 rounded-full bg-blue-500/20 text-blue-400">Z2</span>
       </div>
       <div class="text-center py-2">
         <div id="wallet-z2-count" class="text-5xl font-black text-slate-100 font-mono tabular-nums">0</div>
@@ -1071,13 +1093,13 @@ function renderWallet(city) {
     </div>
 
     <!-- Z4 -->
-    <div id="wallet-z4-card" class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+    <div id="wallet-z4-card" class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4">
       <div class="flex items-center justify-between">
         <div>
-          <h3 class="text-sm font-black text-slate-100">Zóna Z4</h3>
-          <p class="text-[10px] text-slate-500">3,00 €/jízda · platnost 75 min</p>
+          <h3 class="text-lg font-black text-slate-100">Zóna Z4</h3>
+          <p class="text-sm text-slate-500">3,00 €/jízda · platnost 75 min</p>
         </div>
-        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400">Z4</span>
+        <span class="text-sm font-bold px-3 py-1 rounded-full bg-purple-500/20 text-purple-400">Z4</span>
       </div>
       <div class="text-center py-2">
         <div id="wallet-z4-count" class="text-5xl font-black text-slate-100 font-mono tabular-nums">0</div>
@@ -1091,24 +1113,24 @@ function renderWallet(city) {
     </div>
 
     <!-- Countdown -->
-    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
-      <h3 class="text-xs uppercase font-extrabold text-yellow-400 tracking-wider">⏱ Platnost jízdenky</h3>
-      <div id="countdown-display" class="hidden space-y-3">
+    <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4">
+      <h3 class="text-base uppercase font-extrabold text-yellow-400 tracking-wider">⏱ Platnost jízdenky</h3>
+      <div id="countdown-display" class="hidden space-y-4">
         <div class="text-center">
-          <div id="countdown-zone-label" class="text-xs text-slate-500 mb-1">Z2 · 60 min</div>
-          <div id="countdown-time" class="text-4xl font-black text-center tracking-tight text-emerald-400 font-mono tabular-nums">00:00</div>
-          <div id="countdown-valid-until" class="text-[11px] text-slate-500 mt-1"></div>
+          <div id="countdown-zone-label" class="text-sm text-slate-500 mb-2">Z2 · 60 min</div>
+          <div id="countdown-time" class="text-5xl font-black text-center tracking-tight text-emerald-400 font-mono tabular-nums">00:00</div>
+          <div id="countdown-valid-until" class="text-sm text-slate-500 mt-2"></div>
         </div>
         <div class="h-3 bg-slate-800 rounded-full overflow-hidden">
           <div id="countdown-bar" class="h-full rounded-full transition-all duration-1000 bg-emerald-500" style="width:100%"></div>
         </div>
-        <button onclick="cancelCountdown()" class="w-full py-2 text-xs font-bold text-red-400 hover:text-red-300 transition cursor-pointer border border-red-900/30 rounded-lg">✕ Zrušit odpočet</button>
+        <button onclick="cancelCountdown()" class="w-full py-3 text-sm font-bold text-red-400 hover:text-red-300 transition cursor-pointer border border-red-900/30 rounded-xl">✕ Zrušit odpočet</button>
       </div>
-      <div id="countdown-buttons" class="space-y-2">
-        <p class="text-xs text-slate-500">Spusť hned po validaci jízdenky:</p>
-        <div class="flex gap-2">
-          <button onclick="startCountdown('z2')" class="flex-1 py-2.5 text-xs font-bold rounded-lg bg-blue-900/30 border border-blue-800/50 text-blue-400 hover:bg-blue-900/50 transition cursor-pointer">⏱ Z2 – 60 min</button>
-          <button onclick="startCountdown('z4')" class="flex-1 py-2.5 text-xs font-bold rounded-lg bg-purple-900/30 border border-purple-800/50 text-purple-400 hover:bg-purple-900/50 transition cursor-pointer">⏱ Z4 – 75 min</button>
+      <div id="countdown-buttons" class="space-y-3">
+        <p class="text-sm text-slate-500">Spusť hned po validaci jízdenky:</p>
+        <div class="flex gap-3">
+          <button onclick="startCountdown('z2')" class="flex-1 py-4 text-sm font-bold rounded-xl bg-blue-900/30 border border-blue-800/50 text-blue-400 hover:bg-blue-900/50 transition cursor-pointer">⏱ Z2 – 60 min</button>
+          <button onclick="startCountdown('z4')" class="flex-1 py-4 text-sm font-bold rounded-xl bg-purple-900/30 border border-purple-800/50 text-purple-400 hover:bg-purple-900/50 transition cursor-pointer">⏱ Z4 – 75 min</button>
         </div>
       </div>
     </div>`;
@@ -1117,25 +1139,25 @@ function renderWallet(city) {
 function renderTransport(city) {
   const sections = city.transportSections.map(sec => {
     const items = (sec.items || []).map(item => `
-      <div class="flex items-start gap-2">
-        <span class="font-bold text-xs shrink-0 w-32" style="color:${sec.titleColor}">${item.key}</span>
-        <span class="text-xs text-slate-300">${item.value}</span>
+      <div class="flex items-start gap-3">
+        <span class="font-bold text-sm shrink-0 w-36" style="color:${sec.titleColor}">${item.key}</span>
+        <span class="text-sm text-slate-300">${item.value}</span>
       </div>`).join('');
     const linkBtn = sec.linkUrl
       ? `<a href="${sec.linkUrl}" target="_blank"
-          class="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-bold transition cursor-pointer" style="color:${sec.titleColor}">
+          class="w-full flex items-center justify-center gap-2 py-3 px-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-sm font-bold transition cursor-pointer" style="color:${sec.titleColor}">
           <span>${sec.linkLabel}</span>
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
          </a>` : '';
     return `
-      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
-        <h3 class="text-xs uppercase font-extrabold tracking-wider" style="color:${sec.titleColor}">${sec.title}</h3>
-        ${sec.content ? `<p class="text-xs text-slate-300 leading-relaxed">${sec.content}</p>` : ''}
-        ${items ? `<div class="space-y-2 bg-slate-950/30 p-3 rounded-lg">${items}</div>` : ''}
+      <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4">
+        <h3 class="text-sm uppercase font-extrabold tracking-wider" style="color:${sec.titleColor}">${sec.title}</h3>
+        ${sec.content ? `<p class="text-sm text-slate-300 leading-relaxed">${sec.content}</p>` : ''}
+        ${items ? `<div class="space-y-3 bg-slate-950/30 p-4 rounded-xl">${items}</div>` : ''}
         ${linkBtn}
       </div>`;
   }).join('');
-  return `<h2 class="text-lg font-black text-slate-100">🚌 Doprava & Tipy</h2>${sections}`;
+  return `<h2 class="text-xl font-black text-slate-100">🚌 Doprava & Tipy</h2>${sections}`;
 }
 
 // ===========================
