@@ -1,0 +1,1839 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Porto & Lagos – MHD Průvodce</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#080f1c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+    .animate-fade-in { animation: fadeIn 0.22s ease-out both; }
+    details > summary { list-style: none; cursor: pointer; user-select: none; }
+    details > summary::-webkit-details-marker { display: none; }
+    details[open] .details-arrow { transform: rotate(180deg); }
+    .pb-safe { padding-bottom: max(env(safe-area-inset-bottom, 12px), 12px); }
+    .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+    * { -webkit-tap-highlight-color: transparent; }
+  </style>
+</head>
+<body class="bg-[#080f1c] text-slate-100 font-sans antialiased">
+
+<!-- ===== CITY PICKER ===== -->
+<div id="city-picker" class="min-h-screen flex flex-col pt-safe">
+  <div class="max-w-md mx-auto w-full px-4 py-10 flex-1 flex flex-col">
+    <div class="mb-10 text-center">
+      <div class="text-5xl mb-4">🧭</div>
+      <h1 class="text-2xl font-black text-slate-100">Průvodce cestou</h1>
+      <p class="text-sm text-slate-400 mt-1.5">Vyber město pro navigaci</p>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Porto -->
+      <button onclick="renderCity('porto')"
+        class="relative overflow-hidden rounded-2xl p-5 text-left cursor-pointer active:scale-95 transition-transform duration-150"
+        style="background:linear-gradient(135deg,#1a3055 0%,#0d2240 60%,#070f1e 100%);border:1px solid rgba(251,191,36,0.35)">
+        <div class="text-4xl mb-3">🚇</div>
+        <h2 class="text-lg font-black text-yellow-400">Porto</h2>
+        <p class="text-xs text-slate-400 mt-0.5">MHD Průvodce</p>
+        <div class="mt-3 flex flex-wrap gap-1">
+          <span class="text-[10px] bg-yellow-500/15 text-yellow-300 px-1.5 py-0.5 rounded-full font-bold">Metro</span>
+          <span class="text-[10px] bg-yellow-500/15 text-yellow-300 px-1.5 py-0.5 rounded-full font-bold">Autobus</span>
+          <span class="text-[10px] bg-yellow-500/15 text-yellow-300 px-1.5 py-0.5 rounded-full font-bold">Andante</span>
+        </div>
+      </button>
+      <!-- Lagos -->
+      <button onclick="renderCity('lagos')"
+        class="relative overflow-hidden rounded-2xl p-5 text-left cursor-pointer active:scale-95 transition-transform duration-150"
+        style="background:linear-gradient(135deg,#082525 0%,#041515 60%,#020a0a 100%);border:1px solid rgba(34,211,238,0.35)">
+        <div class="text-4xl mb-3">🏖️</div>
+        <h2 class="text-lg font-black text-cyan-400">Lagos</h2>
+        <p class="text-xs text-slate-400 mt-0.5">Algarve Průvodce</p>
+        <div class="mt-3 flex flex-wrap gap-1">
+          <span class="text-[10px] bg-cyan-500/15 text-cyan-300 px-1.5 py-0.5 rounded-full font-bold">Pláže</span>
+          <span class="text-[10px] bg-cyan-500/15 text-cyan-300 px-1.5 py-0.5 rounded-full font-bold">Bus EVA</span>
+          <span class="text-[10px] bg-cyan-500/15 text-cyan-300 px-1.5 py-0.5 rounded-full font-bold">Trajekt</span>
+        </div>
+      </button>
+    </div>
+    <p class="text-center text-xs text-slate-700 mt-10">Porto MHD PWA · v2.0</p>
+  </div>
+</div>
+
+<!-- ===== CITY APP ===== -->
+<div id="city-app" class="hidden flex flex-col min-h-screen" style="max-width:448px;margin:0 auto">
+  <!-- Header -->
+  <header id="app-header" class="sticky top-0 z-30 bg-slate-900/95 border-b border-slate-800 backdrop-blur pt-safe px-4 py-3">
+    <div class="flex items-center justify-between">
+      <button onclick="showCityPicker()" class="flex items-center space-x-1.5 text-slate-400 hover:text-slate-200 transition cursor-pointer active:scale-90">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+        </svg>
+        <span class="text-xs font-medium">Města</span>
+      </button>
+      <div class="flex items-center space-x-2">
+        <span id="city-emoji" class="text-xl"></span>
+        <h1 id="city-name-header" class="text-base font-black"></h1>
+      </div>
+      <div class="flex items-center space-x-1.5">
+        <div id="connection-status" class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+        <span id="connection-status-text" class="text-[11px] text-green-400 font-medium">Online</span>
+      </div>
+    </div>
+    <div class="flex items-center justify-between mt-1">
+      <span id="city-time" class="text-[11px] font-mono text-slate-500"></span>
+      <span id="city-date" class="text-[11px] text-slate-600"></span>
+    </div>
+  </header>
+
+  <!-- Main content -->
+  <main id="app-main" class="flex-1 overflow-y-auto pb-28 px-4 pt-4 space-y-4"></main>
+
+  <!-- Bottom nav -->
+  <nav class="fixed bottom-0 left-0 right-0 z-30 bg-slate-900/95 border-t border-slate-800 backdrop-blur pb-safe" style="max-width:448px;margin:0 auto;left:50%;transform:translateX(-50%);width:100%">
+    <div id="tab-buttons" class="flex items-center justify-around px-1 pt-1.5 pb-1"></div>
+  </nav>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-slate-800 text-slate-100 text-xs font-semibold px-4 py-2 rounded-full shadow-xl opacity-0 transition-opacity duration-300 pointer-events-none whitespace-nowrap"></div>
+
+<!-- ===== PLACES MODAL ===== -->
+<div id="places-modal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm" onclick="if(event.target===this)closePlacesModal()">
+  <div class="absolute inset-x-0 bottom-0 bg-[#080f1c] border-t border-slate-800 rounded-t-2xl overflow-y-auto" style="max-height:90vh;max-width:448px;margin:0 auto;left:50%;transform:translateX(-50%);width:100%">
+    <!-- Sticky header -->
+    <div class="sticky top-0 bg-[#080f1c] border-b border-slate-800 px-4 py-3 flex items-center justify-between z-10">
+      <h2 class="text-sm font-black text-slate-100">📍 Správa míst</h2>
+      <button onclick="closePlacesModal()" class="text-slate-400 hover:text-slate-100 transition text-2xl leading-none cursor-pointer select-none">×</button>
+    </div>
+    <div class="px-4 py-4 space-y-6 pb-safe">
+
+      <!-- Ubytování -->
+      <div class="space-y-3">
+        <h3 class="text-xs font-extrabold uppercase tracking-wider text-yellow-400">🏠 Ubytování</h3>
+        <div class="relative">
+          <input id="modal-home-search" type="text" placeholder="Hledat adresu ubytování…"
+            oninput="nominatimSearch('modal-home-search','modal-home-results')"
+            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-yellow-500 transition">
+          <div id="modal-home-results" class="hidden absolute left-0 right-0 top-full mt-0.5 bg-slate-800 border border-slate-700 rounded-lg overflow-hidden z-20 shadow-xl max-h-48 overflow-y-auto"></div>
+        </div>
+        <input id="modal-home-name" type="text" placeholder="Název (např. Hotel Douro)"
+          class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-slate-600 transition">
+        <input id="modal-home-address" type="text" placeholder="Plná adresa"
+          class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-slate-600 transition">
+        <div class="grid grid-cols-2 gap-2">
+          <input id="modal-home-lat" type="number" step="0.00001" placeholder="Lat (vyplní vyhledávání)"
+            class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-400 font-mono focus:outline-none">
+          <input id="modal-home-lng" type="number" step="0.00001" placeholder="Lng"
+            class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-400 font-mono focus:outline-none">
+        </div>
+        <div class="flex gap-2">
+          <button onclick="saveHomeSettings()" class="flex-1 bg-yellow-500 hover:bg-yellow-400 active:scale-95 text-slate-950 font-black text-xs py-2.5 rounded-lg transition cursor-pointer">Uložit ubytování</button>
+          <button onclick="resetHomeSettings()" class="px-3 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-400 text-xs py-2 rounded-lg transition cursor-pointer">Reset</button>
+        </div>
+      </div>
+
+      <!-- Přidat místo zájmu -->
+      <div class="space-y-3 border-t border-slate-800 pt-5">
+        <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-400">➕ Přidat místo zájmu</h3>
+        <div class="relative">
+          <input id="modal-poi-search" type="text" placeholder="Hledat místo…"
+            oninput="nominatimSearch('modal-poi-search','modal-poi-results')"
+            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-slate-500 transition">
+          <div id="modal-poi-results" class="hidden absolute left-0 right-0 top-full mt-0.5 bg-slate-800 border border-slate-700 rounded-lg overflow-hidden z-20 shadow-xl max-h-48 overflow-y-auto"></div>
+        </div>
+        <div class="flex gap-2">
+          <input id="modal-poi-emoji" type="text" placeholder="📍" maxlength="2"
+            class="w-14 shrink-0 bg-slate-900 border border-slate-800 rounded-lg px-2 py-2.5 text-sm text-center focus:outline-none">
+          <input id="modal-poi-name" type="text" placeholder="Název místa"
+            class="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-slate-600 transition">
+        </div>
+        <input id="modal-poi-address" type="text" placeholder="Plná adresa (vyplní vyhledávání)"
+          class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-slate-600 transition">
+        <div class="grid grid-cols-2 gap-2">
+          <input id="modal-poi-lat" type="number" step="0.00001" placeholder="Lat"
+            class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-400 font-mono focus:outline-none">
+          <input id="modal-poi-lng" type="number" step="0.00001" placeholder="Lng"
+            class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-400 font-mono focus:outline-none">
+        </div>
+        <button onclick="addPoi()" class="w-full bg-slate-700 hover:bg-slate-600 active:scale-95 text-slate-100 font-bold text-xs py-2.5 rounded-lg transition cursor-pointer">+ Přidat místo</button>
+      </div>
+
+      <!-- Uložená místa -->
+      <div class="space-y-2 border-t border-slate-800 pt-5">
+        <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-400">🗂️ Uložená místa</h3>
+        <div id="modal-poi-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===========================
+// CITY CONFIG DATA
+// ===========================
+const CITIES = [
+  {
+    id: 'porto',
+    name: 'Porto',
+    emoji: '🚇',
+    subtitle: 'MHD Průvodce',
+    color: '#fbbf24',
+    accentCls: 'text-yellow-400',
+    timezone: 'Europe/Lisbon',
+    timeLabel: 'Čas v Portu',
+    tabs: [
+      { id:'overview', label:'Přehled',    icon:'📋' },
+      { id:'routes',   label:'Trasy',      icon:'🗺️' },
+      { id:'info',     label:'Tahák',      icon:'📖' },
+      { id:'map',      label:'Mapa',       icon:'🚇' },
+      { id:'wallet',   label:'Peněženka',  icon:'💳' }
+    ],
+    welcome: { title:'Porto MHD', subtitle:'Průvodce dopravou' },
+    arrivalBullets: [
+      'Metro E z letiště → přestup na Casa da Música (Zóna Z4)',
+      'Autobus 204 z Casa da Música → zastávka Prédios de Lordelo (Zóna Z2)',
+      'Validovat kartu žlutými sloupci před každou jízdou i přestupem!',
+      'Ubytování: Rua Paulo Gama 551, Lordelo do Ouro'
+    ],
+    overviewItems: [
+      { label:'2 karty Andante Azul', detail:'Každá karta 0,60 € – kup na letišti v automatech', time:'Z2 + Z4', badge:'Nutnost', badgeColor:'#ef4444' },
+      { label:'Z4 – od letiště', detail:'Metro E + Bus 204 z Casa da Música → domů', time:'3,00 €/jízda · 75 min', badge:'Letiště', badgeColor:'#9333ea' },
+      { label:'Z2 – po Portu', detail:'Autobusy 200, 207, 209 v rámci Porta', time:'1,85 €/jízda · 60 min', badge:'Město', badgeColor:'#2563eb' },
+      { label:'Bus 204', detail:'Casa da Música → Prédios de Lordelo', time:'12–20 min intervaly', badge:'Klíčová', badgeColor:'#fbbf24' }
+    ],
+    tipBullets: [
+      'Kup 2 karty Andante Azul (po 0,60 €) hned na letišti u automatů u metra',
+      'Na každém přestupu validuj znovu – i na zastávce při čekání na druhý spoj!',
+      'V neděli ráno bus 207 jezdí od 6:30 – první spoj na Campanhã!',
+      '1M noční bus každou hodinu 01:00–05:00, příjezd Planetário +10 min od Aliados'
+    ],
+    routes: [
+      {
+        from:'Letiště', to:'Ubytování',
+        badge:'Zóna Z4', badgeColor:'#2563eb', duration:'~45 min',
+        description:'Nastup na Metro E (směr Estádio do Dragão), přestup na Casa da Música, Bus 204 → Prédios de Lordelo',
+        mapsUrl:'https://www.google.com/maps/dir/?api=1&origin=Aeroporto+Francisco+Sa+Carneiro+Porto&destination=Rua+Paulo+Gama+551+Porto&travelmode=transit',
+        mapsLabel:'Google Maps – Transit'
+      },
+      {
+        from:'Ubytování', to:'Fakulta (FLUP)',
+        badge:'Zóna Z2', badgeColor:'#16a34a', duration:'~10–15 min',
+        description:'Bus 204 ze zastávky Prédios de Lordelo nebo Bus 209 ze zastávky Planetário, 3 zastávky → Faculdade de Letras',
+        mapsUrl:'https://www.google.com/maps/dir/?api=1&origin=Rua+Paulo+Gama+551+Porto&destination=Faculdade+de+Letras+da+Universidade+do+Porto&travelmode=transit',
+        mapsLabel:'Google Maps – Transit'
+      },
+      {
+        from:'Ubytování', to:'Centrum (Aliados)',
+        badge:'Zóna Z2', badgeColor:'#16a34a', duration:'~20 min',
+        description:'Bus 200 nebo 207 ze zastávky Planetário → Praça Filipa de Lencastre / Aliados',
+        mapsUrl:'https://www.google.com/maps/dir/?api=1&origin=Rua+Paulo+Gama+551+Porto&destination=Avenida+dos+Aliados+Porto&travelmode=transit',
+        mapsLabel:'Google Maps – Transit'
+      },
+      {
+        from:'Ubytování', to:'Campanhã',
+        badge:'Zóna Z2', badgeColor:'#dc2626', duration:'~30 min',
+        warning:'⚠ V neděli ráno první spoj až po 6:00!',
+        description:'Bus 207 přímo ze zastávky Planetário na Estação Campanhã',
+        mapsUrl:'https://www.google.com/maps/dir/?api=1&origin=Rua+Paulo+Gama+551+Porto&destination=Estacao+de+Campanha+Porto&travelmode=transit',
+        mapsLabel:'Google Maps – Transit'
+      }
+    ],
+    infoSections: [
+      { type:'accordion', title:'💳 Karta Andante Azul',
+        body:'<p>Jízdenka na kartu Andante: karta samotná stojí <strong>0,60 €</strong>. Každá karta je pro <strong>1 osobu</strong>. Jízdy kupuješ do karty v automatech na metru nebo v informačních centrech STCP/Metro do zásoby dopředu.</p>' },
+      { type:'accordion', title:'🌐 Zlaté pravidlo zón',
+        body:'<p>Jedna karta pojme jízdy pouze pro <strong>1 zónu najednou</strong>. Pokud jedeš z letiště (Z4) a pak po Portu (Z2), potřebuješ <strong>2 karty</strong>. Řešení: jedna karta pro Z2, jedna pro Z4.</p>' },
+      { type:'accordion', title:'🛎️ Jak správně validovat',
+        body:'<p>Validuj kartu <strong>před každou jízdou</strong> i přestupem. V metru: <strong>žluté sloupce</strong> na nástupišti. V autobuse: <strong>předními dveřmi</strong> u čtečky u řidiče. Při přestupu validuj znovu – i kdyby jiný spoj přijel hned!</p>' },
+      { type:'accordion', title:'🌙 Noční autobus 1M',
+        body:'<p><strong>Ze směru centrum (Aliados):</strong> 01:00, 02:00, 03:00, 04:00, 05:00<br><strong>Příjezd Planetário:</strong> +10 min od Aliados<br><strong>Ze směru Matosinhos:</strong> +25 min od Aliados</p>' },
+      { type:'accordion', title:'🚌 Bus 204 – jízdní řád',
+        body:'<p><strong>Ranní špička</strong> (6–9h): 12–15 min<br><strong>Denní provoz</strong> (9–16h): 18–20 min<br><strong>Odpolední špička</strong> (16–19h): 12–15 min<br><strong>Večer</strong>: 25–30 min<br><strong>Víkend</strong>: 25–35 min</p>' },
+      { type:'accordion', title:'🚏 Zastávka Planetário – přehled linek',
+        body:'<p><strong>Bus 200</strong> Circular: 05:30–23:00<br><strong>Bus 207</strong> → Campanhã: neděle ráno první spoj 06:30<br><strong>Bus 209</strong> → FLUP / Faculdade de Letras<br><strong>Bus 1M</strong> noční: 01:00–05:00 každou hodinu</p>' }
+    ],
+    mapTitle:'Mapa metra Porto',
+    mapNote:'Schematická mapa – není v přesném geografickém měřítku. Pinch to zoom na dotykovém zařízení.',
+    extras:'porto'
+  },
+  {
+    id: 'lagos',
+    name: 'Lagos',
+    emoji: '🏖️',
+    subtitle: 'Algarve Průvodce',
+    color: '#22d3ee',
+    accentCls: 'text-cyan-400',
+    timezone: 'Europe/Lisbon',
+    timeLabel: 'Čas v Lagosu',
+    tabs: [
+      { id:'overview',  label:'Přehled',  icon:'📋' },
+      { id:'routes',    label:'Trasy',    icon:'🗺️' },
+      { id:'beaches',   label:'Pláže',    icon:'🏖️' },
+      { id:'map',       label:'Mapa',     icon:'🗾' },
+      { id:'transport', label:'Doprava',  icon:'🚌' }
+    ],
+    welcome: { title:'Lagos', subtitle:'Průvodce po Algarve' },
+    arrivalBullets: [
+      'Vlak CP z Lisabonu nebo Fara → Estação de Lagos (konečná stanice)',
+      'Z nádraží pěšky do ubytování ~10 min (cca 700 m)',
+      'Taxi k dispozici přímo u nádraží a na Praça Gil Eanes',
+      'Bus EVA terminál: Rua da Porta de Portugal (u tržnice, ~7 min od ubytování)'
+    ],
+    overviewItems: [
+      { label:'Praia da Batata', detail:'700 m – zátoková, klidná', time:'10 min pěšky', badge:'Nejbližší', badgeColor:'#06b6d4' },
+      { label:'Praia Dona Ana', detail:'Zlaté útesy, ikonická pláž Algarve', time:'35 min / taxi 7–9 €', badge:'Ikonická', badgeColor:'#d97706' },
+      { label:'Ponta da Piedade', detail:'Skalní oblouky – must-see!', time:'Taxi ~7 €', badge:'Must-see', badgeColor:'#9333ea' },
+      { label:'Bus EVA', detail:'Terminál: Rua da Porta de Portugal', time:'→ Luz, Sagres, Portimão', badge:'Doprava', badgeColor:'#2563eb' }
+    ],
+    tipBullets: [
+      'Nejbližší pláž Batata je 10 min pěšky – ideální pro ranní koupání',
+      'Dona Ana + Camilo: jdi pěšky po pobřeží, nádherné výhledy na útesy',
+      'Ponta da Piedade: taxíkem 7 € tam, pak pěšky zpět přes Camilo a Dona Ana',
+      'Meia Praia: trajektem ze Mariny (sezónní duben–říjen, ~3–5 € zpáteční)'
+    ],
+    routes: [
+      {
+        from:'Nádraží', to:'Ubytování',
+        badge:'Pěšky', badgeColor:'#16a34a', duration:'~10 min',
+        description:'Z Estação de Lagos pěšky do ubytování Rua Cândido Guerreiro, cca 700 m po rovinatém terénu.',
+        mapsUrl:'https://www.google.com/maps/dir/?api=1&origin=Estacao+de+Lagos+Portugal&destination=Rua+Candido+Guerreiro+Lagos&travelmode=walking',
+        mapsLabel:'Google Maps – Pěšky'
+      },
+      {
+        from:'Ubytování', to:'Praia da Batata',
+        badge:'Pěšky', badgeColor:'#16a34a', duration:'~10 min / 700 m',
+        description:'Pěšky k pevnosti Ponta da Bandeira a pláži Batata – nejkratší cesta k moři z ubytování.',
+        mapsUrl:'https://www.google.com/maps/dir/?api=1&origin=Rua+Candido+Guerreiro+Lagos&destination=Praia+da+Batata+Lagos&travelmode=walking',
+        mapsLabel:'Google Maps – Pěšky'
+      },
+      {
+        from:'Ubytování', to:'Dona Ana + Camilo',
+        badge:'Pěšky + Taxi', badgeColor:'#d97706', duration:'35–40 min / ~8 €',
+        description:'Pobřežní stezka 2,5 km nebo taxi 7–9 €. Dona Ana a Camilo jsou vedle sebe – navštiv obě!',
+        mapsUrl:'https://www.google.com/maps/dir/?api=1&origin=Rua+Candido+Guerreiro+Lagos&destination=Praia+Dona+Ana+Lagos&travelmode=walking',
+        mapsLabel:'Trasa – Dona Ana',
+        mapsUrl2:'https://www.google.com/maps/dir/?api=1&origin=Rua+Candido+Guerreiro+Lagos&destination=Praia+do+Camilo+Lagos&travelmode=walking',
+        mapsLabel2:'Trasa – Camilo'
+      },
+      {
+        from:'Ubytování', to:'Meia Praia',
+        badge:'Trajekt ⛴️', badgeColor:'#0891b2', duration:'~15 min',
+        warning:'⚠ Sezónní trajekt! Provoz duben–říjen.',
+        description:'Trajekt ze Mariny de Lagos na Meia Praia (8 km písečná pláž). Sezónní provoz, cca 3–5 € zpáteční.',
+        mapsUrl:'https://www.google.com/maps/dir/?api=1&origin=Rua+Candido+Guerreiro+Lagos&destination=Meia+Praia+Lagos&travelmode=transit',
+        mapsLabel:'Google Maps – Transit'
+      },
+      {
+        from:'Ubytování', to:'Praia da Luz',
+        badge:'Bus EVA', badgeColor:'#2563eb', duration:'~20 min',
+        description:'6 km na západ, bus EVA z terminálu Rua da Porta de Portugal → Luz. Klidnější vesnice, méně turistů.',
+        mapsUrl:'https://www.google.com/maps/dir/?api=1&origin=Rua+Candido+Guerreiro+Lagos&destination=Praia+da+Luz+Portugal&travelmode=transit',
+        mapsLabel:'Google Maps – Transit'
+      }
+    ],
+    infoSections: [
+      {
+        type:'beach-card', name:'Praia da Batata', badge:'Nejbližší', badgeColor:'#06b6d4',
+        access:'~700 m · 10 min pěšky',
+        description:'Zátoková klidná pláž u pevnosti Ponta da Bandeira. Ideální na koupání, menší vlny, záchranáři v sezóně.',
+        stats:[ {label:'Vlny',value:'Klidné'}, {label:'Velikost',value:'Malá'}, {label:'Záchranáři',value:'Sezónně'} ],
+        mapsUrl:'https://maps.google.com/?q=Praia+da+Batata+Lagos+Portugal'
+      },
+      {
+        type:'beach-card', name:'Praia Dona Ana', badge:'Ikonická', badgeColor:'#d97706',
+        access:'~2,5 km · 35 min pěšky',
+        description:'Zlaté útesy, ikonická pláž Algarve. Skvělé pro snorkeling a fotografování. Záchranáři 6/6–30/9.',
+        stats:[ {label:'Vlny',value:'Střední'}, {label:'Scenérie',value:'★★★★★'}, {label:'Záchranáři',value:'6/6–30/9'} ],
+        mapsUrl:'https://maps.google.com/?q=Praia+Dona+Ana+Lagos+Portugal'
+      },
+      {
+        type:'beach-card', name:'Praia do Camilo', badge:'Foto nej', badgeColor:'#ea580c',
+        access:'~200 m za Dona Ana',
+        description:'Přístup schodištěm vytesaným do skal. Malá romantická pláž, odpolední stín od útesů.',
+        stats:[ {label:'Přístup',value:'Schodiště'}, {label:'Velikost',value:'Malá'}, {label:'Stín',value:'Odpoledne ↓'} ],
+        mapsUrl:'https://maps.google.com/?q=Praia+do+Camilo+Lagos+Portugal'
+      },
+      {
+        type:'beach-card', name:'Meia Praia', badge:'8 km písku', badgeColor:'#0891b2',
+        access:'Trajekt ~15 min (sezóna)',
+        description:'Obrovská 8 km písečná pláž na druhé straně zálivu. Oblíbená u kite-surferů, silnější vítr.',
+        stats:[ {label:'Vítr',value:'Silnější'}, {label:'Sporty',value:'Kite surf'}, {label:'Přístup',value:'Trajekt sezóna'} ],
+        mapsUrl:'https://maps.google.com/?q=Meia+Praia+Lagos+Portugal'
+      },
+      {
+        type:'beach-card', name:'Praia da Luz', badge:'Klidnější', badgeColor:'#2563eb',
+        access:'6 km · bus EVA ~20 min',
+        description:'Klidná rybářská vesnice 6 km od Lagosu. Méně turistů, přátelská atmosféra, klidnější vlny.',
+        stats:[ {label:'Vlny',value:'Klidnější'}, {label:'Dav',value:'Méně lidí'}, {label:'Dojezd',value:'Bus 20 min'} ],
+        mapsUrl:'https://maps.google.com/?q=Praia+da+Luz+Portugal'
+      },
+      {
+        type:'beach-card', name:'Ponta da Piedade', badge:'Must-see', badgeColor:'#9333ea',
+        access:'~3 km · taxi ~7 €',
+        description:'Skalní oblouky a zlaté útesy – ikonické místo Algarve. Není to pláž, ale výlet za to rozhodně stojí!',
+        stats:[ {label:'Typ',value:'Skalní útesy'}, {label:'Přístup',value:'Taxi / pěšky'}, {label:'Výlet',value:'Must-see'} ],
+        mapsUrl:'https://maps.google.com/?q=Ponta+da+Piedade+Lagos+Portugal'
+      },
+      { type:'flag-legend' }
+    ],
+    mapTitle:'Mapa Lagos a okolí',
+    mapNote:'Schematická mapa – není v přesném geografickém měřítku. Pinch to zoom na dotykovém zařízení.',
+    transportSections: [
+      {
+        title:'🚌 Bus EVA Transportes', titleColor:'#f59e0b',
+        content:'Hlavní dopravce Algarve, označení EVA / Vamus. Terminál Lagos: <strong>Rua da Porta de Portugal</strong> (u tržnice, ~7 min od ubytování).',
+        items:[
+          {key:'→ Luz/Sagres', value:'z terminálu Lagos, cca každá 1–2 hod., jízdné ~2–5 €'},
+          {key:'→ Portimão',   value:'regionální spoj na východ, cca 30 min'},
+          {key:'→ Faro',       value:'spojení s letištěm, cca 1,5 hod. (nebo vlak)'}
+        ],
+        linkUrl:'https://www.eva-bus.com', linkLabel:'Web EVA Bus – jízdní řády'
+      },
+      {
+        title:'🚕 Taxi', titleColor:'#fbbf24',
+        content:'Taxi stánek u nádraží a Praça Gil Eanes. Přibližné ceny z centra:',
+        items:[
+          {key:'Centrum → Batata',       value:'4–5 €'},
+          {key:'Centrum → Dona Ana',      value:'7–9 €'},
+          {key:'Centrum → Ponta Piedade', value:'7–9 €'},
+          {key:'Centrum → Luz',           value:'12–15 €'},
+          {key:'Centrum → Meia Praia',    value:'~12 €'}
+        ]
+      },
+      {
+        title:'⛴️ Trajekt', titleColor:'#06b6d4',
+        content:'Ze Mariny de Lagos na Meia Praia. Sezónní provoz duben–říjen.',
+        items:[
+          {key:'Sezóna',  value:'Duben–říjen'},
+          {key:'Trasa',   value:'Marina de Lagos → Meia Praia'},
+          {key:'Čas',     value:'~15 min'},
+          {key:'Cena',    value:'~3–5 € zpáteční'}
+        ]
+      },
+      {
+        title:'🚲 Kolo & Skútr', titleColor:'#a3e635',
+        content:'Půjčovny u nádraží a v centru. Ideální pro výlet na Ponta da Piedade nebo podél pobřeží.',
+        items:[
+          {key:'Kolo',      value:'10–15 €/den'},
+          {key:'E-scooter', value:'20–30 €/den'}
+        ]
+      },
+      {
+        title:'🚂 Vlak CP', titleColor:'#f87171',
+        content:'Přímé vlakové spojení z Lagosu (konečná stanice vlakové linky):',
+        items:[
+          {key:'→ Portimão',  value:'~20 min'},
+          {key:'→ Albufeira', value:'~55 min'},
+          {key:'→ Faro',      value:'~1h 40 min (+ letiště)'}
+        ],
+        linkUrl:'https://www.cp.pt', linkLabel:'Web CP – jízdní řády vlaků'
+      }
+    ],
+    extras: null
+  }
+];
+
+// ===========================
+// SVG MAP DATA
+// ===========================
+const PORTO_MAP_SVG = `<svg width="540" height="400" viewBox="0 0 540 400" class="select-none">
+
+                  <!-- ===== POZADÍ ===== -->
+                  <!-- Rio Douro -->
+                  <path d="M 20 312 Q 270 295 520 315" stroke="#0ea5e9" stroke-width="14" fill="none" opacity="0.2" stroke-linecap="round"/>
+                  <text x="440" y="302" fill="#38bdf8" font-size="9" opacity="0.55" font-weight="bold">Rio Douro</text>
+
+                  <!-- ===== METRO LINKY ===== -->
+
+                  <!-- Linka C (Zelená): ISMAI → Casa da Música → Trindade → Campanhã -->
+                  <path d="M 75 105 L 168 174" stroke="#16a34a" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                  <path d="M 168 174 L 270 174 L 415 174" stroke="#16a34a" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+
+                  <!-- Linka B (Červená): Póvoa → Casa da Música → Trindade → Dragão -->
+                  <path d="M 38 118 L 168 180" stroke="#dc2626" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                  <path d="M 168 180 L 270 180 L 365 180" stroke="#dc2626" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+
+                  <!-- Linka A (Modrá): Sen. Matosinhos → Casa da Música → Trindade → Dragão -->
+                  <path d="M 28 185 L 166 185" stroke="#2563eb" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                  <path d="M 166 185 L 270 185 L 365 185" stroke="#2563eb" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+
+                  <!-- Linka E (Fialová): Aeroporto → Campanhã → sdílená trasa zpět -->
+                  <path d="M 450 48 L 415 178" stroke="#9333ea" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                  <path d="M 415 178 L 270 178" stroke="#9333ea" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+
+                  <!-- Linka D (Žlutá): Hosp. São João → Trindade → São Bento → Jardim do Morro → Santo Ovídio -->
+                  <path d="M 270 58 L 270 330" stroke="#ca8a04" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+
+                  <!-- Linka F (Oranžová): Campanhã → Fânzeres -->
+                  <path d="M 415 190 L 500 255" stroke="#ea580c" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+
+                  <!-- ===== STANICE ===== -->
+
+                  <!-- Sen. Matosinhos (A) -->
+                  <circle cx="28" cy="185" r="4" fill="#2563eb" stroke="#fff" stroke-width="1.5"/>
+                  <text x="33" y="179" fill="#93c5fd" font-size="8.5" font-weight="bold">Snh. Matosinhos</text>
+
+                  <!-- Póvoa de Varzim (B) -->
+                  <circle cx="38" cy="118" r="4" fill="#dc2626" stroke="#fff" stroke-width="1.5"/>
+                  <text x="45" y="113" fill="#fca5a5" font-size="8.5" font-weight="bold">Póvoa de Varzim</text>
+                  <text x="45" y="124" fill="#64748b" font-size="7.5">Linka B</text>
+
+                  <!-- ISMAI (C) -->
+                  <circle cx="75" cy="105" r="4" fill="#16a34a" stroke="#fff" stroke-width="1.5"/>
+                  <text x="82" y="101" fill="#86efac" font-size="8.5" font-weight="bold">ISMAI</text>
+                  <text x="82" y="112" fill="#64748b" font-size="7.5">Linka C</text>
+
+                  <!-- Hospital São João (D) -->
+                  <circle cx="270" cy="58" r="4" fill="#ca8a04" stroke="#fff" stroke-width="1.5"/>
+                  <text x="276" y="53" fill="#fcd34d" font-size="8.5" font-weight="bold">Hosp. São João</text>
+                  <text x="276" y="64" fill="#64748b" font-size="7.5">Linka D</text>
+
+                  <!-- Aeroporto (E) - zvýrazněný -->
+                  <circle cx="450" cy="48" r="7" fill="#9333ea" stroke="#fff" stroke-width="2"/>
+                  <text x="420" y="36" fill="#c4b5fd" font-size="10.5" font-weight="bold">✈ Aeroporto</text>
+                  <text x="424" y="48" fill="#a78bfa" font-size="8.5" font-weight="bold">Zóna Z4</text>
+
+                  <!-- Casa da Música (A, B, C, E) - klíčový přestup -->
+                  <circle cx="168" cy="180" r="8" fill="#f1f5f9" stroke="#1e293b" stroke-width="2"/>
+                  <text x="168" y="162" fill="#f8fafc" font-size="10.5" font-weight="bold" text-anchor="middle">Casa da Música</text>
+                  <text x="168" y="148" fill="#fbbf24" font-size="9" font-weight="bold" text-anchor="middle">🚌 Bus 204 → domů</text>
+
+                  <!-- Trindade (VŠECHNY linky) - největší hub -->
+                  <circle cx="270" cy="180" r="10" fill="#fbbf24" stroke="#fff" stroke-width="2.5"/>
+                  <text x="270" y="200" fill="#f8fafc" font-size="11.5" font-weight="black" text-anchor="middle">Trindade</text>
+                  <text x="270" y="212" fill="#94a3b8" font-size="8" text-anchor="middle">Centrální hub – všechny linky</text>
+
+                  <!-- Estádio do Dragão (A, B, E) -->
+                  <circle cx="365" cy="180" r="5" fill="#e2e8f0" stroke="#1e293b" stroke-width="1.5"/>
+                  <text x="365" y="167" fill="#f1f5f9" font-size="9" text-anchor="middle">Est. do Dragão</text>
+
+                  <!-- Campanhã (C, E, F) + vlak -->
+                  <circle cx="415" cy="180" r="7" fill="#f1f5f9" stroke="#ef4444" stroke-width="2.5"/>
+                  <text x="415" y="164" fill="#ef4444" font-size="10.5" font-weight="black" text-anchor="middle">Campanhã 🚂</text>
+                  <text x="415" y="197" fill="#94a3b8" font-size="7.5" text-anchor="middle">Vlakové nádraží</text>
+
+                  <!-- São Bento (D) -->
+                  <circle cx="270" cy="245" r="5.5" fill="#ca8a04" stroke="#fff" stroke-width="1.5"/>
+                  <text x="278" y="241" fill="#f1f5f9" font-size="10" font-weight="bold">São Bento</text>
+                  <text x="278" y="252" fill="#64748b" font-size="7.5">Hist. centrum</text>
+
+                  <!-- Jardim do Morro (D) - za řekou -->
+                  <circle cx="270" cy="325" r="5" fill="#ca8a04" stroke="#1e293b" stroke-width="1.5"/>
+                  <text x="278" y="320" fill="#f1f5f9" font-size="9">Jardim do Morro</text>
+                  <text x="278" y="331" fill="#64748b" font-size="7.5">Most Luíse I. / Gaia</text>
+
+                  <!-- Santo Ovídio (D) -->
+                  <circle cx="270" cy="360" r="4" fill="#ca8a04" stroke="#fff" stroke-width="1.5"/>
+                  <text x="278" y="364" fill="#fcd34d" font-size="8.5" font-weight="bold">Santo Ovídio</text>
+
+                  <!-- Fânzeres (F) -->
+                  <circle cx="500" cy="255" r="4" fill="#ea580c" stroke="#fff" stroke-width="1.5"/>
+                  <text x="472" y="270" fill="#fdba74" font-size="8.5">Fânzeres (F)</text>
+
+                  <!-- Ubytování marker -->
+                  <circle cx="115" cy="225" r="6" fill="#fbbf24" stroke="#1e293b" stroke-width="1.5" opacity="0.85"/>
+                  <text x="123" y="222" fill="#fbbf24" font-size="9" font-weight="bold">🏠 Ubytování</text>
+                  <text x="123" y="233" fill="#94a3b8" font-size="7.5">Planetário / Prédios Lordelo</text>
+                  <!-- Šipka od ubytování k Casa da Música -->
+                  <line x1="122" y1="222" x2="158" y2="188" stroke="#fbbf24" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>
+
+                  <!-- ===== LEGENDA ===== -->
+                  <rect x="10" y="340" width="148" height="54" fill="#0f172a" rx="6" opacity="0.9"/>
+                  <text x="18" y="354" fill="#94a3b8" font-size="8" font-weight="bold">LEGENDA LINEK</text>
+                  <circle cx="20" cy="364" r="4" fill="#2563eb"/><text x="28" y="368" fill="#93c5fd" font-size="8">A – Matosinhos</text>
+                  <circle cx="20" cy="376" r="4" fill="#dc2626"/><text x="28" y="380" fill="#fca5a5" font-size="8">B – Póvoa</text>
+                  <circle cx="85" cy="364" r="4" fill="#16a34a"/><text x="93" y="368" fill="#86efac" font-size="8">C – ISMAI</text>
+                  <circle cx="85" cy="376" r="4" fill="#ca8a04"/><text x="93" y="380" fill="#fcd34d" font-size="8">D – Gaia</text>
+                  <circle cx="130" cy="352" r="4" fill="#9333ea"/><text x="138" y="356" fill="#c4b5fd" font-size="8">E – ✈</text>
+                  <circle cx="130" cy="364" r="4" fill="#ea580c"/><text x="138" y="368" fill="#fdba74" font-size="8">F</text>
+                </svg>`;
+
+const LAGOS_MAP_SVG = `<svg width="540" height="380" viewBox="0 0 540 380" class="select-none">
+
+                <!-- ===== POZADÍ (oceán + záliv) ===== -->
+                <rect x="0" y="0" width="540" height="380" fill="#050d1a"/>
+
+                <!-- Oceán západ -->
+                <path d="M 0 255 Q 80 240 170 248 Q 220 252 255 255 L 255 380 L 0 380 Z" fill="#0a1f35" opacity="0.9"/>
+
+                <!-- Baía de Lagos (záliv) -->
+                <path d="M 255 255 Q 330 235 410 220 Q 470 210 540 212 L 540 380 L 255 380 Z" fill="#0a2135" opacity="0.9"/>
+
+                <!-- Vlnky – oceán -->
+                <path d="M 20 295 Q 55 290 90 295" stroke="#0e3a5a" stroke-width="1.5" fill="none" opacity="0.7"/>
+                <path d="M 20 315 Q 65 310 110 315 Q 145 320 175 314" stroke="#0e3a5a" stroke-width="1.5" fill="none" opacity="0.6"/>
+                <path d="M 20 340 Q 70 335 120 340 Q 160 345 200 340" stroke="#0e3a5a" stroke-width="1.5" fill="none" opacity="0.5"/>
+
+                <!-- Vlnky – záliv -->
+                <path d="M 300 300 Q 345 295 390 300" stroke="#0e3a5a" stroke-width="1.5" fill="none" opacity="0.6"/>
+                <path d="M 330 330 Q 380 325 430 330" stroke="#0e3a5a" stroke-width="1.5" fill="none" opacity="0.5"/>
+
+                <!-- Pobřeží – západ -->
+                <path d="M 0 255 Q 70 242 130 246 Q 170 248 195 252 Q 220 254 252 256" stroke="#1d4ed8" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.5"/>
+
+                <!-- Pobřeží – záliv -->
+                <path d="M 255 256 Q 330 238 400 222 Q 460 210 530 213" stroke="#1d4ed8" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.4"/>
+
+                <!-- ===== ŘEKA BENSAFRIM ===== -->
+                <path d="M 233 75 Q 236 140 240 190 Q 242 220 244 250" stroke="#1a5c8a" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+                <text x="188" y="168" fill="#2b7db5" font-size="8" opacity="0.7" transform="rotate(-90 200 168)">Bensafrim</text>
+
+                <!-- ===== SILNICE ===== -->
+                <!-- Hlavní silnice sever–jih -->
+                <path d="M 255 40 L 248 250" stroke="#1e293b" stroke-width="2.5" fill="none"/>
+                <!-- Silnice na Meia Praia (east) -->
+                <path d="M 248 130 Q 340 118 430 130 Q 490 138 535 148" stroke="#1e293b" stroke-width="2" fill="none" stroke-dasharray="6,3"/>
+                <!-- Silnice na Luz (west) -->
+                <path d="M 175 190 Q 100 198 40 210 Q 10 215 0 218" stroke="#1e293b" stroke-width="2" fill="none" stroke-dasharray="6,3"/>
+
+                <!-- ===== VLAKOVÉ NÁDRAŽÍ ===== -->
+                <rect x="265" y="38" width="110" height="32" rx="6" fill="#1e293b" stroke="#ef4444" stroke-width="1.5" opacity="0.95"/>
+                <circle cx="276" cy="54" r="7" fill="#ef4444" stroke="#fca5a5" stroke-width="1.5"/>
+                <text x="270" y="50" fill="#fca5a5" font-size="7" font-weight="bold">🚂</text>
+                <text x="288" y="49" fill="#fca5a5" font-size="9" font-weight="bold">Estação Lagos</text>
+                <text x="288" y="62" fill="#64748b" font-size="7.5">konečná stanice</text>
+
+                <!-- ===== BUS TERMINÁL ===== -->
+                <circle cx="250" cy="98" r="6" fill="#f59e0b" stroke="#fde68a" stroke-width="1.5"/>
+                <text x="261" y="94" fill="#fde68a" font-size="9" font-weight="bold">Terminál EVA</text>
+                <text x="261" y="105" fill="#64748b" font-size="7.5">🚌 → Luz, Sagres</text>
+
+                <!-- ===== UBYTOVÁNÍ ===== -->
+                <circle cx="200" cy="140" r="9" fill="#f59e0b" stroke="#1e293b" stroke-width="2"/>
+                <text x="200" y="143" fill="#1e293b" font-size="8" text-anchor="middle" font-weight="black">🏠</text>
+                <text x="215" y="133" fill="#fbbf24" font-size="10" font-weight="black">Ubytování</text>
+                <text x="215" y="145" fill="#94a3b8" font-size="7.5">Rua Cândido Guerreiro</text>
+
+                <!-- ===== MARINA ===== -->
+                <circle cx="218" cy="222" r="6" fill="#0891b2" stroke="#67e8f9" stroke-width="1.5"/>
+                <text x="228" y="218" fill="#67e8f9" font-size="9" font-weight="bold">⛵ Marina Lagos</text>
+                <text x="228" y="229" fill="#94a3b8" font-size="7.5">trajekt → Meia Praia</text>
+
+                <!-- ===== TRAJEKT ===== -->
+                <path d="M 222 227 Q 320 238 430 248" stroke="#0891b2" stroke-width="2" fill="none" stroke-dasharray="7,4" opacity="0.8"/>
+                <text x="295" y="228" fill="#0891b2" font-size="8" font-weight="bold">⛴️ ~15 min</text>
+
+                <!-- ===== FORT PONTA DA BANDEIRA ===== -->
+                <rect x="152" y="250" width="18" height="18" rx="3" fill="#334155" stroke="#94a3b8" stroke-width="1.5"/>
+                <text x="161" y="262" fill="#cbd5e1" font-size="9" text-anchor="middle">⛩</text>
+                <text x="128" y="246" fill="#94a3b8" font-size="7.5">Fort</text>
+
+                <!-- ===== PLÁŽE ===== -->
+
+                <!-- Batata -->
+                <circle cx="138" cy="262" r="6" fill="#06b6d4" stroke="#fff" stroke-width="1.5"/>
+                <text x="98" y="257" fill="#67e8f9" font-size="9" font-weight="bold">Batata</text>
+                <text x="100" y="268" fill="#94a3b8" font-size="7.5">10 min 🚶</text>
+
+                <!-- Dona Ana -->
+                <circle cx="82" cy="290" r="6" fill="#06b6d4" stroke="#fff" stroke-width="1.5"/>
+                <text x="44" y="285" fill="#67e8f9" font-size="9" font-weight="bold">Dona Ana</text>
+                <text x="50" y="296" fill="#94a3b8" font-size="7.5">35 min 🚶</text>
+
+                <!-- Camilo -->
+                <circle cx="48" cy="308" r="5" fill="#06b6d4" stroke="#fff" stroke-width="1.5"/>
+                <text x="10" y="317" fill="#67e8f9" font-size="8.5" font-weight="bold">Camilo</text>
+
+                <!-- Ponta da Piedade -->
+                <circle cx="28" cy="330" r="4" fill="#a855f7" stroke="#fff" stroke-width="1.5"/>
+                <text x="10" y="345" fill="#c084fc" font-size="8" font-weight="bold">Ponta Piedade</text>
+                <text x="14" y="355" fill="#64748b" font-size="7">🏔️ skalní oblouky</text>
+
+                <!-- Praia da Luz (šipka vlevo) -->
+                <path d="M 8 228 L 0 228" stroke="#4ade80" stroke-width="2" fill="none"/>
+                <text x="10" y="224" fill="#4ade80" font-size="8.5" font-weight="bold">← Praia da Luz</text>
+                <text x="15" y="234" fill="#64748b" font-size="7">6 km · bus EVA</text>
+
+                <!-- Meia Praia -->
+                <circle cx="448" cy="248" r="7" fill="#06b6d4" stroke="#fff" stroke-width="2"/>
+                <text x="412" y="234" fill="#67e8f9" font-size="10" font-weight="bold">Meia Praia</text>
+                <text x="414" y="246" fill="#94a3b8" font-size="7.5">8 km · kite-surf</text>
+                <text x="420" y="258" fill="#94a3b8" font-size="7">⛴️ sezónní trajekt</text>
+
+                <!-- ===== PĚŠÍ TRASY ===== -->
+                <!-- Ubytování → Batata -->
+                <path d="M 208 148 Q 192 185 172 228 Q 163 244 154 256" stroke="#f59e0b" stroke-width="1.5" fill="none" stroke-dasharray="4,3" opacity="0.5"/>
+
+                <!-- Batata → Dona Ana -->
+                <path d="M 135 265 Q 112 275 85 292" stroke="#f59e0b" stroke-width="1.5" fill="none" stroke-dasharray="3,3" opacity="0.45"/>
+
+                <!-- Dona Ana → Camilo → Ponta Piedade -->
+                <path d="M 79 294 Q 62 302 50 309 Q 38 318 30 328" stroke="#f59e0b" stroke-width="1.5" fill="none" stroke-dasharray="3,3" opacity="0.4"/>
+
+                <!-- ===== POPISKY VODY ===== -->
+                <text x="55" y="362" fill="#0e3a5a" font-size="11" font-weight="bold" opacity="0.6">ATLANTSKÝ OCEÁN</text>
+                <text x="320" y="355" fill="#0e3a5a" font-size="10" font-weight="bold" opacity="0.5">BAÍA DE LAGOS</text>
+
+                <!-- ===== LEGENDA ===== -->
+                <rect x="358" y="32" width="170" height="100" fill="#0f172a" rx="6" opacity="0.95"/>
+                <text x="368" y="49" fill="#94a3b8" font-size="8" font-weight="bold">LEGENDA</text>
+                <circle cx="372" cy="61" r="4" fill="#06b6d4"/>
+                <text x="381" y="65" fill="#67e8f9" font-size="8">Pláž</text>
+                <circle cx="372" cy="76" r="4" fill="#f59e0b"/>
+                <text x="381" y="80" fill="#fbbf24" font-size="8">Ubytování</text>
+                <circle cx="372" cy="91" r="4" fill="#ef4444"/>
+                <text x="381" y="95" fill="#fca5a5" font-size="8">Vlakové nádraží</text>
+                <circle cx="372" cy="106" r="4" fill="#a855f7"/>
+                <text x="381" y="110" fill="#c084fc" font-size="8">Ponta da Piedade</text>
+                <line x1="368" y1="120" x2="380" y2="120" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3,2"/>
+                <text x="384" y="124" fill="#94a3b8" font-size="8">Trasa pěšky</text>
+                <line x1="368" y1="131" x2="380" y2="131" stroke="#0891b2" stroke-width="1.5" stroke-dasharray="5,3"/>
+                <text x="384" y="135" fill="#94a3b8" font-size="8">Trajekt</text>
+
+                <!-- Sever -->
+                <text x="497" y="170" fill="#475569" font-size="8" text-anchor="middle" font-weight="bold">N</text>
+                <line x1="497" y1="174" x2="497" y2="186" stroke="#475569" stroke-width="1.5"/>
+                <polygon points="493,181 497,174 501,181" fill="#475569"/>
+
+              </svg>`;
+
+// ===========================
+// STATE
+// ===========================
+let currentCity = null;
+let clockInterval = null;
+
+// ===========================
+// NAVIGATION
+// ===========================
+function showCityPicker() {
+  document.getElementById('city-picker').classList.remove('hidden');
+  document.getElementById('city-app').classList.add('hidden');
+  if (clockInterval) { clearInterval(clockInterval); clockInterval = null; }
+  if (window._cdInterval) { clearInterval(window._cdInterval); window._cdInterval = null; }
+  if (window._weatherInterval) { clearInterval(window._weatherInterval); window._weatherInterval = null; }
+  if (window.depRefreshTimers) {
+    Object.values(window.depRefreshTimers).forEach(t => clearTimeout(t));
+    window.depRefreshTimers = {};
+  }
+}
+
+function renderCity(cityId) {
+  const city = CITIES.find(c => c.id === cityId);
+  if (!city) return;
+  currentCity = city;
+
+  document.getElementById('city-picker').classList.add('hidden');
+  document.getElementById('city-app').classList.remove('hidden');
+
+  // Header
+  document.getElementById('city-emoji').textContent = city.emoji;
+  const nameEl = document.getElementById('city-name-header');
+  nameEl.textContent = city.name;
+  nameEl.style.color = city.color;
+
+  // Tab buttons
+  document.getElementById('tab-buttons').innerHTML = city.tabs.map(tab => `
+    <button id="tab-btn-${tab.id}" onclick="switchTab('${tab.id}')"
+      class="flex-1 flex flex-col items-center justify-center py-1.5 px-0.5 rounded-lg transition-all duration-150 cursor-pointer select-none"
+      style="color:#475569">
+      <span class="text-base leading-none">${tab.icon}</span>
+      <span class="text-[9px] font-bold mt-0.5 leading-none">${tab.label}</span>
+    </button>`).join('');
+
+  // Tab content
+  document.getElementById('app-main').innerHTML = city.tabs.map(tab => `
+    <section id="section-${tab.id}" class="animate-fade-in space-y-4 hidden">
+      ${renderTabContent(tab.id, city)}
+    </section>`).join('');
+
+  // Init features
+  if (city.extras === 'porto') initPorto();
+  initMap();
+  updateOnlineStatus();
+
+  // Clock
+  if (clockInterval) clearInterval(clockInterval);
+  updateClock(city);
+  clockInterval = setInterval(() => updateClock(city), 1000);
+
+  // Show first tab
+  switchTab(city.tabs[0].id);
+}
+
+function switchTab(tabId) {
+  const city = currentCity;
+  if (!city) return;
+  city.tabs.forEach(tab => {
+    const sec = document.getElementById('section-' + tab.id);
+    const btn = document.getElementById('tab-btn-' + tab.id);
+    if (!sec || !btn) return;
+    if (tab.id === tabId) {
+      sec.classList.remove('hidden');
+      btn.style.color = city.color;
+      btn.style.background = 'rgba(255,255,255,0.07)';
+    } else {
+      sec.classList.add('hidden');
+      btn.style.color = '#475569';
+      btn.style.background = '';
+    }
+  });
+}
+
+// ===========================
+// RENDER FUNCTIONS
+// ===========================
+function renderTabContent(tabId, city) {
+  switch(tabId) {
+    case 'overview':  return renderOverview(city);
+    case 'routes':    return renderRoutes(city);
+    case 'info':      return renderInfo(city);
+    case 'beaches':   return renderBeaches(city);
+    case 'map':       return renderMap(city);
+    case 'wallet':    return renderWallet(city);
+    case 'transport': return renderTransport(city);
+    default: return '';
+  }
+}
+
+function renderOverview(city) {
+  const arrivals = city.arrivalBullets.map(b => `
+    <li class="flex items-start gap-2">
+      <span class="w-1.5 h-1.5 rounded-full shrink-0 mt-1.5" style="background:${city.color}"></span>
+      <span class="text-xs text-slate-300 leading-relaxed">${b}</span>
+    </li>`).join('');
+
+  const cards = city.overviewItems.map(item => `
+    <div class="bg-slate-900/60 rounded-xl p-3 border border-slate-800">
+      <div class="flex items-center justify-between gap-2 mb-0.5">
+        <span class="text-xs font-bold text-slate-100">${item.label}</span>
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0" style="background:${item.badgeColor}22;color:${item.badgeColor}">${item.badge}</span>
+      </div>
+      <p class="text-[11px] text-slate-400">${item.detail}</p>
+      <p class="text-[10px] text-slate-600 mt-0.5">${item.time}</p>
+    </div>`).join('');
+
+  const tips = city.tipBullets.map(t => `
+    <li class="flex items-start gap-2">
+      <span class="text-xs shrink-0">💡</span>
+      <span class="text-xs text-slate-300 leading-relaxed">${t}</span>
+    </li>`).join('');
+
+  const portoExtra = city.extras === 'porto' ? `
+    <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800 space-y-2">
+      <div class="flex items-center gap-3">
+        <span id="weather-icon" class="text-2xl leading-none">🌡️</span>
+        <div class="flex-1">
+          <div class="flex items-baseline gap-1.5">
+            <span id="weather-temp" class="text-base font-black text-slate-100">–°C</span>
+            <span id="weather-wind" class="text-[10px] text-slate-400 font-mono">– km/h</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Porto počasí</span>
+            <span id="weather-desc" class="text-[11px] text-slate-300 font-medium">načítám…</span>
+          </div>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div class="bg-slate-800/60 rounded-lg p-2 flex items-center gap-2">
+          <span id="fc-icon-1" class="text-lg">🌡️</span>
+          <div><span class="text-[9px] text-slate-500 uppercase tracking-wider block">zítra</span><span id="fc-temp-1" class="text-[11px] font-bold text-slate-200">–°C</span></div>
+        </div>
+        <div class="bg-slate-800/60 rounded-lg p-2 flex items-center gap-2">
+          <span id="fc-icon-2" class="text-lg">🌡️</span>
+          <div><span class="text-[9px] text-slate-500 uppercase tracking-wider block">pozítří</span><span id="fc-temp-2" class="text-[11px] font-bold text-slate-200">–°C</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2.5">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xs uppercase font-extrabold text-slate-400 tracking-wider">🗺️ Okolí</h3>
+        <div class="flex items-center gap-2">
+          <select id="nearby-location-select" onchange="document.getElementById('nearby-results').innerHTML='';document.querySelectorAll('.nearby-cat-btn').forEach(b=>b.classList.remove('ring-1','ring-yellow-400','text-yellow-400'))" class="bg-slate-800 border border-slate-700/60 rounded-md px-2 py-1 text-[11px] text-slate-200 focus:outline-none cursor-pointer max-w-[130px] truncate">
+            <option value="home">🏠 Ubytování</option>
+          </select>
+          <button onclick="openPlacesModal()" class="shrink-0 text-[13px] bg-slate-800 hover:bg-slate-700 border border-slate-700 text-yellow-400 px-2 py-1 rounded-md font-bold cursor-pointer transition" title="Správa míst">⚙️</button>
+        </div>
+      </div>
+      <div class="grid grid-cols-4 gap-1.5">
+        <button onclick="fetchNearby(this,'supermarket')" class="nearby-cat-btn bg-slate-800 hover:bg-slate-700 active:scale-95 text-[11px] text-slate-300 py-2 rounded-lg transition cursor-pointer select-none font-semibold">🛒<br><span class="text-[9px]">Super.</span></button>
+        <button onclick="fetchNearby(this,'cafe')" class="nearby-cat-btn bg-slate-800 hover:bg-slate-700 active:scale-95 text-[11px] text-slate-300 py-2 rounded-lg transition cursor-pointer select-none font-semibold">☕<br><span class="text-[9px]">Kavárny</span></button>
+        <button onclick="fetchNearby(this,'fast_food')" class="nearby-cat-btn bg-slate-800 hover:bg-slate-700 active:scale-95 text-[11px] text-slate-300 py-2 rounded-lg transition cursor-pointer select-none font-semibold">🍔<br><span class="text-[9px]">Fast food</span></button>
+        <button onclick="fetchNearby(this,'bar')" class="nearby-cat-btn bg-slate-800 hover:bg-slate-700 active:scale-95 text-[11px] text-slate-300 py-2 rounded-lg transition cursor-pointer select-none font-semibold">🍺<br><span class="text-[9px]">Bary</span></button>
+      </div>
+      <div id="nearby-results" class="space-y-1.5"></div>
+    </div>` : '';
+
+  return `
+    ${portoExtra}
+    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+      <h2 class="text-base font-black" style="color:${city.color}">${city.emoji} ${city.welcome.title}</h2>
+      <p class="text-xs text-slate-500">${city.welcome.subtitle}</p>
+      <ul class="space-y-2">${arrivals}</ul>
+    </div>
+    <div class="grid grid-cols-2 gap-2">${cards}</div>
+    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2">
+      <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-500">💡 Tipy & Triky</h3>
+      <ul class="space-y-2">${tips}</ul>
+    </div>`;
+}
+
+function renderRoutes(city) {
+  const cards = city.routes.map(r => renderRouteCard(r, city)).join('');
+
+  let extra = '';
+  if (city.id === 'porto') {
+    extra = `
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+        <h3 class="text-xs uppercase font-extrabold text-yellow-400 tracking-wider">📡 Live odjezdy STCP</h3>
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs font-bold text-slate-100">Prédios de Lordelo</p>
+              <p class="text-[10px] text-slate-500">LRD1/LRD2 · linky 204 · 207 · 209</p>
+            </div>
+            <button id="dep-btn-lordelo" onclick="loadArrivals('lordelo')"
+              class="text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-yellow-400 hover:bg-slate-700 transition cursor-pointer">
+              ↺ Načíst
+            </button>
+          </div>
+          <div id="dep-lordelo" class="hidden"></div>
+        </div>
+        <div class="space-y-2 border-t border-slate-800 pt-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs font-bold text-slate-100">Planetário</p>
+              <p class="text-[10px] text-slate-500">PLNT1/PLNT2 · linky 200 · 207 · 209 · 1M</p>
+            </div>
+            <button id="dep-btn-planetario" onclick="loadArrivals('planetario')"
+              class="text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-yellow-400 hover:bg-slate-700 transition cursor-pointer">
+              ↺ Načíst
+            </button>
+          </div>
+          <div id="dep-planetario" class="hidden"></div>
+        </div>
+      </div>
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2">
+        <h3 class="text-xs uppercase font-extrabold text-yellow-400 tracking-wider">📍 Nejbližší zastávka</h3>
+        <button id="locate-btn" onclick="locateMeNow()"
+          class="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-bold text-yellow-400 transition cursor-pointer active:scale-98">
+          <span>📍</span><span>Zjistit polohu</span>
+        </button>
+        <div id="locate-result" class="hidden"></div>
+      </div>`;
+  } else if (city.id === 'lagos') {
+    extra = `
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2">
+        <h3 class="text-xs uppercase font-extrabold text-cyan-400 tracking-wider">📍 Moje poloha</h3>
+        <button id="locate-btn-lagos" onclick="locateMeLagos()"
+          class="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-bold text-cyan-400 transition cursor-pointer active:scale-98">
+          <span>📍</span><span>Zobrazit moji polohu v Google Maps</span>
+        </button>
+        <div id="locate-result-lagos" class="hidden text-xs text-slate-300 leading-relaxed"></div>
+      </div>`;
+  }
+
+  return `
+    <h2 class="text-lg font-black text-slate-100">🗺️ Trasy</h2>
+    ${cards}
+    ${extra}`;
+}
+
+function renderRouteCard(route, city) {
+  const warning = route.warning
+    ? `<div class="text-[11px] text-red-400 font-bold bg-red-950/30 border border-red-900/40 rounded-lg px-3 py-1.5">${route.warning}</div>`
+    : '';
+  const btn1 = route.mapsUrl
+    ? `<a href="${route.mapsUrl}" target="_blank" class="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-bold transition cursor-pointer" style="color:${city.color}">
+        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+        <span>${route.mapsLabel || 'Google Maps'}</span>
+       </a>` : '';
+  const btn2 = route.mapsUrl2
+    ? `<a href="${route.mapsUrl2}" target="_blank" class="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-bold transition cursor-pointer" style="color:${city.color}">
+        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+        <span>${route.mapsLabel2}</span>
+       </a>` : '';
+  const btns = (btn1 || btn2) ? `<div class="flex gap-2 flex-wrap">${btn1}${btn2}</div>` : '';
+
+  return `
+    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2">
+      <div class="flex items-start justify-between gap-2">
+        <div>
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <span class="text-xs font-bold text-slate-300">${route.from}</span>
+            <svg class="w-3 h-3 text-slate-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            <span class="text-xs font-black text-slate-100">${route.to}</span>
+          </div>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full mt-1 inline-block" style="background:${route.badgeColor}22;color:${route.badgeColor}">${route.badge}</span>
+        </div>
+        <span class="text-xs font-black shrink-0 mt-0.5" style="color:${city.color}">${route.duration}</span>
+      </div>
+      <p class="text-xs text-slate-400 leading-relaxed">${route.description}</p>
+      ${warning}
+      ${btns}
+    </div>`;
+}
+
+function renderInfo(city) {
+  const sections = city.infoSections.map(sec => {
+    if (sec.type !== 'accordion') return '';
+    return `
+      <details class="bg-slate-900/60 rounded-xl border border-slate-800 overflow-hidden group">
+        <summary class="flex items-center justify-between px-4 py-3 cursor-pointer select-none">
+          <span class="text-xs font-bold text-slate-100 pr-2">${sec.title}</span>
+          <svg class="w-4 h-4 text-slate-500 shrink-0 details-arrow transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </summary>
+        <div class="px-4 pb-4 text-xs text-slate-300 leading-relaxed border-t border-slate-800 pt-3">${sec.body}</div>
+      </details>`;
+  }).join('');
+  return `<h2 class="text-lg font-black text-slate-100">📖 Tahák</h2>${sections}`;
+}
+
+function renderBeaches(city) {
+  const sections = city.infoSections.map(sec => {
+    if (sec.type === 'beach-card') {
+      const stats = sec.stats.map(s => `
+        <div class="text-center">
+          <div class="text-[10px] text-slate-500 mb-0.5">${s.label}</div>
+          <div class="text-xs font-bold text-slate-200">${s.value}</div>
+        </div>`).join('');
+      const mapsBtn = sec.mapsUrl
+        ? `<a href="${sec.mapsUrl}" target="_blank" class="w-full flex items-center justify-center gap-1 py-1.5 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-bold text-cyan-400 transition cursor-pointer">
+            <span>📍</span><span>Otevřít v Mapách</span>
+           </a>` : '';
+      return `
+        <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <h3 class="text-sm font-black text-slate-100">${sec.name}</h3>
+              <p class="text-[10px] text-slate-500 mt-0.5">${sec.access}</p>
+            </div>
+            <span class="text-[10px] font-black px-2 py-0.5 rounded-full shrink-0" style="background:${sec.badgeColor}22;color:${sec.badgeColor}">${sec.badge}</span>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">${sec.description}</p>
+          <div class="grid grid-cols-3 gap-2 bg-slate-950/40 rounded-lg p-2">${stats}</div>
+          ${mapsBtn}
+        </div>`;
+    }
+    if (sec.type === 'flag-legend') {
+      return `
+        <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2">
+          <h3 class="text-xs uppercase font-extrabold text-slate-500 tracking-wider">🏖️ Vlajky na plážích</h3>
+          <div class="space-y-2.5">
+            <div class="flex items-center gap-3"><span class="w-5 h-5 rounded-sm shrink-0 bg-green-500"></span><span class="text-xs text-slate-300"><strong>Zelená</strong> – koupání povoleno, záchranáři přítomni</span></div>
+            <div class="flex items-center gap-3"><span class="w-5 h-5 rounded-sm shrink-0 bg-yellow-400"></span><span class="text-xs text-slate-300"><strong>Žlutá</strong> – opatrnost, podmínky proměnlivé</span></div>
+            <div class="flex items-center gap-3"><span class="w-5 h-5 rounded-sm shrink-0 bg-red-500"></span><span class="text-xs text-slate-300"><strong>Červená</strong> – koupání zakázáno, nebezpečné vlny</span></div>
+            <div class="flex items-center gap-3"><span class="w-5 h-5 rounded-sm shrink-0 bg-purple-500"></span><span class="text-xs text-slate-300"><strong>Fialová</strong> – výskyt nebezpečných živočichů (medúzy apod.)</span></div>
+          </div>
+        </div>`;
+    }
+    return '';
+  }).join('');
+  return `<h2 class="text-lg font-black text-slate-100">🏖️ Pláže</h2>${sections}`;
+}
+
+function renderMap(city) {
+  const svg = city.id === 'porto' ? PORTO_MAP_SVG : LAGOS_MAP_SVG;
+  return `
+    <h2 class="text-lg font-black text-slate-100">${city.emoji} ${city.mapTitle}</h2>
+    <div class="relative bg-slate-900/60 rounded-xl border border-slate-800 overflow-hidden" style="height:420px">
+      <div class="absolute right-2 top-2 z-10 flex flex-col gap-1">
+        <button onclick="zoomMap(1.2)" class="w-8 h-8 rounded bg-slate-800 border border-slate-700 font-bold text-slate-100 flex items-center justify-center active:scale-90 cursor-pointer select-none text-lg">+</button>
+        <button onclick="zoomMap(0.8)" class="w-8 h-8 rounded bg-slate-800 border border-slate-700 font-bold text-slate-100 flex items-center justify-center active:scale-90 cursor-pointer select-none text-lg">−</button>
+        <button onclick="resetZoom()" class="w-8 h-8 rounded bg-slate-800 border border-slate-700 text-[10px] font-bold text-slate-100 flex items-center justify-center active:scale-90 cursor-pointer select-none">RST</button>
+      </div>
+      <div id="map-container" class="overflow-hidden w-full h-full flex items-center justify-center touch-none">
+        <div id="map-svg-wrapper" class="origin-center transition-transform duration-200" style="min-width:540px;min-height:400px">
+          ${svg}
+        </div>
+      </div>
+    </div>
+    <p class="text-[10px] text-slate-600 italic">${city.mapNote}</p>`;
+}
+
+function renderWallet(city) {
+  return `
+    <h2 class="text-lg font-black text-slate-100">💳 Andante Peněženka</h2>
+
+    <!-- Z2 -->
+    <div id="wallet-z2-card" class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-sm font-black text-slate-100">Zóna Z2</h3>
+          <p class="text-[10px] text-slate-500">1,85 €/jízda · platnost 60 min</p>
+        </div>
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400">Z2</span>
+      </div>
+      <div class="text-center py-2">
+        <div id="wallet-z2-count" class="text-5xl font-black text-slate-100 font-mono tabular-nums">0</div>
+        <div id="wallet-z2-eur" class="text-sm text-slate-400 mt-1">≈ 0,00 €</div>
+        <div id="wallet-z2-warn" class="hidden text-xs font-bold text-red-400 mt-1"></div>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="changeRides('z2',-1)" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-2xl font-black text-slate-300 cursor-pointer active:scale-95 transition">−</button>
+        <button onclick="changeRides('z2',1)"  class="flex-1 py-3 rounded-xl text-2xl font-black text-slate-900 cursor-pointer active:scale-95 transition" style="background:#fbbf24">+</button>
+      </div>
+    </div>
+
+    <!-- Z4 -->
+    <div id="wallet-z4-card" class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-sm font-black text-slate-100">Zóna Z4</h3>
+          <p class="text-[10px] text-slate-500">3,00 €/jízda · platnost 75 min</p>
+        </div>
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400">Z4</span>
+      </div>
+      <div class="text-center py-2">
+        <div id="wallet-z4-count" class="text-5xl font-black text-slate-100 font-mono tabular-nums">0</div>
+        <div id="wallet-z4-eur" class="text-sm text-slate-400 mt-1">≈ 0,00 €</div>
+        <div id="wallet-z4-warn" class="hidden text-xs font-bold text-red-400 mt-1"></div>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="changeRides('z4',-1)" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-2xl font-black text-slate-300 cursor-pointer active:scale-95 transition">−</button>
+        <button onclick="changeRides('z4',1)"  class="flex-1 py-3 rounded-xl text-2xl font-black text-slate-900 cursor-pointer active:scale-95 transition" style="background:#fbbf24">+</button>
+      </div>
+    </div>
+
+    <!-- Countdown -->
+    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+      <h3 class="text-xs uppercase font-extrabold text-yellow-400 tracking-wider">⏱ Platnost jízdenky</h3>
+      <div id="countdown-display" class="hidden space-y-3">
+        <div class="text-center">
+          <div id="countdown-zone-label" class="text-xs text-slate-500 mb-1">Z2 · 60 min</div>
+          <div id="countdown-time" class="text-4xl font-black text-center tracking-tight text-emerald-400 font-mono tabular-nums">00:00</div>
+          <div id="countdown-valid-until" class="text-[11px] text-slate-500 mt-1"></div>
+        </div>
+        <div class="h-3 bg-slate-800 rounded-full overflow-hidden">
+          <div id="countdown-bar" class="h-full rounded-full transition-all duration-1000 bg-emerald-500" style="width:100%"></div>
+        </div>
+        <button onclick="cancelCountdown()" class="w-full py-2 text-xs font-bold text-red-400 hover:text-red-300 transition cursor-pointer border border-red-900/30 rounded-lg">✕ Zrušit odpočet</button>
+      </div>
+      <div id="countdown-buttons" class="space-y-2">
+        <p class="text-xs text-slate-500">Spusť hned po validaci jízdenky:</p>
+        <div class="flex gap-2">
+          <button onclick="startCountdown('z2')" class="flex-1 py-2.5 text-xs font-bold rounded-lg bg-blue-900/30 border border-blue-800/50 text-blue-400 hover:bg-blue-900/50 transition cursor-pointer">⏱ Z2 – 60 min</button>
+          <button onclick="startCountdown('z4')" class="flex-1 py-2.5 text-xs font-bold rounded-lg bg-purple-900/30 border border-purple-800/50 text-purple-400 hover:bg-purple-900/50 transition cursor-pointer">⏱ Z4 – 75 min</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderTransport(city) {
+  const sections = city.transportSections.map(sec => {
+    const items = (sec.items || []).map(item => `
+      <div class="flex items-start gap-2">
+        <span class="font-bold text-xs shrink-0 w-32" style="color:${sec.titleColor}">${item.key}</span>
+        <span class="text-xs text-slate-300">${item.value}</span>
+      </div>`).join('');
+    const linkBtn = sec.linkUrl
+      ? `<a href="${sec.linkUrl}" target="_blank"
+          class="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-bold transition cursor-pointer" style="color:${sec.titleColor}">
+          <span>${sec.linkLabel}</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+         </a>` : '';
+    return `
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+        <h3 class="text-xs uppercase font-extrabold tracking-wider" style="color:${sec.titleColor}">${sec.title}</h3>
+        ${sec.content ? `<p class="text-xs text-slate-300 leading-relaxed">${sec.content}</p>` : ''}
+        ${items ? `<div class="space-y-2 bg-slate-950/30 p-3 rounded-lg">${items}</div>` : ''}
+        ${linkBtn}
+      </div>`;
+  }).join('');
+  return `<h2 class="text-lg font-black text-slate-100">🚌 Doprava & Tipy</h2>${sections}`;
+}
+
+// ===========================
+// SHARED UTILITIES
+// ===========================
+function updateClock(city) {
+  try {
+    const now = new Date();
+    const t = now.toLocaleTimeString('cs-CZ', { timeZone:city.timezone, hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false });
+    const d = now.toLocaleDateString('cs-CZ', { timeZone:city.timezone, weekday:'long', day:'numeric', month:'long' });
+    const te = document.getElementById('city-time');
+    const de = document.getElementById('city-date');
+    if (te) te.textContent = city.timeLabel + ': ' + t;
+    if (de) de.textContent = d;
+  } catch(e) {}
+}
+
+function updateOnlineStatus() {
+  const dot = document.getElementById('connection-status');
+  const txt = document.getElementById('connection-status-text');
+  if (!dot || !txt) return;
+  if (navigator.onLine) {
+    dot.className = 'w-2 h-2 rounded-full bg-green-500 animate-pulse';
+    txt.textContent = 'Online'; txt.className = 'text-[11px] text-green-400 font-medium';
+  } else {
+    dot.className = 'w-2 h-2 rounded-full bg-red-500 animate-pulse';
+    txt.textContent = 'Offline'; txt.className = 'text-[11px] text-red-400 font-medium';
+  }
+}
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.remove('opacity-0'); t.classList.add('opacity-100');
+  setTimeout(() => { t.classList.remove('opacity-100'); t.classList.add('opacity-0'); }, 2000);
+}
+
+// ===========================
+// MAP ZOOM (shared)
+// ===========================
+let currentMapZoom = 1, mapTransX = 0, mapTransY = 0;
+
+function applyMapTransform() {
+  const w = document.getElementById('map-svg-wrapper');
+  if (w) w.style.transform = `scale(${currentMapZoom}) translate(${mapTransX}px,${mapTransY}px)`;
+}
+function zoomMap(factor) {
+  currentMapZoom = Math.min(Math.max(currentMapZoom * factor, 0.4), 3.5);
+  applyMapTransform();
+}
+function resetZoom() {
+  currentMapZoom = 1; mapTransX = 0; mapTransY = 0; applyMapTransform();
+}
+function initMap() {
+  currentMapZoom = 1; mapTransX = 0; mapTransY = 0;
+  setTimeout(() => {
+    const container = document.getElementById('map-container');
+    if (!container) return;
+    let lastDist = 0, pinching = false;
+    let dsx = 0, dsy = 0, dstx = 0, dsty = 0;
+    const dist = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+    container.addEventListener('touchstart', e => {
+      if (e.touches.length === 2) { lastDist = dist(e.touches); pinching = true; e.preventDefault(); }
+      else if (e.touches.length === 1) {
+        dsx = e.touches[0].clientX; dsy = e.touches[0].clientY;
+        dstx = mapTransX; dsty = mapTransY; pinching = false;
+      }
+    }, { passive: false });
+    container.addEventListener('touchmove', e => {
+      if (e.touches.length === 2 && pinching) {
+        const d = dist(e.touches);
+        currentMapZoom = Math.min(Math.max(currentMapZoom * (d / lastDist), 0.4), 3.5);
+        lastDist = d; applyMapTransform(); e.preventDefault();
+      } else if (e.touches.length === 1 && !pinching) {
+        mapTransX = dstx + (e.touches[0].clientX - dsx) / currentMapZoom;
+        mapTransY = dsty + (e.touches[0].clientY - dsy) / currentMapZoom;
+        applyMapTransform(); e.preventDefault();
+      }
+    }, { passive: false });
+    container.addEventListener('touchend', () => { pinching = false; });
+  }, 100);
+}
+
+// ===========================
+// PORTO – WALLET
+// ===========================
+const RIDE_PRICE = { z2: 1.85, z4: 3.00 };
+let rides = {
+  z2: parseInt(localStorage.getItem('porto_mhd_z2_rides') || '0', 10),
+  z4: parseInt(localStorage.getItem('porto_mhd_z4_rides') || '0', 10)
+};
+
+function updateWalletUI() {
+  ['z2', 'z4'].forEach(zone => {
+    const count = rides[zone];
+    const eur = (count * RIDE_PRICE[zone]).toFixed(2).replace('.', ',');
+    const countEl = document.getElementById('wallet-' + zone + '-count');
+    const eurEl   = document.getElementById('wallet-' + zone + '-eur');
+    const card    = document.getElementById('wallet-' + zone + '-card');
+    const warn    = document.getElementById('wallet-' + zone + '-warn');
+    if (!countEl || !card) return;
+    countEl.textContent = count;
+    eurEl.textContent = '≈ ' + eur + ' €';
+    card.classList.remove('border-red-500/60','bg-red-950/20','border-yellow-500/50','border-slate-800/60');
+    if (count === 0) {
+      card.classList.add('border-red-500/60', 'bg-red-950/20');
+      warn.textContent = '⚠ Prázdná!'; warn.classList.remove('hidden');
+    } else if (count <= 2) {
+      card.classList.add('border-yellow-500/50');
+      warn.textContent = '⚠ Doplnit!'; warn.classList.remove('hidden');
+    } else {
+      card.classList.add('border-slate-800/60');
+      warn.classList.add('hidden');
+    }
+  });
+}
+
+function changeRides(zone, amount) {
+  rides[zone] = Math.max(0, rides[zone] + amount);
+  localStorage.setItem('porto_mhd_' + zone + '_rides', rides[zone]);
+  updateWalletUI();
+}
+
+// ===========================
+// PORTO – COUNTDOWN
+// ===========================
+const COUNTDOWN_MS = { z2: 60 * 60 * 1000, z4: 75 * 60 * 1000 };
+let notifTimeouts = [];
+
+function clearNotifTimeouts() {
+  notifTimeouts.forEach(clearTimeout);
+  notifTimeouts = [];
+}
+
+async function scheduleTicketNotifs(zone, startMs) {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') return;
+  }
+  if (Notification.permission !== 'granted') return;
+  clearNotifTimeouts();
+  const duration = COUNTDOWN_MS[zone];
+  const now = Date.now();
+  const schedule = [
+    [duration - 5*60000, '⏱ Jízdenka vyprší za 5 minut!',             [200,100,200],           'ticket-5'],
+    [duration -   60000, '🚨 Jízdenka vyprší za 1 minutu! Přestupuj!', [500,200,500,200,500],   'ticket-1'],
+    [duration,           '❌ Jízdenka vypršela – pípni znovu.',         [1000],                  'ticket-exp']
+  ];
+  schedule.forEach(([offset, body, vibrate, tag]) => {
+    const delay = startMs + offset - now;
+    if (delay > 0) {
+      notifTimeouts.push(setTimeout(() => {
+        new Notification('Porto MHD', { body, icon:'./icon-192.png', tag });
+        if (navigator.vibrate) navigator.vibrate(vibrate);
+      }, delay));
+    }
+  });
+}
+
+function startCountdown(zone) {
+  const startMs = Date.now();
+  localStorage.setItem('porto_mhd_cd_start', startMs);
+  localStorage.setItem('porto_mhd_cd_zone', zone);
+  scheduleTicketNotifs(zone, startMs);
+  renderCountdown();
+}
+
+function cancelCountdown() {
+  clearNotifTimeouts();
+  localStorage.removeItem('porto_mhd_cd_start');
+  localStorage.removeItem('porto_mhd_cd_zone');
+  renderCountdown();
+}
+
+function renderCountdown() {
+  const start = parseInt(localStorage.getItem('porto_mhd_cd_start') || '0');
+  const zone  = localStorage.getItem('porto_mhd_cd_zone') || 'z2';
+  const display = document.getElementById('countdown-display');
+  const buttons = document.getElementById('countdown-buttons');
+  if (!display || !buttons) return;
+
+  if (!start) {
+    display.classList.add('hidden'); buttons.classList.remove('hidden'); return;
+  }
+  display.classList.remove('hidden'); buttons.classList.add('hidden');
+
+  const duration  = COUNTDOWN_MS[zone];
+  const elapsed   = Date.now() - start;
+  const remaining = Math.max(0, duration - elapsed);
+
+  const timeEl  = document.getElementById('countdown-time');
+  const barEl   = document.getElementById('countdown-bar');
+  const labelEl = document.getElementById('countdown-zone-label');
+  const untilEl = document.getElementById('countdown-valid-until');
+  if (!timeEl) return;
+
+  labelEl.textContent = zone === 'z2' ? 'Z2 · 60 min' : 'Z4 · 75 min';
+  barEl.style.width = ((remaining / duration) * 100) + '%';
+
+  if (remaining === 0) {
+    timeEl.textContent = 'VYPRŠELA!';
+    timeEl.className = 'text-3xl font-black text-center tracking-tight text-red-400 font-mono animate-pulse';
+    barEl.className = 'h-full rounded-full bg-red-600';
+    untilEl.textContent = 'Jízdenka neplatí — pípni znovu.';
+    if (elapsed > duration + 60000) cancelCountdown();
+    return;
+  }
+
+  const mins = Math.floor(remaining / 60000);
+  const secs = Math.floor((remaining % 60000) / 1000);
+  timeEl.textContent = String(mins).padStart(2,'0') + ':' + String(secs).padStart(2,'0');
+
+  if (remaining > 15 * 60000) {
+    timeEl.className = 'text-4xl font-black text-center tracking-tight text-emerald-400 font-mono tabular-nums';
+    barEl.className = 'h-full rounded-full transition-all duration-1000 bg-emerald-500';
+  } else if (remaining > 5 * 60000) {
+    timeEl.className = 'text-4xl font-black text-center tracking-tight text-yellow-400 font-mono tabular-nums';
+    barEl.className = 'h-full rounded-full transition-all duration-1000 bg-yellow-500';
+  } else {
+    timeEl.className = 'text-4xl font-black text-center tracking-tight text-red-400 font-mono tabular-nums animate-pulse';
+    barEl.className = 'h-full rounded-full transition-all duration-1000 bg-red-500';
+  }
+
+  try {
+    const validUntil = new Date(start + duration);
+    const t = new Intl.DateTimeFormat('cs-CZ', { timeZone:'Europe/Lisbon', hour:'2-digit', minute:'2-digit', hour12:false }).format(validUntil);
+    untilEl.textContent = 'Platí do: ' + t + ' (portug. čas)';
+  } catch(e) { untilEl.textContent = ''; }
+}
+
+function initPorto() {
+  updateWalletUI();
+  renderCountdown();
+  if (window._cdInterval) clearInterval(window._cdInterval);
+  window._cdInterval = setInterval(renderCountdown, 1000);
+  const start = parseInt(localStorage.getItem('porto_mhd_cd_start') || '0');
+  const zone  = localStorage.getItem('porto_mhd_cd_zone') || 'z2';
+  if (start) scheduleTicketNotifs(zone, start);
+  fetchWeather();
+  if (window._weatherInterval) clearInterval(window._weatherInterval);
+  window._weatherInterval = setInterval(fetchWeather, 1800000);
+  applyPlaces();
+}
+
+// ===========================
+// PORTO – STCP LIVE DEPARTURES
+// ===========================
+const STCP_STOPS = {
+  lordelo:    { stops: [{ id:'LRD1',  label:'→ FLUP/Centrum', color:'#10b981' }, { id:'LRD2',  label:'→ Foz/Pláž', color:'#60a5fa' }] },
+  planetario: { stops: [{ id:'PLNT1', label:'→ FLUP/Centrum', color:'#10b981' }, { id:'PLNT2', label:'→ Foz/Pláž', color:'#60a5fa' }] }
+};
+window.depRefreshTimers = {};
+
+async function loadArrivals(key) {
+  const config = STCP_STOPS[key];
+  const container = document.getElementById('dep-' + key);
+  const btn = document.getElementById('dep-btn-' + key);
+  if (!container || !btn) return;
+
+  btn.textContent = '⟳'; btn.disabled = true;
+  container.classList.remove('hidden');
+  container.innerHTML = '<p style="font-size:11px;color:#64748b;text-align:center;padding:8px 0">Načítám odjezdy…</p>';
+  clearTimeout(window.depRefreshTimers[key]);
+
+  const results = await Promise.all(
+    config.stops.map(stop =>
+      fetch('https://proxy.cors.sh/https://stcp.pt/api/stops/' + stop.id + '/realtime', { cache:'no-store' })
+        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(data => ({ ...stop, arrivals: data.arrivals || [], ok: true }))
+        .catch(err => ({ ...stop, arrivals: [], ok: false, err: err.message }))
+    )
+  );
+
+  const allFailed = results.every(r => !r.ok);
+  if (allFailed) {
+    container.innerHTML = '<div style="padding:6px 2px;text-align:center"><p style="font-size:11px;color:#f87171">Nepodařilo se načíst (' + (results[0]?.err || 'CORS/síť') + ').</p><p style="font-size:10px;color:#475569;margin-top:4px">Použij záložní odkaz pro otevření STCP webu.</p></div>';
+    btn.textContent = '↺ Zkusit znovu'; btn.disabled = false; return;
+  }
+
+  const all = [];
+  results.forEach(r => r.arrivals.forEach(a => all.push({ ...a, dirLabel: r.label, dirColor: r.color })));
+  all.sort((a, b) => a.arrival_minutes - b.arrival_minutes);
+
+  if (all.length === 0) {
+    container.innerHTML = '<p style="font-size:11px;color:#64748b;text-align:center;padding:8px 0">Žádné spoje v příštích 60 min.</p>';
+  } else {
+    const rows = all.slice(0, 6).map(a => {
+      const mins = a.arrival_minutes;
+      const minsStr = mins <= 0 ? 'Přijíždí!' : mins + ' min';
+      const minsColor = mins <= 0 ? '#34d399' : mins <= 3 ? '#34d399' : mins <= 6 ? '#fbbf24' : '#94a3b8';
+      const delayHtml = (a.status === 'DELAYED' && a.delay_minutes > 0.5)
+        ? ' <span style="color:#f87171;font-size:9px">+' + Math.round(a.delay_minutes) + '\'</span>' : '';
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 4px;border-bottom:1px solid rgba(51,65,85,0.5)">'
+        + '<div style="display:flex;align-items:center;gap:7px">'
+        + '<span style="background:#1e293b;color:#fbbf24;font-weight:900;font-size:12px;padding:2px 6px;border-radius:5px;min-width:30px;text-align:center;font-family:monospace">' + (a.route_short_name || a.route_long_name) + '</span>'
+        + '<div><div style="font-size:11px;color:#e2e8f0;font-weight:600">' + a.trip_headsign + '</div>'
+        + '<div style="font-size:9px;color:' + a.dirColor + ';margin-top:1px">' + a.dirLabel + '</div></div></div>'
+        + '<span style="font-weight:900;font-size:14px;color:' + minsColor + ';font-family:monospace;white-space:nowrap">' + minsStr + delayHtml + '</span>'
+        + '</div>';
+    }).join('');
+    const t = new Date().toLocaleTimeString('cs-CZ', { hour:'2-digit', minute:'2-digit' });
+    container.innerHTML = '<div style="background:rgba(2,6,23,0.4);border:1px solid rgba(51,65,85,0.4);border-radius:8px;overflow:hidden;margin-bottom:2px">'
+      + '<div style="padding:2px 4px">' + rows + '</div>'
+      + '<div style="font-size:9px;color:#334155;text-align:right;padding:3px 8px">Aktualizováno ' + t + ' · auto-refresh 30 s</div></div>';
+  }
+  btn.textContent = '↺ Obnovit'; btn.disabled = false;
+  window.depRefreshTimers[key] = setTimeout(() => loadArrivals(key), 30000);
+}
+
+// ===========================
+// PORTO – GEOLOCATION
+// ===========================
+const STOPS_GEO = [
+  { id:'LRD1',  name:'Prédios de Lordelo', dir:'→ FLUP/Centrum', lat:41.15441, lng:-8.64908, lines:'204, 207, 209' },
+  { id:'LRD2',  name:'Prédios de Lordelo', dir:'→ Foz/Pláž',     lat:41.15441, lng:-8.64908, lines:'204' },
+  { id:'PLNT1', name:'Planetário',          dir:'→ FLUP/Centrum', lat:41.15355, lng:-8.65148, lines:'200, 207, 209, 1M' },
+  { id:'PLNT2', name:'Planetário',          dir:'→ Foz/Pláž',     lat:41.15355, lng:-8.65148, lines:'200, 207, 1M' },
+  { id:'home',  name:'🏠 Ubytování',        dir:'Rua Paulo Gama 551', lat:41.15468, lng:-8.65016, lines:null }
+];
+
+function haversineM(la1, ln1, la2, ln2) {
+  const R = 6371000, r = d => d * Math.PI / 180;
+  const a = Math.sin(r(la2-la1)/2)**2 + Math.cos(r(la1))*Math.cos(r(la2))*Math.sin(r(ln2-ln1)/2)**2;
+  return 2*R*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function locateMeNow() {
+  const btn = document.getElementById('locate-btn');
+  const result = document.getElementById('locate-result');
+  if (!navigator.geolocation) {
+    result.classList.remove('hidden');
+    result.innerHTML = '<p style="font-size:11px;color:#f87171;padding:6px">Geolokace není dostupná v tomto prohlížeči.</p>';
+    return;
+  }
+  btn.textContent = '⟳ Hledám polohu…'; btn.disabled = true;
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const { latitude:lat, longitude:lng, accuracy } = pos.coords;
+      const sorted = STOPS_GEO
+        .map(s => ({ ...s, dist: Math.round(haversineM(lat, lng, s.lat, s.lng)) }))
+        .sort((a, b) => a.dist - b.dist);
+      const rows = sorted.map(s => {
+        const wmin = Math.ceil(s.dist / 75);
+        const col = s.dist < 200 ? '#34d399' : s.dist < 500 ? '#fbbf24' : '#94a3b8';
+        const badge = s.id !== 'home'
+          ? '<span style="background:#1e293b;color:#64748b;font-size:9px;padding:1px 5px;border-radius:3px;font-family:monospace;margin-right:5px">' + s.id + '</span>' : '';
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 2px;border-bottom:1px solid rgba(51,65,85,0.3)">'
+          + '<div>' + badge
+          + '<span style="font-size:11px;color:#e2e8f0;font-weight:600">' + s.name + '</span>'
+          + '<span style="font-size:9px;color:#64748b;display:block;margin-top:1px">' + s.dir + (s.lines ? ' · ' + s.lines : '') + '</span></div>'
+          + '<div style="text-align:right">'
+          + '<span style="font-size:13px;font-weight:900;color:' + col + ';font-family:monospace">' + s.dist + ' m</span>'
+          + '<span style="font-size:9px;color:#64748b;display:block">~' + wmin + ' min pěšky</span></div></div>';
+      }).join('');
+      result.classList.remove('hidden');
+      result.innerHTML = '<div style="font-size:10px;color:#334155;padding:2px 0 6px">GPS přesnost ±' + Math.round(accuracy) + ' m</div>' + rows;
+      btn.textContent = '📍 Obnovit polohu'; btn.disabled = false;
+    },
+    err => {
+      const msgs = { 1:'Přístup zamítnut – povol polohu v nastavení.', 2:'Poloha není dostupná.', 3:'Časový limit vypršel.' };
+      result.classList.remove('hidden');
+      result.innerHTML = '<p style="font-size:11px;color:#f87171;padding:6px">' + (msgs[err.code] || 'Chyba geolokace.') + '</p>';
+      btn.textContent = '📍 Zjistit polohu'; btn.disabled = false;
+    },
+    { timeout:10000, enableHighAccuracy:true }
+  );
+}
+
+// ===========================
+// LAGOS – GEOLOCATION
+// ===========================
+function locateMeLagos() {
+  const btn = document.getElementById('locate-btn-lagos');
+  const result = document.getElementById('locate-result-lagos');
+  if (!btn || !result) return;
+  btn.textContent = '⏳ Zjišťuji polohu…'; btn.disabled = true;
+  if (!navigator.geolocation) {
+    result.textContent = 'Geolokace není k dispozici v tomto prohlížeči.';
+    result.classList.remove('hidden');
+    btn.innerHTML = '<span>📍</span><span>Zobrazit moji polohu v Google Maps</span>';
+    btn.disabled = false; return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const lat = pos.coords.latitude.toFixed(6);
+      const lng = pos.coords.longitude.toFixed(6);
+      const mapsUrl = 'https://www.google.com/maps?q=' + lat + ',' + lng;
+      result.innerHTML = '<p class="text-xs text-slate-300 mb-2">📍 Tvoje poloha: <span class="font-mono text-cyan-400">' + lat + ', ' + lng + '</span></p>'
+        + '<a href="' + mapsUrl + '" target="_blank" class="text-xs text-cyan-400 underline font-bold">Otevřít v Google Maps ↗</a>';
+      result.classList.remove('hidden');
+      btn.innerHTML = '<span>📍</span><span>Zobrazit moji polohu v Google Maps</span>';
+      btn.disabled = false;
+    },
+    () => {
+      result.textContent = 'Nepodařilo se zjistit polohu. Povol přístup k poloze v nastavení prohlížeče.';
+      result.classList.remove('hidden');
+      btn.innerHTML = '<span>📍</span><span>Zobrazit moji polohu v Google Maps</span>';
+      btn.disabled = false;
+    },
+    { timeout:10000, maximumAge:60000 }
+  );
+}
+
+// ===========================
+// PORTO – WEATHER
+// ===========================
+const WMO = {
+  icons:  {0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',71:'🌨️',73:'🌨️',75:'❄️',80:'🌦️',81:'🌦️',82:'⛈️',95:'⛈️',96:'⛈️',99:'⛈️'},
+  labels: {0:'Jasno',1:'Převážně jasno',2:'Polojasno',3:'Zataženo',45:'Mlha',48:'Jinovatka',51:'Mrholení',53:'Mrholení',55:'Mrholení',61:'Slabý déšť',63:'Déšť',65:'Silný déšť',71:'Sněžení',73:'Sněžení',75:'Sněhová bouře',80:'Přeháňky',81:'Přeháňky',82:'Silné přeháňky',95:'Bouřka',96:'Bouřka',99:'Silná bouřka'}
+};
+
+async function fetchWeather() {
+  try {
+    const res = await fetch(
+      'https://api.open-meteo.com/v1/forecast?latitude=41.15&longitude=-8.61&current=temperature_2m,weathercode,windspeed_10m&daily=temperature_2m_max,temperature_2m_min,weathercode&forecast_days=3&timezone=Europe%2FLisbon',
+      { cache: 'no-store' }
+    );
+    if (!res.ok) throw new Error();
+    const { current: c, daily: d } = await res.json();
+    const iEl = document.getElementById('weather-icon');
+    if (!iEl) return;
+    iEl.textContent = WMO.icons[c.weathercode] ?? '🌡️';
+    document.getElementById('weather-temp').textContent = Math.round(c.temperature_2m) + '°C';
+    document.getElementById('weather-desc').textContent = WMO.labels[c.weathercode] ?? 'Počasí';
+    document.getElementById('weather-wind').textContent = Math.round(c.windspeed_10m) + ' km/h';
+    [1, 2].forEach(i => {
+      document.getElementById('fc-icon-' + i).textContent = WMO.icons[d.weathercode[i]] ?? '🌡️';
+      document.getElementById('fc-temp-' + i).textContent =
+        Math.round(d.temperature_2m_min[i]) + '–' + Math.round(d.temperature_2m_max[i]) + '°C';
+    });
+  } catch { /* offline – výchozí hodnoty zůstanou */ }
+}
+
+// ===========================
+// PORTO – PLACES (ubytování & POI)
+// ===========================
+const DEFAULT_HOME = {
+  name:    'Rua Paulo Gama, 551',
+  address: 'Rua Paulo Gama 551, Lordelo do Ouro, Porto',
+  lat:     41.15468,
+  lng:     -8.65016
+};
+
+function loadHome() {
+  return {
+    name:    localStorage.getItem('porto_home_name')    || DEFAULT_HOME.name,
+    address: localStorage.getItem('porto_home_address') || DEFAULT_HOME.address,
+    lat:     parseFloat(localStorage.getItem('porto_home_lat'))  || DEFAULT_HOME.lat,
+    lng:     parseFloat(localStorage.getItem('porto_home_lng'))  || DEFAULT_HOME.lng
+  };
+}
+
+function saveHomeSettings() {
+  const name    = document.getElementById('modal-home-name').value.trim();
+  const address = document.getElementById('modal-home-address').value.trim();
+  const lat     = parseFloat(document.getElementById('modal-home-lat').value)  || DEFAULT_HOME.lat;
+  const lng     = parseFloat(document.getElementById('modal-home-lng').value)  || DEFAULT_HOME.lng;
+  if (!name || !address) return;
+  localStorage.setItem('porto_home_name', name);
+  localStorage.setItem('porto_home_address', address);
+  localStorage.setItem('porto_home_lat', lat);
+  localStorage.setItem('porto_home_lng', lng);
+  applyPlaces();
+  showToast('Ubytování uloženo! 🏠');
+}
+
+function resetHomeSettings() {
+  ['porto_home_name','porto_home_address','porto_home_lat','porto_home_lng'].forEach(k => localStorage.removeItem(k));
+  applyPlaces();
+  showToast('Ubytování resetováno.');
+}
+
+function loadPois() {
+  try { return JSON.parse(localStorage.getItem('porto_pois') || '[]'); } catch { return []; }
+}
+
+function savePois(pois) { localStorage.setItem('porto_pois', JSON.stringify(pois)); }
+
+function addPoi() {
+  const emoji   = document.getElementById('modal-poi-emoji').value.trim()   || '📍';
+  const name    = document.getElementById('modal-poi-name').value.trim();
+  const address = document.getElementById('modal-poi-address').value.trim();
+  const lat     = parseFloat(document.getElementById('modal-poi-lat').value)  || null;
+  const lng     = parseFloat(document.getElementById('modal-poi-lng').value)  || null;
+  if (!name || !address) { showToast('Vyplň název a adresu.'); return; }
+  const pois = loadPois();
+  pois.push({ emoji, name, address, lat, lng });
+  savePois(pois);
+  ['modal-poi-emoji','modal-poi-name','modal-poi-address','modal-poi-lat','modal-poi-lng','modal-poi-search']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  applyPlaces();
+  showToast(emoji + ' ' + name + ' přidáno!');
+}
+
+function deletePoi(index) {
+  const pois = loadPois();
+  pois.splice(index, 1);
+  savePois(pois);
+  applyPlaces();
+}
+
+function applyPlaces() {
+  const h = loadHome();
+  const pois = loadPois();
+
+  // Sync STOPS_GEO home entry
+  const homeStop = STOPS_GEO.find(s => s.id === 'home');
+  if (homeStop) { homeStop.name = '🏠 ' + h.name; homeStop.dir = h.address; homeStop.lat = h.lat; homeStop.lng = h.lng; }
+
+  // Rebuild STOPS_GEO poi entries
+  const base = STOPS_GEO.filter(s => !s.id.startsWith('poi_'));
+  STOPS_GEO.length = 0;
+  base.forEach(s => STOPS_GEO.push(s));
+  pois.filter(p => p.lat && p.lng).forEach((p, i) => {
+    STOPS_GEO.push({ id: 'poi_' + i, name: p.emoji + ' ' + p.name, dir: p.address, lat: p.lat, lng: p.lng, lines: null });
+  });
+
+  // Update nearby location selector
+  const nearbySel = document.getElementById('nearby-location-select');
+  if (nearbySel) {
+    const prev = nearbySel.value;
+    nearbySel.innerHTML = '<option value="home">🏠 ' + h.name + '</option>'
+      + pois.filter(p => p.lat && p.lng).map((p, i) =>
+        '<option value="poi_' + i + '">' + p.emoji + ' ' + p.name + '</option>'
+      ).join('');
+    if ([...nearbySel.options].some(o => o.value === prev)) nearbySel.value = prev;
+  }
+
+  // Refresh modal UI if open
+  renderPlacesModal();
+}
+
+function renderPlacesModal() {
+  const h = loadHome();
+  const ni  = document.getElementById('modal-home-name');    if (ni)  ni.value  = h.name;
+  const ai  = document.getElementById('modal-home-address'); if (ai)  ai.value  = h.address;
+  const lti = document.getElementById('modal-home-lat');     if (lti) lti.value = h.lat;
+  const lni = document.getElementById('modal-home-lng');     if (lni) lni.value = h.lng;
+
+  const pois = loadPois();
+  const list = document.getElementById('modal-poi-list');
+  if (!list) return;
+  list.innerHTML = pois.length === 0
+    ? '<p class="text-xs text-slate-500 text-center py-3">Zatím žádná místa.</p>'
+    : pois.map((p, i) =>
+      '<div class="flex items-center justify-between p-2 rounded-lg bg-slate-950/40 border border-slate-800/50">'
+      + '<div class="truncate mr-2"><span class="text-xs font-bold text-slate-200">' + p.emoji + ' ' + p.name + '</span>'
+      + '<span class="text-[10px] text-slate-500 block truncate">' + p.address + '</span></div>'
+      + '<button onclick="deletePoi(' + i + ')" class="shrink-0 text-slate-500 hover:text-red-400 text-sm px-2 transition cursor-pointer select-none">✕</button>'
+      + '</div>'
+    ).join('');
+}
+
+function openPlacesModal() {
+  renderPlacesModal();
+  document.getElementById('places-modal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePlacesModal() {
+  document.getElementById('places-modal').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+// ===========================
+// PORTO – NOMINATIM GEOCODING
+// ===========================
+let _nominatimTimer = null;
+
+function nominatimSearch(inputId, resultsId) {
+  const query = (document.getElementById(inputId) || {}).value || '';
+  const list = document.getElementById(resultsId);
+  if (!list) return;
+  clearTimeout(_nominatimTimer);
+  if (query.trim().length < 3) { list.classList.add('hidden'); list.innerHTML = ''; return; }
+  _nominatimTimer = setTimeout(() => {
+    list.innerHTML = '<div class="px-3 py-2 text-slate-500 text-xs">Hledám…</div>';
+    list.classList.remove('hidden');
+    fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(query) + '&format=json&limit=5&addressdetails=1', {
+      headers: { 'Accept-Language': 'cs,en' }
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (!data.length) { list.innerHTML = '<div class="px-3 py-2 text-slate-500 text-xs">Nic nenalezeno.</div>'; return; }
+        list.innerHTML = data.map((item, i) =>
+          '<div data-idx="' + i + '" class="px-3 py-2.5 border-b border-slate-700/50 last:border-0 cursor-pointer hover:bg-slate-700 active:bg-slate-600 transition">'
+          + '<div class="font-semibold text-slate-100 text-xs">' + (item.name || item.display_name.split(',')[0]) + '</div>'
+          + '<div class="text-[10px] text-slate-400 truncate">' + item.display_name + '</div></div>'
+        ).join('');
+        list.querySelectorAll('[data-idx]').forEach(el => {
+          el.addEventListener('click', () => nominatimFill(resultsId, data[parseInt(el.dataset.idx)]));
+        });
+      })
+      .catch(() => { list.innerHTML = '<div class="px-3 py-2 text-red-400 text-xs">Chyba připojení.</div>'; });
+  }, 400);
+}
+
+function nominatimFill(resultsId, item) {
+  const shortName = item.name || item.display_name.split(',')[0];
+  const lat = parseFloat(item.lat), lng = parseFloat(item.lon);
+  if (resultsId === 'modal-home-results') {
+    document.getElementById('modal-home-name').value    = shortName;
+    document.getElementById('modal-home-address').value = item.display_name;
+    document.getElementById('modal-home-lat').value     = lat;
+    document.getElementById('modal-home-lng').value     = lng;
+    document.getElementById('modal-home-search').value  = '';
+  } else {
+    document.getElementById('modal-poi-name').value    = shortName;
+    document.getElementById('modal-poi-address').value = item.display_name;
+    document.getElementById('modal-poi-lat').value     = lat;
+    document.getElementById('modal-poi-lng').value     = lng;
+    document.getElementById('modal-poi-search').value  = '';
+  }
+  const list = document.getElementById(resultsId);
+  list.classList.add('hidden'); list.innerHTML = '';
+}
+
+document.addEventListener('click', e => {
+  ['modal-home-results', 'modal-poi-results'].forEach(id => {
+    const list = document.getElementById(id);
+    if (list && !list.classList.contains('hidden') && !list.contains(e.target)) {
+      const inputId = id.replace('-results', '-search');
+      if (e.target.id !== inputId) { list.classList.add('hidden'); list.innerHTML = ''; }
+    }
+  });
+});
+
+// ===========================
+// PORTO – NEARBY PLACES (OVERPASS / OSM)
+// ===========================
+const NEARBY_CFG = {
+  supermarket: { tag: '"shop"="supermarket"', label: 'Supermarket', radius: 1000 },
+  cafe:        { tag: '"amenity"="cafe"',      label: 'Kavárna',     radius: 600  },
+  fast_food:   { tag: '"amenity"="fast_food"', label: 'Fast food',   radius: 600  },
+  bar:         { tag: '"amenity"="bar"',        label: 'Bar',         radius: 600  }
+};
+
+async function fetchNearby(btn, category) {
+  const sel = document.getElementById('nearby-location-select');
+  const val = sel ? sel.value : 'home';
+  let lat, lng;
+  if (val === 'home') {
+    const h = loadHome(); lat = h.lat; lng = h.lng;
+  } else {
+    const idx = parseInt(val.replace('poi_', ''));
+    const poi = loadPois()[idx];
+    if (!poi || !poi.lat) { showToast('Toto místo nemá souřadnice.'); return; }
+    lat = poi.lat; lng = poi.lng;
+  }
+
+  document.querySelectorAll('.nearby-cat-btn').forEach(b => b.classList.remove('ring-1', 'ring-yellow-400', 'text-yellow-400'));
+  btn.classList.add('ring-1', 'ring-yellow-400', 'text-yellow-400');
+
+  const results = document.getElementById('nearby-results');
+  results.innerHTML = '<p class="text-slate-500 text-center py-3 text-xs">Hledám v okolí…</p>';
+
+  const cfg = NEARBY_CFG[category];
+  const q = `[out:json][timeout:12];(node[${cfg.tag}](around:${cfg.radius},${lat},${lng});way[${cfg.tag}](around:${cfg.radius},${lat},${lng}););out center 15;`;
+  try {
+    const res = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: q });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    const places = data.elements
+      .map(el => {
+        const elat = el.lat ?? el.center?.lat, elng = el.lon ?? el.center?.lon;
+        if (!elat) return null;
+        return { name: el.tags?.name || el.tags?.['name:en'] || cfg.label, dist: Math.round(haversineM(lat, lng, elat, elng)), elat, elng };
+      })
+      .filter(Boolean).sort((a, b) => a.dist - b.dist).slice(0, 10);
+
+    if (!places.length) {
+      results.innerHTML = '<p class="text-slate-500 text-center py-3 text-xs">Nic v okolí ' + cfg.radius + ' m nenalezeno.</p>';
+      return;
+    }
+    results.innerHTML = places.map(p =>
+      '<div class="flex items-center justify-between p-2 rounded-lg bg-slate-950/40">'
+      + '<div class="truncate mr-2">'
+      + '<span class="text-slate-100 font-bold text-xs block truncate">' + p.name + '</span>'
+      + '<span class="text-slate-500 text-[10px] font-mono">' + p.dist + ' m · ~' + Math.ceil(p.dist / 75) + ' min</span>'
+      + '</div>'
+      + '<a href="https://www.google.com/maps/search/?api=1&query=' + p.elat + ',' + p.elng + '" target="_blank" rel="noopener" '
+      + 'class="shrink-0 bg-slate-700 hover:bg-slate-600 text-yellow-400 text-[10px] px-2.5 py-1.5 rounded-md font-bold transition">Mapa</a>'
+      + '</div>'
+    ).join('');
+  } catch {
+    results.innerHTML = '<p class="text-red-400 text-center py-3 text-[11px]">Chyba – zkontroluj připojení.</p>';
+  }
+}
+
+// ===========================
+// SERVICE WORKER
+// ===========================
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>

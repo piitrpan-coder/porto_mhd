@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Lagos Průvodce • Algarve</title>
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Lagos">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      --color-lagos-teal: #0891b2;
+      --color-lagos-sand: #f59e0b;
+      --color-lagos-dark: #0f172a;
+      --color-lagos-card: #1e293b;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .pb-safe { padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+    .pt-safe { padding-top: calc(16px + env(safe-area-inset-top, 0px)); }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in { animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-cyan-500 selection:text-slate-900">
+
+<div class="w-full max-w-md mx-auto flex flex-col flex-grow bg-[#080f1c] min-h-screen shadow-2xl relative border-x border-slate-900">
+
+  <!-- ===== HEADER ===== -->
+  <header class="pt-safe px-4 pb-3 bg-slate-900/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-800 flex items-center justify-between">
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 rounded-full bg-cyan-600 flex items-center justify-center shadow-lg shadow-cyan-600/30">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1M4.22 4.22l.7.7m12.66 12.66l.7.7M1 12h1m20 0h1M4.22 19.78l.7-.7M18.36 5.64l.7-.7M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-base font-extrabold tracking-wider text-slate-50 uppercase flex items-center">
+          Lagos <span class="ml-1.5 text-[10px] bg-cyan-500/20 text-cyan-400 font-semibold px-1.5 py-0.5 rounded border border-cyan-500/20">ALGARVE</span>
+        </h1>
+        <p class="text-[11px] text-slate-400 font-medium">Průvodce plážemi & dopravou</p>
+      </div>
+    </div>
+    <div class="flex items-center space-x-1.5 bg-slate-950/80 px-2.5 py-1 rounded-full border border-slate-800">
+      <span id="connection-status" class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+      <span id="connection-status-text" class="text-[11px] text-slate-300 font-medium">Online</span>
+    </div>
+  </header>
+
+  <!-- ===== MAIN ===== -->
+  <main class="flex-grow p-4 pb-28">
+
+    <!-- ===== TAB 1: PŘEHLED ===== -->
+    <section id="section-dashboard" class="animate-fade-in space-y-4">
+
+      <!-- Welcome card -->
+      <div class="bg-gradient-to-br from-cyan-950 to-slate-900 p-5 rounded-2xl border border-cyan-900/40 relative overflow-hidden shadow-xl">
+        <div class="absolute right-0 bottom-0 translate-x-6 translate-y-6 opacity-10 text-cyan-400">
+          <svg class="w-36 h-36" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M20 14c-.667 1.333-2 2-4 2s-3.333-.667-4-2c-.667 1.333-2 2-4 2s-3.333-.667-4-2v6h20v-6zM4 12c.667-1.333 2-2 4-2s3.333.667 4 2c.667-1.333 2-2 4-2s3.333.667 4 2V6H4v6z"/>
+          </svg>
+        </div>
+        <h2 class="text-xl font-black text-slate-100">Ahoj v Lagosu! 🏖️</h2>
+        <p class="text-sm text-slate-300 mt-1 leading-relaxed">Offline průvodce pro tvůj pobyt na Algarve. Pláže, doprava, trasy – vše na jednom místě.</p>
+        <div class="mt-4 pt-4 border-t border-cyan-900/40 flex items-center justify-between">
+          <div>
+            <span class="text-[11px] uppercase tracking-wider text-slate-400 block font-semibold">Místní čas (Lisabon)</span>
+            <span id="lagos-time" class="text-3xl font-mono font-black text-slate-50 tabular-nums tracking-tight">--:--:--</span>
+          </div>
+          <div class="text-right">
+            <span id="lagos-date" class="text-[11px] text-cyan-400 font-semibold block capitalize leading-relaxed"></span>
+            <span class="text-[11px] text-slate-500 font-medium mt-0.5 block">Portugal WEST/WEST+1</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Arrival card -->
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2.5">
+        <h3 class="text-xs uppercase font-extrabold text-slate-400 tracking-wider">🚂 Příjezd vlakem</h3>
+        <div class="flex items-start space-x-2">
+          <span class="text-cyan-400 text-sm leading-none mt-0.5">›</span>
+          <p class="text-xs text-slate-300 leading-relaxed">Estação de Lagos je <strong>konečná</strong> Linha do Algarve – vlak se neodvalí dál, klid.</p>
+        </div>
+        <div class="flex items-start space-x-2">
+          <span class="text-cyan-400 text-sm leading-none mt-0.5">›</span>
+          <p class="text-xs text-slate-300 leading-relaxed">Na ubytování (Rua Cândido Guerreiro) je to <strong>~800 m / 10 min pěšky</strong> dolů do historického centra.</p>
+        </div>
+        <div class="flex items-start space-x-2">
+          <span class="text-cyan-400 text-sm leading-none mt-0.5">›</span>
+          <p class="text-xs text-slate-300 leading-relaxed">Taxi stojí před nádražím – s kufry pohodlnější, <strong>cca 4–5 €</strong>.</p>
+        </div>
+      </div>
+
+      <!-- Beach overview -->
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+        <h3 class="text-xs uppercase font-extrabold text-slate-400 tracking-wider">🏝️ Pláže v dosahu</h3>
+        <div class="space-y-2">
+          <div class="flex items-center justify-between bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/50">
+            <div class="flex items-center space-x-2.5">
+              <span class="text-emerald-400 font-black text-xs w-16 tabular-nums">~10 min</span>
+              <div>
+                <span class="text-sm text-slate-100 font-bold block">Praia da Batata</span>
+                <span class="text-[10px] text-slate-500">zátoková, klidná voda</span>
+              </div>
+            </div>
+            <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30 font-semibold shrink-0">pěšky</span>
+          </div>
+          <div class="flex items-center justify-between bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/50">
+            <div class="flex items-center space-x-2.5">
+              <span class="text-amber-400 font-black text-xs w-16 tabular-nums">~35 min</span>
+              <div>
+                <span class="text-sm text-slate-100 font-bold block">Praia Dona Ana</span>
+                <span class="text-[10px] text-slate-500">zlaté skály, ikonická</span>
+              </div>
+            </div>
+            <span class="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded border border-amber-500/30 font-semibold shrink-0">pěšky/bus</span>
+          </div>
+          <div class="flex items-center justify-between bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/50">
+            <div class="flex items-center space-x-2.5">
+              <span class="text-amber-400 font-black text-xs w-16 tabular-nums">~40 min</span>
+              <div>
+                <span class="text-sm text-slate-100 font-bold block">Praia do Camilo</span>
+                <span class="text-[10px] text-slate-500">schodiště ze skály, nej foto</span>
+              </div>
+            </div>
+            <span class="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded border border-amber-500/30 font-semibold shrink-0">pěšky/bus</span>
+          </div>
+          <div class="flex items-center justify-between bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/50">
+            <div class="flex items-center space-x-2.5">
+              <span class="text-cyan-400 font-black text-xs w-16 tabular-nums">~15 min</span>
+              <div>
+                <span class="text-sm text-slate-100 font-bold block">Meia Praia</span>
+                <span class="text-[10px] text-slate-500">8 km, plochá, kite-surf</span>
+              </div>
+            </div>
+            <span class="text-[10px] bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded border border-cyan-500/30 font-semibold shrink-0">⛴️ trajekt</span>
+          </div>
+          <div class="flex items-center justify-between bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/50">
+            <div class="flex items-center space-x-2.5">
+              <span class="text-blue-400 font-black text-xs w-16 tabular-nums">~20 min</span>
+              <div>
+                <span class="text-sm text-slate-100 font-bold block">Praia da Luz</span>
+                <span class="text-[10px] text-slate-500">klidná vesnice, 6 km west</span>
+              </div>
+            </div>
+            <span class="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded border border-blue-500/30 font-semibold shrink-0">bus EVA</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tips card -->
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-amber-900/30 space-y-2">
+        <h3 class="text-xs uppercase font-extrabold text-amber-400 tracking-wider">☀️ Důležité tipy</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">• Lagos je <strong>malé a pěší město</strong> – z centra dostaneš pláže Batata i Dona Ana bez MHD.</p>
+        <p class="text-xs text-slate-300 leading-relaxed">• V létě (červenec–srpen) jsou oblíbené pláže <strong>přeplněné od 11h</strong>. Přijď před 10h nebo po 16h.</p>
+        <p class="text-xs text-slate-300 leading-relaxed">• Cliffové pláže (Dona Ana, Camilo) <strong>ztrácejí slunce dřív</strong> – skály odpolední stín přináší.</p>
+        <p class="text-xs text-slate-300 leading-relaxed">• Trajekt na Meia Praia jezdí <strong>sezónně</strong> (přibližně dubna–října) – ověř den předem.</p>
+        <p class="text-xs text-slate-300 leading-relaxed">• Ponta da Piedade (skalní oblouky) je <strong>must-see</strong> – ideálně lode z mariny nebo pěšky z Camilo.</p>
+      </div>
+
+    </section>
+
+    <!-- ===== TAB 2: TRASY ===== -->
+    <section id="section-routes" class="animate-fade-in space-y-4 hidden">
+      <h2 class="text-lg font-black text-slate-100 flex items-center space-x-2">
+        <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+        </svg>
+        <span>Trasy & Navigace</span>
+      </h2>
+      <p class="text-xs text-slate-400 -mt-2">Kliknutím se otevře přímá trasa v Google Maps.</p>
+
+      <!-- Route 1: Nádraží → Ubytování -->
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800/80 shadow-md flex flex-col">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-black bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30">Pěšky</span>
+          <span class="text-slate-400 text-[10px] font-semibold">~10 minut · ~800 m</span>
+        </div>
+        <h3 class="text-sm font-bold text-slate-100">🚂 Nádraží ➔ Ubytování</h3>
+        <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
+          Z Estação de Lagos vyjdi ven, dej se <strong>doleva a jdi dolů kopcem</strong> (Rua dos Combatentes da Grande Guerra nebo přes Praça Gil Eanes).
+          Rua Cândido Guerreiro je v samém historickém centru.
+          S těžkými kufry: taxi přímo před nádražím, <strong>~4–5 €</strong>.
+        </p>
+        <a href="https://www.google.com/maps/dir/?api=1&origin=Estacao+de+Lagos+Lagos+Portugal&destination=Rua+Candido+Guerreiro+Lagos+Portugal&travelmode=walking"
+           target="_blank"
+           class="w-full mt-4 bg-slate-800 hover:bg-slate-700 active:scale-98 text-cyan-400 text-xs font-bold py-2.5 px-3 rounded-lg border border-slate-700/50 flex items-center justify-center space-x-2 transition cursor-pointer">
+          <span>Otevřít v Google Maps</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+          </svg>
+        </a>
+      </div>
+
+      <!-- Route 2: Ubytování → Praia da Batata -->
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800/80 shadow-md flex flex-col">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-black bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30">Pěšky</span>
+          <span class="text-slate-400 text-[10px] font-semibold">~10 minut · ~700 m</span>
+        </div>
+        <h3 class="text-sm font-bold text-slate-100">🏠 Ubytování ➔ Praia da Batata</h3>
+        <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
+          Nejbližší pláž! Jdi dolů k přístavu kolem středověkého <strong>Fortu Ponta da Bandeira</strong>
+          (vstup za pár eur, uvnitř hezky). Pláž da Batata je chráněná zátokou – klidnější voda,
+          vhodná pro rodiny i vchod do moře. Rovná nábřežní promenáda.
+        </p>
+        <a href="https://www.google.com/maps/dir/?api=1&origin=Rua+Candido+Guerreiro+Lagos+Portugal&destination=Praia+da+Batata+Lagos+Portugal&travelmode=walking"
+           target="_blank"
+           class="w-full mt-4 bg-slate-800 hover:bg-slate-700 active:scale-98 text-cyan-400 text-xs font-bold py-2.5 px-3 rounded-lg border border-slate-700/50 flex items-center justify-center space-x-2 transition cursor-pointer">
+          <span>Otevřít v Google Maps</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+          </svg>
+        </a>
+      </div>
+
+      <!-- Route 3: Ubytování → Dona Ana + Camilo -->
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800/80 shadow-md flex flex-col">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-black bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded border border-amber-500/30">Pěšky / Taxi</span>
+          <span class="text-slate-400 text-[10px] font-semibold">35–40 min pěšky / ~8 €</span>
+        </div>
+        <h3 class="text-sm font-bold text-slate-100">🏠 Ubytování ➔ Dona Ana + Camilo</h3>
+        <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
+          Nejkrásnější pláže Lagosu s ikonickými zlatými útesy.
+          <strong>Pěšky po pobřežní stezce</strong> od Bataty kolem pobřeží ~35 min (doporučená trasa!).
+          <strong>Taxi:</strong> cca 7–9 € jedním směrem – dobrá volba pro zpáteční cestu.
+          Camilo je ~200 m za Dona Ana, schody dolů ze skály.
+        </p>
+        <div class="grid grid-cols-2 gap-2 mt-4">
+          <a href="https://www.google.com/maps/dir/?api=1&origin=Rua+Candido+Guerreiro+Lagos+Portugal&destination=Praia+Dona+Ana+Lagos+Portugal&travelmode=walking"
+             target="_blank"
+             class="bg-slate-800 hover:bg-slate-700 active:scale-98 text-cyan-400 text-xs font-bold py-2.5 px-2 rounded-lg border border-slate-700/50 flex items-center justify-center space-x-1.5 transition cursor-pointer">
+            <span>Dona Ana ↗</span>
+          </a>
+          <a href="https://www.google.com/maps/dir/?api=1&origin=Rua+Candido+Guerreiro+Lagos+Portugal&destination=Praia+do+Camilo+Lagos+Portugal&travelmode=walking"
+             target="_blank"
+             class="bg-slate-800 hover:bg-slate-700 active:scale-98 text-cyan-400 text-xs font-bold py-2.5 px-2 rounded-lg border border-slate-700/50 flex items-center justify-center space-x-1.5 transition cursor-pointer">
+            <span>Camilo ↗</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Route 4: Meia Praia (trajekt) -->
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-cyan-900/40 shadow-md flex flex-col">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-black bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded border border-cyan-500/30">Trajekt ⛴️</span>
+          <span class="text-cyan-400 text-[10px] font-bold">Sezónní provoz!</span>
+        </div>
+        <h3 class="text-sm font-bold text-slate-100">🏠 Ubytování ➔ Meia Praia</h3>
+        <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
+          Největší pláž regionu (8 km rovné písku!), výborná pro kite-surf a beach volejbal.
+          <strong>Trajekt z Marina de Lagos</strong> (~5 min pěšky od ubytování) –
+          přeplavba zálivem trvá ~15 min, cca 2–3 € zpáteční.
+          <strong>Pozor:</strong> jezdí sezónně (přibližně duben–říjen), ověř přímo na molu nebo den předem.
+          Mimo sezónu: bus nebo taxi ~12 €.
+        </p>
+        <a href="https://www.google.com/maps/dir/?api=1&origin=Marina+de+Lagos+Portugal&destination=Meia+Praia+Lagos+Portugal&travelmode=transit"
+           target="_blank"
+           class="w-full mt-4 bg-slate-800 hover:bg-slate-700 active:scale-98 text-cyan-400 text-xs font-bold py-2.5 px-3 rounded-lg border border-slate-700/50 flex items-center justify-center space-x-2 transition cursor-pointer">
+          <span>Navigovat na Meia Praia</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+          </svg>
+        </a>
+      </div>
+
+      <!-- Route 5: Praia da Luz -->
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800/80 shadow-md flex flex-col">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-black bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded border border-blue-500/30">Bus EVA</span>
+          <span class="text-slate-400 text-[10px] font-semibold">~20 minut · 6 km</span>
+        </div>
+        <h3 class="text-sm font-bold text-slate-100">🏠 Ubytování ➔ Praia da Luz</h3>
+        <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
+          Klidná vesnice se širší plátanovou plážemi, méně turistů než Lagos centrum.
+          <strong>Bus EVA</strong> z terminálu Lagos (Rua da Porta de Portugal, ~7 min pěšky od ubytování)
+          směr Burgau / Sagres – vystup na zastávce Luz. Cena cca 2–3 €.
+          <strong>Taxi:</strong> ~12–15 €.
+        </p>
+        <a href="https://www.google.com/maps/dir/?api=1&origin=Rua+Candido+Guerreiro+Lagos+Portugal&destination=Praia+da+Luz+Lagos+Portugal&travelmode=transit"
+           target="_blank"
+           class="w-full mt-4 bg-slate-800 hover:bg-slate-700 active:scale-98 text-cyan-400 text-xs font-bold py-2.5 px-3 rounded-lg border border-slate-700/50 flex items-center justify-center space-x-2 transition cursor-pointer">
+          <span>Trasa na Praia da Luz</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+          </svg>
+        </a>
+      </div>
+
+      <!-- Geolocation -->
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+        <h3 class="text-xs uppercase font-extrabold text-slate-400 tracking-wider">📍 Kde teď jsem?</h3>
+        <button id="locate-btn" onclick="locateMeNow()"
+          class="w-full bg-slate-800 hover:bg-slate-700 active:scale-98 text-slate-200 text-xs font-bold py-2.5 px-4 rounded-xl border border-slate-700/50 transition flex items-center justify-center space-x-2 cursor-pointer select-none">
+          <span>📍</span>
+          <span>Zobrazit moji polohu v Google Maps</span>
+        </button>
+        <div id="locate-result" class="hidden bg-slate-950/30 rounded-lg px-3 py-2 text-xs text-slate-300"></div>
+      </div>
+    </section>
+
+    <!-- ===== TAB 3: PLÁŽE ===== -->
+    <section id="section-beaches" class="animate-fade-in space-y-4 hidden">
+      <h2 class="text-lg font-black text-slate-100 flex items-center space-x-2">
+        <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M7 8c2 1 4 1 6 0s4-1 6 0M7 12c2 1 4 1 6 0s4-1 6 0M7 16c2 1 4 1 6 0s4-1 6 0"/>
+        </svg>
+        <span>Průvodce Plážemi</span>
+      </h2>
+      <p class="text-xs text-slate-400 -mt-2">6 plají a jedno nezbytné místo v okolí Lagosu.</p>
+
+      <!-- Praia da Batata -->
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-emerald-900/40 space-y-2">
+        <div class="flex items-start justify-between">
+          <div>
+            <h3 class="text-sm font-black text-slate-100">🏖️ Praia da Batata</h3>
+            <p class="text-[10px] text-emerald-400 font-semibold mt-0.5">~700 m od ubytování · 10 min pěšky</p>
+          </div>
+          <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30 font-semibold shrink-0 mt-0.5">Nejbližší</span>
+        </div>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Malá, chráněná pláž u ústí přístavu, za Fortem Ponta da Bandeira. Klidnější vlny
+          než oceánské pláže – vhodná pro vstup do vody i rodiny s dětmi. Oblíbená ke snídaňovému
+          koupání. Občerstvení v blízkosti.
+        </p>
+        <div class="grid grid-cols-3 gap-1.5 mt-1">
+          <div class="bg-slate-950/40 p-2 rounded text-center">
+            <span class="text-[10px] text-slate-400 block">Vlny</span>
+            <span class="text-xs font-bold text-emerald-400">klidné</span>
+          </div>
+          <div class="bg-slate-950/40 p-2 rounded text-center">
+            <span class="text-[10px] text-slate-400 block">Velikost</span>
+            <span class="text-xs font-bold text-slate-200">malá</span>
+          </div>
+          <div class="bg-slate-950/40 p-2 rounded text-center">
+            <span class="text-[10px] text-slate-400 block">Záchranáři</span>
+            <span class="text-xs font-bold text-amber-400">sezónně</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Praia Dona Ana -->
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-amber-900/40 space-y-2">
+        <div class="flex items-start justify-between">
+          <div>
+            <h3 class="text-sm font-black text-slate-100">🌅 Praia Dona Ana</h3>
+            <p class="text-[10px] text-amber-400 font-semibold mt-0.5">~2,5 km · 35 min pěšky nebo taxi ~8 €</p>
+          </div>
+          <span class="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded border border-amber-500/30 font-semibold shrink-0 mt-0.5">Ikonická</span>
+        </div>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Jedna z nejfotografovanějších plání celého Algarve – zlaté písečné útesy s malebými zátokami.
+          Oceánský charakter (vlny silnější). Odpoledne přichází stín ze skál dřív, než bys čekal/a.
+          Restaurace nahoře na útesech. V létě velmi oblíbená – přijdi brzy.
+        </p>
+        <div class="grid grid-cols-3 gap-1.5 mt-1">
+          <div class="bg-slate-950/40 p-2 rounded text-center">
+            <span class="text-[10px] text-slate-400 block">Vlny</span>
+            <span class="text-xs font-bold text-amber-400">střední</span>
+          </div>
+          <div class="bg-slate-950/40 p-2 rounded text-center">
+            <span class="text-[10px] text-slate-400 block">Scenérie</span>
+            <span class="text-xs font-bold text-amber-400">★★★★★</span>
+          </div>
+          <div class="bg-slate-950/40 p-2 rounded text-center">
+            <span class="text-[10px] text-slate-400 block">Záchranáři</span>
+            <span class="text-xs font-bold text-emerald-400">6/6–30/9</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Praia do Camilo -->
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-amber-900/40 space-y-2">
+        <div class="flex items-start justify-between">
+          <div>
+            <h3 class="text-sm font-black text-slate-100">📸 Praia do Camilo</h3>
+            <p class="text-[10px] text-amber-400 font-semibold mt-0.5">~200 m za Dona Ana · schodiště dolů ze skály</p>
+          </div>
+          <span class="text-[10px] bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded border border-orange-500/30 font-semibold shrink-0 mt-0.5">Foto nej</span>
+        </div>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Slavná fotografická pláž – přístupy po dlouhém dřevěném schodišti vytesaném do útesů.
+          Dvě malé zátoky s tyrkysovou vodou. Menší a intimnější než Dona Ana.
+          Pořiď si foto schodiště odshora – klasika Algarve.
+          <strong>Doporučení:</strong> navštiv obě pláže v jednom výletě.
+        </p>
+        <div class="grid grid-cols-3 gap-1.5 mt-1">
+          <div class="bg-slate-950/40 p-2 rounded text-center">
+            <span class="text-[10px] text-slate-400 block">Přístup</span>
+            <span class="text-xs font-bold text-amber-400">schodiště</span>
+          </div>
+          <div class="bg-slate-950/40 p-2 rounded text-center">
+            <span class="text-[10px] text-slate-400 block">Velikost</span>
+            <span class="text-xs font-bold text-slate-200">malá</span>
+          </div>
+          <div class="bg-slate-950/40 p-2 rounded text-center">
+            <span class="text-[10px] text-slate-400 block">Stín</span>
+            <span class="text-xs font-bold text-red-400">odpoledne ↓</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Meia Praia -->
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-cyan-900/40 space-y-2">
+        <div class="flex items-start justify-between">
+          <div>
+            <h3 class="text-sm font-black text-slate-100">⛴️ Meia Praia</h3>
+            <p class="text-[10px] text-cyan-400 font-semibold mt-0.5">Trajekt z Mariny ~15 min (sezónní)</p>
+          </div>
+          <span class="text-[10px] bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded border border-cyan-500/30 font-semibold shrink-0 mt-0.5">8 km písku</span>
+        </div>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Největší a nejprostornější pláž v okolí – 8 km rovného písku na severním břehu zálivu.
+          Výborná pro kite-surf, windsurfing a beach volejbal. Méně skalnatá, plochá.
+          Trajekt z Marina de Lagos je turistická atrakce sama o sobě.
+          Pokud trajekt nejede: bus nebo taxi ~12 € dokola zálivem.
+        </p>
+        <div class="grid grid-cols-3 gap-1.5 mt-1">
+          <div class="bg-slate-950/40 p-2 rounded text-center">
+            <span class="text-[10px] text-slate-400 block">Vítr</span>
+            <span class="text-xs font-bold text-amber-400">silnější</span>
+          </div>
+          <div class="bg-slate-950/40 p-2 rounded text-center">
+            <span class="text-[10px] text-slate-400 block">Sporty</span>
+            <span class="text-xs font-bold text-cyan-400">kite, surf</span>
+          </div>
+          <div class="bg-slate-950/40 p-2 rounded text-center">
+            <span class="text-[10px] text-slate-400 block">Přístup</span>
+            <span class="text-xs font-bold text-cyan-400">⛴️ sezóna</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Praia da Luz -->
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-blue-900/40 space-y-2">
+        <div class="flex items-start justify-between">
+          <div>
+            <h3 class="text-sm font-black text-slate-100">🏡 Praia da Luz</h3>
+            <p class="text-[10px] text-blue-400 font-semibold mt-0.5">6 km west · bus EVA ~20 min</p>
+          </div>
+          <span class="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded border border-blue-500/30 font-semibold shrink-0 mt-0.5">Klidnější</span>
+        </div>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Malebná rybářská vesnice se širší plání. Méně turistů než v centru Lagosu.
+          Širší pláž vhodná pro relaxaci a snorkeling. Restaurace a bary přímo na promenádě.
+          Bus EVA z terminálu Lagos (7 min pěšky), jízda ~20 min.
+        </p>
+        <div class="grid grid-cols-3 gap-1.5 mt-1">
+          <div class="bg-slate-950/40 p-2 rounded text-center">
+            <span class="text-[10px] text-slate-400 block">Vlny</span>
+            <span class="text-xs font-bold text-emerald-400">klidnější</span>
+          </div>
+          <div class="bg-slate-950/40 p-2 rounded text-center">
+            <span class="text-[10px] text-slate-400 block">Dav</span>
+            <span class="text-xs font-bold text-emerald-400">méně lidí</span>
+          </div>
+          <div class="bg-slate-950/40 p-2 rounded text-center">
+            <span class="text-[10px] text-slate-400 block">Dojezd</span>
+            <span class="text-xs font-bold text-blue-400">bus 20 min</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ponta da Piedade (must-see) -->
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-purple-900/40 space-y-2">
+        <div class="flex items-start justify-between">
+          <div>
+            <h3 class="text-sm font-black text-slate-100">🏔️ Ponta da Piedade</h3>
+            <p class="text-[10px] text-purple-400 font-semibold mt-0.5">~3 km od ubytování · taxi ~7 €</p>
+          </div>
+          <span class="text-[10px] bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded border border-purple-500/30 font-semibold shrink-0 mt-0.5">Must-see</span>
+        </div>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Ikonické zlaté skalní oblouky a jeskyně – nejfotografovanější místo celého Algarve.
+          <strong>Není to pláž</strong>, ale vyhlídkový mys. Lodě z Mariny Lagos nabízí okruh pod útesy
+          (~1 hod., ~15–20 €). Lze dojít pěšky od Camilo (~1,5 km po pobřeží).
+          Západ slunce přímo na mysu je magický – doporučuji večer.
+        </p>
+        <a href="https://www.google.com/maps/dir/?api=1&origin=Rua+Candido+Guerreiro+Lagos+Portugal&destination=Ponta+da+Piedade+Lagos+Portugal&travelmode=walking"
+           target="_blank"
+           class="w-full mt-2 bg-slate-800 hover:bg-slate-700 active:scale-98 text-purple-400 text-xs font-bold py-2 px-3 rounded-lg border border-slate-700/50 flex items-center justify-center space-x-2 transition cursor-pointer">
+          <span>Navigovat na Ponta da Piedade</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+          </svg>
+        </a>
+      </div>
+
+      <!-- Beach flags legend -->
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+        <h3 class="text-xs uppercase font-extrabold text-slate-400 tracking-wider">🚩 Plážové vlajky (EU systém)</h3>
+        <div class="space-y-2">
+          <div class="flex items-center space-x-3">
+            <div class="w-5 h-4 rounded-sm bg-green-500 shrink-0"></div>
+            <p class="text-xs text-slate-300"><strong class="text-emerald-400">Zelená</strong> – bezpečné koupání, záchranář přítomen</p>
+          </div>
+          <div class="flex items-center space-x-3">
+            <div class="w-5 h-4 rounded-sm bg-yellow-400 shrink-0"></div>
+            <p class="text-xs text-slate-300"><strong class="text-yellow-400">Žlutá</strong> – opatrnost, plavej u záchranáře</p>
+          </div>
+          <div class="flex items-center space-x-3">
+            <div class="w-5 h-4 rounded-sm bg-red-500 shrink-0"></div>
+            <p class="text-xs text-slate-300"><strong class="text-red-400">Červená</strong> – nebezpečí, zákaz koupání</p>
+          </div>
+          <div class="flex items-center space-x-3">
+            <div class="w-5 h-4 rounded-sm bg-purple-500 shrink-0"></div>
+            <p class="text-xs text-slate-300"><strong class="text-purple-400">Fialová</strong> – nebezpečná mořská fauna (medúzy aj.)</p>
+          </div>
+          <p class="text-[10px] text-slate-500 mt-1">Záchranáři jsou povinně přítomni 1. června – 30. září na všech hlídaných plájích.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== TAB 4: MAPA ===== -->
+    <section id="section-map" class="animate-fade-in space-y-4 hidden">
+      <h2 class="text-lg font-black text-slate-100 flex items-center space-x-2">
+        <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+        </svg>
+        <span>Mapa oblasti (offline)</span>
+      </h2>
+
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs uppercase font-extrabold text-slate-400 tracking-wider">🗺️ Lagos a okolní pláže</h3>
+          <span class="text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded font-semibold">Schematická</span>
+        </div>
+
+        <div class="relative overflow-hidden border border-slate-800 bg-slate-950 rounded-xl p-1 h-80 flex items-center justify-center">
+          <!-- Zoom controls -->
+          <div class="absolute right-2 top-2 z-10 flex flex-col space-y-1">
+            <button onclick="zoomMap(1.2)" class="w-8 h-8 rounded bg-slate-800 border border-slate-700 font-bold text-slate-100 flex items-center justify-center active:scale-90 cursor-pointer select-none text-lg">+</button>
+            <button onclick="zoomMap(0.8)" class="w-8 h-8 rounded bg-slate-800 border border-slate-700 font-bold text-slate-100 flex items-center justify-center active:scale-90 cursor-pointer select-none text-lg">−</button>
+            <button onclick="resetZoom()" class="w-8 h-8 rounded bg-slate-800 border border-slate-700 text-[10px] font-bold text-slate-100 flex items-center justify-center active:scale-90 cursor-pointer select-none">RST</button>
+          </div>
+
+          <div id="map-container" class="overflow-hidden w-full h-full flex items-center justify-center touch-none">
+            <div id="map-svg-wrapper" class="origin-center transition-transform duration-200" style="min-width: 540px; min-height: 380px;">
+              <svg width="540" height="380" viewBox="0 0 540 380" class="select-none">
+
+                <!-- ===== POZADÍ (oceán + záliv) ===== -->
+                <rect x="0" y="0" width="540" height="380" fill="#050d1a"/>
+
+                <!-- Oceán západ -->
+                <path d="M 0 255 Q 80 240 170 248 Q 220 252 255 255 L 255 380 L 0 380 Z" fill="#0a1f35" opacity="0.9"/>
+
+                <!-- Baía de Lagos (záliv) -->
+                <path d="M 255 255 Q 330 235 410 220 Q 470 210 540 212 L 540 380 L 255 380 Z" fill="#0a2135" opacity="0.9"/>
+
+                <!-- Vlnky – oceán -->
+                <path d="M 20 295 Q 55 290 90 295" stroke="#0e3a5a" stroke-width="1.5" fill="none" opacity="0.7"/>
+                <path d="M 20 315 Q 65 310 110 315 Q 145 320 175 314" stroke="#0e3a5a" stroke-width="1.5" fill="none" opacity="0.6"/>
+                <path d="M 20 340 Q 70 335 120 340 Q 160 345 200 340" stroke="#0e3a5a" stroke-width="1.5" fill="none" opacity="0.5"/>
+
+                <!-- Vlnky – záliv -->
+                <path d="M 300 300 Q 345 295 390 300" stroke="#0e3a5a" stroke-width="1.5" fill="none" opacity="0.6"/>
+                <path d="M 330 330 Q 380 325 430 330" stroke="#0e3a5a" stroke-width="1.5" fill="none" opacity="0.5"/>
+
+                <!-- Pobřeží – západ -->
+                <path d="M 0 255 Q 70 242 130 246 Q 170 248 195 252 Q 220 254 252 256" stroke="#1d4ed8" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.5"/>
+
+                <!-- Pobřeží – záliv -->
+                <path d="M 255 256 Q 330 238 400 222 Q 460 210 530 213" stroke="#1d4ed8" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.4"/>
+
+                <!-- ===== ŘEKA BENSAFRIM ===== -->
+                <path d="M 233 75 Q 236 140 240 190 Q 242 220 244 250" stroke="#1a5c8a" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+                <text x="188" y="168" fill="#2b7db5" font-size="8" opacity="0.7" transform="rotate(-90 200 168)">Bensafrim</text>
+
+                <!-- ===== SILNICE ===== -->
+                <!-- Hlavní silnice sever–jih -->
+                <path d="M 255 40 L 248 250" stroke="#1e293b" stroke-width="2.5" fill="none"/>
+                <!-- Silnice na Meia Praia (east) -->
+                <path d="M 248 130 Q 340 118 430 130 Q 490 138 535 148" stroke="#1e293b" stroke-width="2" fill="none" stroke-dasharray="6,3"/>
+                <!-- Silnice na Luz (west) -->
+                <path d="M 175 190 Q 100 198 40 210 Q 10 215 0 218" stroke="#1e293b" stroke-width="2" fill="none" stroke-dasharray="6,3"/>
+
+                <!-- ===== VLAKOVÉ NÁDRAŽÍ ===== -->
+                <rect x="265" y="38" width="110" height="32" rx="6" fill="#1e293b" stroke="#ef4444" stroke-width="1.5" opacity="0.95"/>
+                <circle cx="276" cy="54" r="7" fill="#ef4444" stroke="#fca5a5" stroke-width="1.5"/>
+                <text x="270" y="50" fill="#fca5a5" font-size="7" font-weight="bold">🚂</text>
+                <text x="288" y="49" fill="#fca5a5" font-size="9" font-weight="bold">Estação Lagos</text>
+                <text x="288" y="62" fill="#64748b" font-size="7.5">konečná stanice</text>
+
+                <!-- ===== BUS TERMINÁL ===== -->
+                <circle cx="250" cy="98" r="6" fill="#f59e0b" stroke="#fde68a" stroke-width="1.5"/>
+                <text x="261" y="94" fill="#fde68a" font-size="9" font-weight="bold">Terminál EVA</text>
+                <text x="261" y="105" fill="#64748b" font-size="7.5">🚌 → Luz, Sagres</text>
+
+                <!-- ===== UBYTOVÁNÍ ===== -->
+                <circle cx="200" cy="140" r="9" fill="#f59e0b" stroke="#1e293b" stroke-width="2"/>
+                <text x="200" y="143" fill="#1e293b" font-size="8" text-anchor="middle" font-weight="black">🏠</text>
+                <text x="215" y="133" fill="#fbbf24" font-size="10" font-weight="black">Ubytování</text>
+                <text x="215" y="145" fill="#94a3b8" font-size="7.5">Rua Cândido Guerreiro</text>
+
+                <!-- ===== MARINA ===== -->
+                <circle cx="218" cy="222" r="6" fill="#0891b2" stroke="#67e8f9" stroke-width="1.5"/>
+                <text x="228" y="218" fill="#67e8f9" font-size="9" font-weight="bold">⛵ Marina Lagos</text>
+                <text x="228" y="229" fill="#94a3b8" font-size="7.5">trajekt → Meia Praia</text>
+
+                <!-- ===== TRAJEKT ===== -->
+                <path d="M 222 227 Q 320 238 430 248" stroke="#0891b2" stroke-width="2" fill="none" stroke-dasharray="7,4" opacity="0.8"/>
+                <text x="295" y="228" fill="#0891b2" font-size="8" font-weight="bold">⛴️ ~15 min</text>
+
+                <!-- ===== FORT PONTA DA BANDEIRA ===== -->
+                <rect x="152" y="250" width="18" height="18" rx="3" fill="#334155" stroke="#94a3b8" stroke-width="1.5"/>
+                <text x="161" y="262" fill="#cbd5e1" font-size="9" text-anchor="middle">⛩</text>
+                <text x="128" y="246" fill="#94a3b8" font-size="7.5">Fort</text>
+
+                <!-- ===== PLÁŽE ===== -->
+
+                <!-- Batata -->
+                <circle cx="138" cy="262" r="6" fill="#06b6d4" stroke="#fff" stroke-width="1.5"/>
+                <text x="98" y="257" fill="#67e8f9" font-size="9" font-weight="bold">Batata</text>
+                <text x="100" y="268" fill="#94a3b8" font-size="7.5">10 min 🚶</text>
+
+                <!-- Dona Ana -->
+                <circle cx="82" cy="290" r="6" fill="#06b6d4" stroke="#fff" stroke-width="1.5"/>
+                <text x="44" y="285" fill="#67e8f9" font-size="9" font-weight="bold">Dona Ana</text>
+                <text x="50" y="296" fill="#94a3b8" font-size="7.5">35 min 🚶</text>
+
+                <!-- Camilo -->
+                <circle cx="48" cy="308" r="5" fill="#06b6d4" stroke="#fff" stroke-width="1.5"/>
+                <text x="10" y="317" fill="#67e8f9" font-size="8.5" font-weight="bold">Camilo</text>
+
+                <!-- Ponta da Piedade -->
+                <circle cx="28" cy="330" r="4" fill="#a855f7" stroke="#fff" stroke-width="1.5"/>
+                <text x="10" y="345" fill="#c084fc" font-size="8" font-weight="bold">Ponta Piedade</text>
+                <text x="14" y="355" fill="#64748b" font-size="7">🏔️ skalní oblouky</text>
+
+                <!-- Praia da Luz (šipka vlevo) -->
+                <path d="M 8 228 L 0 228" stroke="#4ade80" stroke-width="2" fill="none"/>
+                <polygon points="0,224 0,232 -6,228" fill="#4ade80"/>
+                <text x="10" y="224" fill="#4ade80" font-size="8.5" font-weight="bold">← Praia da Luz</text>
+                <text x="15" y="234" fill="#64748b" font-size="7">6 km · bus EVA</text>
+
+                <!-- Meia Praia -->
+                <circle cx="448" cy="248" r="7" fill="#06b6d4" stroke="#fff" stroke-width="2"/>
+                <text x="412" y="234" fill="#67e8f9" font-size="10" font-weight="bold">Meia Praia</text>
+                <text x="414" y="246" fill="#94a3b8" font-size="7.5">8 km · kite-surf</text>
+                <text x="420" y="258" fill="#94a3b8" font-size="7">⛴️ sezónní trajekt</text>
+
+                <!-- ===== PĚŠÍ TRASY ===== -->
+                <!-- Ubytování → Batata -->
+                <path d="M 208 148 Q 192 185 172 228 Q 163 244 154 256" stroke="#f59e0b" stroke-width="1.5" fill="none" stroke-dasharray="4,3" opacity="0.5"/>
+
+                <!-- Batata → Dona Ana -->
+                <path d="M 135 265 Q 112 275 85 292" stroke="#f59e0b" stroke-width="1.5" fill="none" stroke-dasharray="3,3" opacity="0.45"/>
+
+                <!-- Dona Ana → Camilo → Ponta Piedade -->
+                <path d="M 79 294 Q 62 302 50 309 Q 38 318 30 328" stroke="#f59e0b" stroke-width="1.5" fill="none" stroke-dasharray="3,3" opacity="0.4"/>
+
+                <!-- ===== POPISKY VODY ===== -->
+                <text x="55" y="362" fill="#0e3a5a" font-size="11" font-weight="bold" opacity="0.6">ATLANTSKÝ OCEÁN</text>
+                <text x="320" y="355" fill="#0e3a5a" font-size="10" font-weight="bold" opacity="0.5">BAÍA DE LAGOS</text>
+
+                <!-- ===== LEGENDA ===== -->
+                <rect x="358" y="32" width="170" height="100" fill="#0f172a" rx="6" opacity="0.95"/>
+                <text x="368" y="49" fill="#94a3b8" font-size="8" font-weight="bold">LEGENDA</text>
+                <circle cx="372" cy="61" r="4" fill="#06b6d4"/>
+                <text x="381" y="65" fill="#67e8f9" font-size="8">Pláž</text>
+                <circle cx="372" cy="76" r="4" fill="#f59e0b"/>
+                <text x="381" y="80" fill="#fbbf24" font-size="8">Ubytování</text>
+                <circle cx="372" cy="91" r="4" fill="#ef4444"/>
+                <text x="381" y="95" fill="#fca5a5" font-size="8">Vlakové nádraží</text>
+                <circle cx="372" cy="106" r="4" fill="#a855f7"/>
+                <text x="381" y="110" fill="#c084fc" font-size="8">Ponta da Piedade</text>
+                <line x1="368" y1="120" x2="380" y2="120" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3,2"/>
+                <text x="384" y="124" fill="#94a3b8" font-size="8">Trasa pěšky</text>
+                <line x1="368" y1="131" x2="380" y2="131" stroke="#0891b2" stroke-width="1.5" stroke-dasharray="5,3"/>
+                <text x="384" y="135" fill="#94a3b8" font-size="8">Trajekt</text>
+
+                <!-- Sever -->
+                <text x="497" y="170" fill="#475569" font-size="8" text-anchor="middle" font-weight="bold">N</text>
+                <line x1="497" y1="174" x2="497" y2="186" stroke="#475569" stroke-width="1.5"/>
+                <polygon points="493,181 497,174 501,181" fill="#475569"/>
+
+              </svg>
+            </div>
+          </div>
+        </div>
+        <p class="text-[10px] text-slate-500 italic">Schematická mapa – není v přesném geografickém měřítku. Pinch to zoom na dotykovém zařízení.</p>
+      </div>
+    </section>
+
+    <!-- ===== TAB 5: DOPRAVA ===== -->
+    <section id="section-transport" class="animate-fade-in space-y-4 hidden">
+      <h2 class="text-lg font-black text-slate-100 flex items-center space-x-2">
+        <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+        </svg>
+        <span>Doprava & Tipy</span>
+      </h2>
+
+      <!-- EVA Transportes -->
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+        <h3 class="text-xs uppercase font-extrabold text-amber-400 tracking-wider">🚌 Bus EVA Transportes</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Hlavní dopravce Algarve, označení <strong>EVA / Vamus</strong>.
+          Terminál Lagos: <strong>Rua da Porta de Portugal</strong> (u tržnice, ~7 min od Rua Cândido Guerreiro).
+        </p>
+        <div class="space-y-2 bg-slate-950/30 p-3 rounded-lg">
+          <div class="flex items-start space-x-2">
+            <span class="text-amber-400 font-bold text-xs shrink-0 w-20">→ Luz/Sagres</span>
+            <span class="text-xs text-slate-300">z terminálu Lagos, cca každá 1–2 hod., jízdné ~2–5 €</span>
+          </div>
+          <div class="flex items-start space-x-2">
+            <span class="text-amber-400 font-bold text-xs shrink-0 w-20">→ Portimão</span>
+            <span class="text-xs text-slate-300">regionální spoj na východ, cca 30 min</span>
+          </div>
+          <div class="flex items-start space-x-2">
+            <span class="text-amber-400 font-bold text-xs shrink-0 w-20">→ Faro</span>
+            <span class="text-xs text-slate-300">spojení s letištěm, cca 1,5 hod. (nebo vlak)</span>
+          </div>
+        </div>
+        <a href="https://www.eva-bus.com" target="_blank"
+           class="w-full bg-slate-800 hover:bg-slate-700 active:scale-98 text-amber-400 text-xs font-bold py-2.5 px-3 rounded-lg border border-slate-700/50 flex items-center justify-center space-x-2 transition cursor-pointer">
+          <span>Web EVA Bus – jízdní řády</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+          </svg>
+        </a>
+      </div>
+
+      <!-- Taxi -->
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+        <h3 class="text-xs uppercase font-extrabold text-slate-400 tracking-wider">🚕 Taxi</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Stanoviště taxi přímo před nádražím a u Praça Gil Eanes (náměstí v centru).
+          Noční příplatky a o víkendu vyšší tarif. Vždy ověř konečnou cenu před odjezdem.
+        </p>
+        <div class="space-y-1.5 bg-slate-950/30 p-3 rounded-lg">
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-400">Nádraží → Ubytování</span>
+            <span class="text-slate-200 font-bold tabular-nums">~4–5 €</span>
+          </div>
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-400">Centrum → Praia Dona Ana</span>
+            <span class="text-slate-200 font-bold tabular-nums">~7–9 €</span>
+          </div>
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-400">Centrum → Ponta da Piedade</span>
+            <span class="text-slate-200 font-bold tabular-nums">~7–9 €</span>
+          </div>
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-400">Centrum → Praia da Luz</span>
+            <span class="text-slate-200 font-bold tabular-nums">~12–15 €</span>
+          </div>
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-400">Centrum → Meia Praia (autem)</span>
+            <span class="text-slate-200 font-bold tabular-nums">~12 €</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Uber/Bolt -->
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2">
+        <h3 class="text-xs uppercase font-extrabold text-slate-400 tracking-wider">📱 Uber / Bolt</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Uber i Bolt jsou v Lagosu dostupné, ale pokrytí je <strong>omezenější než ve velkých městech</strong>.
+          V hlavní sezóně (léto) bývají řidiči k dispozici, mimo sezónu může být čekání delší nebo
+          žádný řidič k dispozici. Klasické taxi je spolehlivější záloha.
+        </p>
+      </div>
+
+      <!-- Trajekt -->
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-cyan-900/40 space-y-2">
+        <h3 class="text-xs uppercase font-extrabold text-cyan-400 tracking-wider">⛴️ Trajekt na Meia Praia</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Sezónní lodní spojení z <strong>Marina de Lagos</strong> na pláž Meia Praia (~15 min).
+          Jezdí přibližně od dubna do října, frekvence se liší.
+          Cena zpáteční jízdenky: <strong>cca 3–5 €</strong>. Zkontroluj provoz přímo na molu nebo se zeptej v marinně.
+        </p>
+      </div>
+
+      <!-- Kolo -->
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2">
+        <h3 class="text-xs uppercase font-extrabold text-slate-400 tracking-wider">🚲 Kolo & Skútr</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          V Lagosu a okolí je několik půjčoven kol a elektroskútrů – praktické pro dosažení
+          vzdálenějších plání (Luz, Sagres). Půjčovny bývají u nádraží a v centru.
+          Cena kola: cca 10–15 €/den, e-scooter: cca 20–30 €/den.
+        </p>
+      </div>
+
+      <!-- Vlak CP -->
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2">
+        <h3 class="text-xs uppercase font-extrabold text-slate-400 tracking-wider">🚂 Vlak CP – výlety</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Z Estação de Lagos jezdí vlaky Linha do Algarve na východ.
+          Výlety: <strong>Portimão</strong> (~20 min), <strong>Albufeira</strong> (~55 min),
+          <strong>Faro</strong> (~1h40 min). Jízdné cca 3–10 €.
+          Jízdní řády na cp.pt nebo v aplikaci CP.
+        </p>
+        <a href="https://www.cp.pt" target="_blank"
+           class="w-full bg-slate-800 hover:bg-slate-700 active:scale-98 text-slate-300 text-xs font-bold py-2.5 px-3 rounded-lg border border-slate-700/50 flex items-center justify-center space-x-2 transition cursor-pointer">
+          <span>CP – jízdní řády vlaků</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+          </svg>
+        </a>
+      </div>
+
+      <!-- Užitečné weby -->
+      <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+        <h3 class="text-xs uppercase font-extrabold text-slate-400 tracking-wider">🔗 Užitečné weby</h3>
+        <div class="space-y-2">
+          <a href="https://www.visitalgarve.pt" target="_blank"
+             class="flex items-center justify-between p-3 bg-slate-950/40 rounded-lg border border-slate-800/50 hover:border-slate-700 transition group">
+            <div>
+              <span class="text-xs text-slate-400 block font-semibold uppercase tracking-wider">Turismus</span>
+              <span class="text-sm font-bold text-slate-200 group-hover:text-cyan-400 transition">Visit Algarve</span>
+            </div>
+            <svg class="w-4 h-4 text-slate-500 group-hover:text-cyan-400 transition" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+            </svg>
+          </a>
+          <a href="https://www.eva-bus.com" target="_blank"
+             class="flex items-center justify-between p-3 bg-slate-950/40 rounded-lg border border-slate-800/50 hover:border-slate-700 transition group">
+            <div>
+              <span class="text-xs text-slate-400 block font-semibold uppercase tracking-wider">Bus Algarve</span>
+              <span class="text-sm font-bold text-slate-200 group-hover:text-cyan-400 transition">EVA Transportes</span>
+            </div>
+            <svg class="w-4 h-4 text-slate-500 group-hover:text-cyan-400 transition" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+            </svg>
+          </a>
+          <a href="https://www.cp.pt" target="_blank"
+             class="flex items-center justify-between p-3 bg-slate-950/40 rounded-lg border border-slate-800/50 hover:border-slate-700 transition group">
+            <div>
+              <span class="text-xs text-slate-400 block font-semibold uppercase tracking-wider">Vlaky</span>
+              <span class="text-sm font-bold text-slate-200 group-hover:text-cyan-400 transition">CP – Comboios de Portugal</span>
+            </div>
+            <svg class="w-4 h-4 text-slate-500 group-hover:text-cyan-400 transition" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+            </svg>
+          </a>
+          <a href="https://www.google.com/maps/search/Lagos+Portugal+beaches" target="_blank"
+             class="flex items-center justify-between p-3 bg-slate-950/40 rounded-lg border border-slate-800/50 hover:border-slate-700 transition group">
+            <div>
+              <span class="text-xs text-slate-400 block font-semibold uppercase tracking-wider">Mapa</span>
+              <span class="text-sm font-bold text-slate-200 group-hover:text-cyan-400 transition">Pláže Lagosu v Maps</span>
+            </div>
+            <svg class="w-4 h-4 text-slate-500 group-hover:text-cyan-400 transition" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ===== TOAST ===== -->
+  <div id="toast" class="fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-cyan-500 text-slate-950 font-bold text-xs py-2.5 px-5 rounded-full shadow-2xl opacity-0 transition-opacity duration-300 pointer-events-none z-50">
+    Zkopírováno! 📋
+  </div>
+
+  <!-- ===== BOTTOM NAVIGATION ===== -->
+  <nav class="pb-safe bg-slate-900/90 backdrop-blur-lg border-t border-slate-800 fixed bottom-0 left-0 right-0 max-w-md mx-auto z-40 flex justify-around py-3 px-2">
+
+    <button id="btn-dashboard" onclick="switchTab('dashboard')" class="flex flex-col items-center justify-center flex-grow text-cyan-400 transition duration-150 cursor-pointer">
+      <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z"/>
+      </svg>
+      <span class="text-[10px] font-bold tracking-wide">Přehled</span>
+    </button>
+
+    <button id="btn-routes" onclick="switchTab('routes')" class="flex flex-col items-center justify-center flex-grow text-slate-400 hover:text-slate-200 transition duration-150 cursor-pointer">
+      <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+      </svg>
+      <span class="text-[10px] font-bold tracking-wide">Trasy</span>
+    </button>
+
+    <button id="btn-beaches" onclick="switchTab('beaches')" class="flex flex-col items-center justify-center flex-grow text-slate-400 hover:text-slate-200 transition duration-150 cursor-pointer">
+      <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M7 8c2 1 4 1 6 0s4-1 6 0M7 12c2 1 4 1 6 0s4-1 6 0M7 16c2 1 4 1 6 0s4-1 6 0"/>
+      </svg>
+      <span class="text-[10px] font-bold tracking-wide">Pláže</span>
+    </button>
+
+    <button id="btn-map" onclick="switchTab('map')" class="flex flex-col items-center justify-center flex-grow text-slate-400 hover:text-slate-200 transition duration-150 cursor-pointer">
+      <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+      </svg>
+      <span class="text-[10px] font-bold tracking-wide">Mapa</span>
+    </button>
+
+    <button id="btn-transport" onclick="switchTab('transport')" class="flex flex-col items-center justify-center flex-grow text-slate-400 hover:text-slate-200 transition duration-150 cursor-pointer">
+      <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+      </svg>
+      <span class="text-[10px] font-bold tracking-wide">Doprava</span>
+    </button>
+
+  </nav>
+</div>
+
+<!-- ===== JAVASCRIPT ===== -->
+<script>
+  const tabs = ['dashboard', 'routes', 'beaches', 'map', 'transport'];
+
+  function switchTab(tabId) {
+    tabs.forEach(id => {
+      document.getElementById(`section-${id}`).classList.toggle('hidden', id !== tabId);
+      const btn = document.getElementById(`btn-${id}`);
+      if (id === tabId) {
+        btn.classList.remove('text-slate-400', 'hover:text-slate-200');
+        btn.classList.add('text-cyan-400');
+      } else {
+        btn.classList.remove('text-cyan-400');
+        btn.classList.add('text-slate-400', 'hover:text-slate-200');
+      }
+    });
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
+
+  // Clock – Europe/Lisbon (same timezone as Porto)
+  function updateClock() {
+    const now = new Date();
+    const timeOpts = { timeZone: 'Europe/Lisbon', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+    const dateOpts = { timeZone: 'Europe/Lisbon', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    try {
+      document.getElementById('lagos-time').textContent = new Intl.DateTimeFormat('cs-CZ', timeOpts).format(now);
+      document.getElementById('lagos-date').textContent = new Intl.DateTimeFormat('cs-CZ', dateOpts).format(now);
+    } catch(e) {
+      document.getElementById('lagos-time').textContent = now.toLocaleTimeString('cs-CZ');
+      document.getElementById('lagos-date').textContent = now.toLocaleDateString('cs-CZ');
+    }
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // Online/Offline status
+  function updateOnlineStatus() {
+    const dot  = document.getElementById('connection-status');
+    const text = document.getElementById('connection-status-text');
+    if (navigator.onLine) {
+      dot.className  = 'w-2 h-2 rounded-full bg-green-500 animate-pulse';
+      text.textContent = 'Online';
+      text.className = 'text-[11px] text-green-400 font-medium';
+    } else {
+      dot.className  = 'w-2 h-2 rounded-full bg-red-500 animate-pulse';
+      text.textContent = 'Offline';
+      text.className = 'text-[11px] text-red-400 font-medium';
+    }
+  }
+  window.addEventListener('online', updateOnlineStatus);
+  window.addEventListener('offline', updateOnlineStatus);
+  updateOnlineStatus();
+
+  // Geolocation
+  function locateMeNow() {
+    const btn = document.getElementById('locate-btn');
+    const result = document.getElementById('locate-result');
+    btn.textContent = '⏳ Zjišťuji polohu…';
+    btn.disabled = true;
+
+    if (!navigator.geolocation) {
+      result.textContent = 'Geolokace není k dispozici v tomto prohlížeči.';
+      result.classList.remove('hidden');
+      btn.textContent = '📍 Zobrazit moji polohu v Google Maps';
+      btn.disabled = false;
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const lat = pos.coords.latitude.toFixed(6);
+        const lng = pos.coords.longitude.toFixed(6);
+        const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+        result.innerHTML = `
+          <p class="text-xs text-slate-300 mb-2">📍 Tvoje poloha: <span class="font-mono text-cyan-400">${lat}, ${lng}</span></p>
+          <a href="${mapsUrl}" target="_blank" class="text-xs text-cyan-400 underline font-bold">Otevřít v Google Maps ↗</a>
+        `;
+        result.classList.remove('hidden');
+        btn.innerHTML = '<span>📍</span><span>Zobrazit moji polohu v Google Maps</span>';
+        btn.disabled = false;
+      },
+      err => {
+        result.textContent = 'Nepodařilo se zjistit polohu. Povol přístup k poloze v nastavení prohlížeče.';
+        result.classList.remove('hidden');
+        btn.innerHTML = '<span>📍</span><span>Zobrazit moji polohu v Google Maps</span>';
+        btn.disabled = false;
+      },
+      { timeout: 10000, maximumAge: 60000 }
+    );
+  }
+
+  // Map zoom
+  let mapScale = 1;
+  function zoomMap(factor) {
+    mapScale = Math.min(Math.max(mapScale * factor, 0.5), 3);
+    document.getElementById('map-svg-wrapper').style.transform = `scale(${mapScale})`;
+  }
+  function resetZoom() {
+    mapScale = 1;
+    document.getElementById('map-svg-wrapper').style.transform = 'scale(1)';
+  }
+
+  // Touch pinch-to-zoom on map
+  (function() {
+    const container = document.getElementById('map-container');
+    if (!container) return;
+    let startDist = null;
+    let startScale = 1;
+    container.addEventListener('touchstart', e => {
+      if (e.touches.length === 2) {
+        startDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        startScale = mapScale;
+      }
+    }, { passive: true });
+    container.addEventListener('touchmove', e => {
+      if (e.touches.length === 2 && startDist) {
+        const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        mapScale = Math.min(Math.max(startScale * (dist / startDist), 0.5), 3);
+        document.getElementById('map-svg-wrapper').style.transform = `scale(${mapScale})`;
+      }
+    }, { passive: true });
+    container.addEventListener('touchend', () => { startDist = null; }, { passive: true });
+  })();
+
+</script>
+</body>
+</html>
