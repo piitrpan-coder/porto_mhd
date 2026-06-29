@@ -730,8 +730,8 @@ function renderCity(cityId) {
     <button id="tab-btn-${tab.id}" onclick="switchTab('${tab.id}')"
       class="flex-1 flex flex-col items-center justify-center py-1.5 px-0.5 rounded-lg transition-all duration-150 cursor-pointer select-none"
       style="color:#475569">
-      <span class="text-base leading-none">${tab.icon}</span>
-      <span class="text-[9px] font-bold mt-0.5 leading-none">${tab.label}</span>
+      <span class="text-xl leading-none">${tab.icon}</span>
+      <span class="text-[11px] font-bold mt-1 leading-none">${tab.label}</span>
     </button>`).join('');
 
   // Tab content
@@ -791,83 +791,83 @@ function renderTabContent(tabId, city) {
 
 function renderOverview(city) {
   const arrivals = city.arrivalBullets.map(b => `
-    <li class="flex items-start gap-2">
-      <span class="w-1.5 h-1.5 rounded-full shrink-0 mt-1.5" style="background:${city.color}"></span>
-      <span class="text-xs text-slate-300 leading-relaxed">${b}</span>
+    <li class="flex items-start gap-2.5">
+      <span class="w-2 h-2 rounded-full shrink-0 mt-1.5" style="background:${city.color}"></span>
+      <span class="text-sm text-slate-300 leading-relaxed">${b}</span>
     </li>`).join('');
 
   const cards = city.overviewItems.map(item => `
-    <div class="bg-slate-900/60 rounded-xl p-3 border border-slate-800">
-      <div class="flex items-center justify-between gap-2 mb-0.5">
-        <span class="text-xs font-bold text-slate-100">${item.label}</span>
-        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0" style="background:${item.badgeColor}22;color:${item.badgeColor}">${item.badge}</span>
+    <div class="bg-slate-900/60 rounded-xl p-4 border border-slate-800">
+      <div class="flex items-center justify-between gap-2 mb-1">
+        <span class="text-sm font-bold text-slate-100">${item.label}</span>
+        <span class="text-xs font-bold px-2 py-0.5 rounded-full shrink-0" style="background:${item.badgeColor}22;color:${item.badgeColor}">${item.badge}</span>
       </div>
-      <p class="text-[11px] text-slate-400">${item.detail}</p>
-      <p class="text-[10px] text-slate-600 mt-0.5">${item.time}</p>
+      <p class="text-xs text-slate-400 leading-relaxed">${item.detail}</p>
+      <p class="text-[11px] text-slate-600 mt-0.5">${item.time}</p>
     </div>`).join('');
 
   const tips = city.tipBullets.map(t => `
-    <li class="flex items-start gap-2">
-      <span class="text-xs shrink-0">💡</span>
-      <span class="text-xs text-slate-300 leading-relaxed">${t}</span>
+    <li class="flex items-start gap-2.5">
+      <span class="text-sm shrink-0">💡</span>
+      <span class="text-sm text-slate-300 leading-relaxed">${t}</span>
     </li>`).join('');
 
   const portoExtra = city.extras === 'porto' ? `
-    <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800 space-y-2">
-      <div class="flex items-center gap-3">
-        <span id="weather-icon" class="text-2xl leading-none">🌡️</span>
+    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+      <div class="flex items-center gap-4">
+        <span id="weather-icon" class="text-5xl leading-none">🌡️</span>
         <div class="flex-1">
-          <div class="flex items-baseline gap-1.5">
-            <span id="weather-temp" class="text-base font-black text-slate-100">–°C</span>
-            <span id="weather-wind" class="text-[10px] text-slate-400 font-mono">– km/h</span>
+          <div class="flex items-baseline gap-2">
+            <span id="weather-temp" class="text-4xl font-black text-slate-100">–°C</span>
+            <span id="weather-wind" class="text-xs text-slate-400 font-mono">– km/h</span>
           </div>
-          <div class="flex items-center gap-1.5">
-            <span class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Porto počasí</span>
-            <span id="weather-desc" class="text-[11px] text-slate-300 font-medium">načítám…</span>
+          <div class="flex items-center gap-1.5 mt-0.5">
+            <span class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Porto počasí</span>
+            <span id="weather-desc" class="text-sm text-slate-300 font-medium">načítám…</span>
           </div>
         </div>
       </div>
       <div class="grid grid-cols-2 gap-2">
-        <div class="bg-slate-800/60 rounded-lg p-2 flex items-center gap-2">
-          <span id="fc-icon-1" class="text-lg">🌡️</span>
-          <div><span class="text-[9px] text-slate-500 uppercase tracking-wider block">zítra</span><span id="fc-temp-1" class="text-[11px] font-bold text-slate-200">–°C</span></div>
+        <div class="bg-slate-800/60 rounded-lg p-3 flex items-center gap-3">
+          <span id="fc-icon-1" class="text-2xl">🌡️</span>
+          <div><span class="text-xs text-slate-500 uppercase tracking-wider block">zítra</span><span id="fc-temp-1" class="text-sm font-bold text-slate-200">–°C</span></div>
         </div>
-        <div class="bg-slate-800/60 rounded-lg p-2 flex items-center gap-2">
-          <span id="fc-icon-2" class="text-lg">🌡️</span>
-          <div><span class="text-[9px] text-slate-500 uppercase tracking-wider block">pozítří</span><span id="fc-temp-2" class="text-[11px] font-bold text-slate-200">–°C</span></div>
+        <div class="bg-slate-800/60 rounded-lg p-3 flex items-center gap-3">
+          <span id="fc-icon-2" class="text-2xl">🌡️</span>
+          <div><span class="text-xs text-slate-500 uppercase tracking-wider block">pozítří</span><span id="fc-temp-2" class="text-sm font-bold text-slate-200">–°C</span></div>
         </div>
       </div>
     </div>
-    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2.5">
+    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
       <div class="flex items-center justify-between">
-        <h3 class="text-xs uppercase font-extrabold text-slate-400 tracking-wider">🗺️ Okolí</h3>
+        <h3 class="text-sm uppercase font-extrabold text-slate-400 tracking-wider">🗺️ Okolí</h3>
         <div class="flex items-center gap-2">
-          <select id="nearby-location-select" onchange="document.getElementById('nearby-results').innerHTML='';document.querySelectorAll('.nearby-cat-btn').forEach(b=>b.classList.remove('ring-1','ring-yellow-400','text-yellow-400'))" class="bg-slate-800 border border-slate-700/60 rounded-md px-2 py-1 text-[11px] text-slate-200 focus:outline-none cursor-pointer max-w-[130px] truncate">
+          <select id="nearby-location-select" onchange="document.getElementById('nearby-results').innerHTML='';document.querySelectorAll('.nearby-cat-btn').forEach(b=>b.classList.remove('ring-1','ring-yellow-400','text-yellow-400'))" class="bg-slate-800 border border-slate-700/60 rounded-md px-2 py-1 text-xs text-slate-200 focus:outline-none cursor-pointer max-w-[130px] truncate">
             <option value="home">🏠 Ubytování</option>
           </select>
-          <button onclick="openPlacesModal()" class="shrink-0 text-[13px] bg-slate-800 hover:bg-slate-700 border border-slate-700 text-yellow-400 px-2 py-1 rounded-md font-bold cursor-pointer transition" title="Správa míst">⚙️</button>
+          <button onclick="openPlacesModal()" class="shrink-0 text-base bg-slate-800 hover:bg-slate-700 border border-slate-700 text-yellow-400 px-2 py-1 rounded-md font-bold cursor-pointer transition" title="Správa míst">⚙️</button>
         </div>
       </div>
-      <div class="grid grid-cols-4 gap-1.5">
-        <button onclick="fetchNearby(this,'supermarket')" class="nearby-cat-btn bg-slate-800 hover:bg-slate-700 active:scale-95 text-[11px] text-slate-300 py-2 rounded-lg transition cursor-pointer select-none font-semibold">🛒<br><span class="text-[9px]">Super.</span></button>
-        <button onclick="fetchNearby(this,'cafe')" class="nearby-cat-btn bg-slate-800 hover:bg-slate-700 active:scale-95 text-[11px] text-slate-300 py-2 rounded-lg transition cursor-pointer select-none font-semibold">☕<br><span class="text-[9px]">Kavárny</span></button>
-        <button onclick="fetchNearby(this,'fast_food')" class="nearby-cat-btn bg-slate-800 hover:bg-slate-700 active:scale-95 text-[11px] text-slate-300 py-2 rounded-lg transition cursor-pointer select-none font-semibold">🍔<br><span class="text-[9px]">Fast food</span></button>
-        <button onclick="fetchNearby(this,'bar')" class="nearby-cat-btn bg-slate-800 hover:bg-slate-700 active:scale-95 text-[11px] text-slate-300 py-2 rounded-lg transition cursor-pointer select-none font-semibold">🍺<br><span class="text-[9px]">Bary</span></button>
+      <div class="grid grid-cols-4 gap-2">
+        <button onclick="fetchNearby(this,'supermarket')" class="nearby-cat-btn bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-3 rounded-xl transition cursor-pointer select-none font-semibold flex flex-col items-center gap-1"><span class="text-2xl leading-none">🛒</span><span class="text-[11px]">Super.</span></button>
+        <button onclick="fetchNearby(this,'cafe')" class="nearby-cat-btn bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-3 rounded-xl transition cursor-pointer select-none font-semibold flex flex-col items-center gap-1"><span class="text-2xl leading-none">☕</span><span class="text-[11px]">Kavárny</span></button>
+        <button onclick="fetchNearby(this,'fast_food')" class="nearby-cat-btn bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-3 rounded-xl transition cursor-pointer select-none font-semibold flex flex-col items-center gap-1"><span class="text-2xl leading-none">🍔</span><span class="text-[11px]">Fast food</span></button>
+        <button onclick="fetchNearby(this,'bar')" class="nearby-cat-btn bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-3 rounded-xl transition cursor-pointer select-none font-semibold flex flex-col items-center gap-1"><span class="text-2xl leading-none">🍺</span><span class="text-[11px]">Bary</span></button>
       </div>
-      <div id="nearby-results" class="space-y-1.5"></div>
+      <div id="nearby-results" class="space-y-2"></div>
     </div>` : '';
 
   return `
     ${portoExtra}
     <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
-      <h2 class="text-base font-black" style="color:${city.color}">${city.emoji} ${city.welcome.title}</h2>
-      <p class="text-xs text-slate-500">${city.welcome.subtitle}</p>
-      <ul class="space-y-2">${arrivals}</ul>
+      <h2 class="text-lg font-black" style="color:${city.color}">${city.emoji} ${city.welcome.title}</h2>
+      <p class="text-sm text-slate-400">${city.welcome.subtitle}</p>
+      <ul class="space-y-2.5">${arrivals}</ul>
     </div>
-    <div class="grid grid-cols-2 gap-2">${cards}</div>
-    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2">
-      <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-500">💡 Tipy & Triky</h3>
-      <ul class="space-y-2">${tips}</ul>
+    <div class="grid grid-cols-2 gap-3">${cards}</div>
+    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+      <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-500">💡 Tipy & Triky</h3>
+      <ul class="space-y-2.5">${tips}</ul>
     </div>`;
 }
 
