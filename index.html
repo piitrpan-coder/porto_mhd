@@ -775,6 +775,7 @@ function renderCity(cityId) {
 
   // Show first tab
   switchTab(city.tabs[0].id);
+  initSwipe();
 }
 
 function switchTab(tabId) {
@@ -841,9 +842,9 @@ function renderOverview(city) {
   const chevron = `<svg class="w-5 h-5 text-slate-500 shrink-0 details-arrow transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>`;
 
   const portoExtra = city.extras === 'porto' ? `
-    <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4">
+    <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4 cursor-pointer active:opacity-80 transition-opacity" onclick="fetchWeather(true)" title="Klepnutím obnovit počasí">
       <div class="flex items-center gap-4">
-        <span id="weather-icon" class="text-6xl leading-none">🌡️</span>
+        <span id="weather-icon" class="text-6xl leading-none" style="transition:opacity 0.15s">🌡️</span>
         <div class="flex-1">
           <div class="flex items-baseline gap-2">
             <span id="weather-temp" class="text-5xl font-black text-slate-100">–°C</span>
@@ -1021,6 +1022,10 @@ function renderRouteCard(route, city) {
       <p class="text-sm text-slate-400 leading-relaxed">${route.description}</p>
       ${warning}
       ${btns}
+      <button onclick="copyToClipboard(${JSON.stringify(route.from + ' → ' + route.to + ' (' + route.badge + ', ' + route.duration + '): ' + route.description)})"
+        class="w-full flex items-center justify-center gap-1.5 py-2 text-xs text-slate-600 hover:text-slate-400 transition cursor-pointer select-none">
+        <span>📋</span><span>Kopírovat trasu</span>
+      </button>
     </div>`;
 }
 
@@ -1232,6 +1237,39 @@ function showToast(msg) {
   setTimeout(() => { t.classList.remove('opacity-100'); t.classList.add('opacity-0'); }, 2000);
 }
 
+function copyToClipboard(text) {
+  if (!text) return;
+  navigator.clipboard?.writeText(text).then(() => showToast('📋 Zkopírováno!')).catch(() => {
+    const el = Object.assign(document.createElement('textarea'), { value: text, style: 'position:fixed;opacity:0' });
+    document.body.appendChild(el); el.select(); document.execCommand('copy'); el.remove();
+    showToast('📋 Zkopírováno!');
+  });
+}
+
+function initSwipe() {
+  const el = document.getElementById('app-main');
+  if (!el || el._swipeOk) return;
+  el._swipeOk = true;
+  let sx, sy, st;
+  el.addEventListener('touchstart', e => {
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY; st = Date.now();
+  }, { passive: true });
+  el.addEventListener('touchend', e => {
+    if (sx == null) return;
+    const dx = e.changedTouches[0].clientX - sx;
+    const dy = e.changedTouches[0].clientY - sy;
+    const dt = Date.now() - st;
+    sx = null;
+    if (Math.abs(dx) < 55 || Math.abs(dy) > 90 || dt > 420) return;
+    const city = currentCity; if (!city) return;
+    const tabs = city.tabs;
+    const idx = tabs.findIndex(t => !document.getElementById('section-' + t.id)?.classList.contains('hidden'));
+    if (idx === -1) return;
+    if (dx < 0 && idx < tabs.length - 1) switchTab(tabs[idx + 1].id);
+    if (dx > 0 && idx > 0) switchTab(tabs[idx - 1].id);
+  }, { passive: true });
+}
+
 // ===========================
 // MAP ZOOM (shared)
 // ===========================
@@ -1301,7 +1339,9 @@ function updateWalletUI() {
     card.classList.remove('border-red-500/60','bg-red-950/20','border-yellow-500/50','border-slate-800/60');
     if (count === 0) {
       card.classList.add('border-red-500/60', 'bg-red-950/20');
-      warn.textContent = '⚠ Prázdná!'; warn.classList.remove('hidden');
+      const neverUsed = localStorage.getItem('porto_mhd_' + zone + '_rides') === null;
+      if (!neverUsed) { warn.textContent = '⚠ Prázdná!'; warn.classList.remove('hidden'); }
+      else warn.classList.add('hidden');
     } else if (count <= 2) {
       card.classList.add('border-yellow-500/50');
       warn.textContent = '⚠ Doplnit!'; warn.classList.remove('hidden');
@@ -1633,7 +1673,9 @@ const WMO = {
   labels: {0:'Jasno',1:'Převážně jasno',2:'Polojasno',3:'Zataženo',45:'Mlha',48:'Jinovatka',51:'Mrholení',53:'Mrholení',55:'Mrholení',61:'Slabý déšť',63:'Déšť',65:'Silný déšť',71:'Sněžení',73:'Sněžení',75:'Sněhová bouře',80:'Přeháňky',81:'Přeháňky',82:'Silné přeháňky',95:'Bouřka',96:'Bouřka',99:'Silná bouřka'}
 };
 
-async function fetchWeather() {
+async function fetchWeather(manual = false) {
+  const iEl = document.getElementById('weather-icon');
+  if (manual && iEl) { iEl.style.transition = 'opacity 0.15s'; iEl.style.opacity = '0.3'; }
   try {
     const res = await fetch(
       'https://api.open-meteo.com/v1/forecast?latitude=41.15&longitude=-8.61&current=temperature_2m,weathercode,windspeed_10m&daily=temperature_2m_max,temperature_2m_min,weathercode&forecast_days=3&timezone=Europe%2FLisbon',
@@ -1641,7 +1683,6 @@ async function fetchWeather() {
     );
     if (!res.ok) throw new Error();
     const { current: c, daily: d } = await res.json();
-    const iEl = document.getElementById('weather-icon');
     if (!iEl) return;
     iEl.textContent = WMO.icons[c.weathercode] ?? '🌡️';
     document.getElementById('weather-temp').textContent = Math.round(c.temperature_2m) + '°C';
@@ -1652,7 +1693,12 @@ async function fetchWeather() {
       document.getElementById('fc-temp-' + i).textContent =
         Math.round(d.temperature_2m_min[i]) + '–' + Math.round(d.temperature_2m_max[i]) + '°C';
     });
-  } catch { /* offline – výchozí hodnoty zůstanou */ }
+    if (manual) showToast('Počasí aktualizováno ✓');
+  } catch {
+    if (manual) showToast('Nepodařilo se načíst počasí – zkontroluj připojení.');
+  } finally {
+    if (iEl) setTimeout(() => { iEl.style.opacity = '1'; }, 200);
+  }
 }
 
 // ===========================
@@ -1767,12 +1813,13 @@ function renderPlacesModal() {
   const list = document.getElementById('modal-poi-list');
   if (!list) return;
   list.innerHTML = pois.length === 0
-    ? '<p class="text-xs text-slate-500 text-center py-3">Zatím žádná místa.</p>'
+    ? '<p class="text-sm text-slate-500 text-center py-5">Zatím žádná místa.</p>'
     : pois.map((p, i) =>
-      '<div class="flex items-center justify-between p-2 rounded-lg bg-slate-950/40 border border-slate-800/50">'
-      + '<div class="truncate mr-2"><span class="text-xs font-bold text-slate-200">' + p.emoji + ' ' + p.name + '</span>'
-      + '<span class="text-[10px] text-slate-500 block truncate">' + p.address + '</span></div>'
-      + '<button onclick="deletePoi(' + i + ')" class="shrink-0 text-slate-500 hover:text-red-400 text-sm px-2 transition cursor-pointer select-none">✕</button>'
+      '<div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/40 border border-slate-800/50 gap-2">'
+      + '<div class="truncate flex-1 cursor-pointer" onclick="copyToClipboard(' + JSON.stringify(p.address) + ')">'
+      + '<span class="text-sm font-bold text-slate-200 block truncate">' + p.emoji + ' ' + p.name + '</span>'
+      + '<span class="text-xs text-slate-500 block truncate">' + p.address + ' <span class="text-slate-700">· klepni pro kopírování</span></span></div>'
+      + '<button onclick="deletePoi(' + i + ')" class="shrink-0 text-slate-500 hover:text-red-400 text-base px-2 py-1 transition cursor-pointer select-none">✕</button>'
       + '</div>'
     ).join('');
 }
