@@ -289,20 +289,20 @@ const CITIES = [
       { emoji:'🚂', name:'CP Comboios', desc:'Vlakové jízdní řády', url:'https://apps.apple.com/pt/app/cp-comboios-de-portugal/id501758310' }
     ],
     itineraries: [
-      { day:'Den 1', title:'Historické centrum', color:'#fbbf24', steps:[
+      { day:'Den 1', title:'Historické centrum', color:'#fbbf24', photoQuery:'Livraria Lello', steps:[
         '⛪ Livraria Lello – nejhezčí knihkupectví světa (rezervace online dopředu!)',
         '🗼 Torre dos Clérigos – výhled na celé Porto',
         '☕ Café Majestic nebo Aliados – kafe v secesním interiéru',
         '🏛️ Palácio da Bolsa – imponující burzovní palác (prohlídka s průvodcem)',
         '🍷 Ribeira – večeře s výhledem na řeku Douro a Gaia'
       ]},
-      { day:'Den 2', title:'Gaia & portové víno', color:'#a78bfa', steps:[
+      { day:'Den 2', title:'Gaia & portové víno', color:'#a78bfa', photoQuery:'Dom Luís I Bridge', steps:[
         '⛴️ Lanovka na Jardim do Morro – panoramatický výhled na Porto',
         '🍾 Sklepy portového vína – Taylor\'s nebo Sandeman (degustace ~15 €)',
         '🌉 Most Dom Luíse I. – přechod po horní pěší promenade zpět do centra',
         '🌅 Miradouro da Vitória nebo Passeio das Virtudes – západ slunce'
       ]},
-      { day:'Den 3', title:'Matosinhos & moře', color:'#34d399', steps:[
+      { day:'Den 3', title:'Matosinhos & moře', color:'#34d399', photoQuery:'Casa da Música', steps:[
         '🚇 Metro linka A do Matosinhos Sul (karta Z2)',
         '🏖️ Praia de Matosinhos – pláž kousek od centra města',
         '🦐 Oběd v rybí restauraci v Matosinhose – čerstvé ryby přímo z přístavu',
@@ -311,12 +311,12 @@ const CITIES = [
       ]}
     ],
     photoSpots: [
-      { name:'Miradouro da Vitória', bestTime:'Západ slunce (18–21 h)', mapsUrl:'https://maps.google.com/?q=Miradouro+da+Vitoria+Porto' },
-      { name:'Ponte Dom Luís I – horní pásmo', bestTime:'Zlatá hodina', mapsUrl:'https://maps.google.com/?q=Ponte+Dom+Luis+I+Porto' },
-      { name:'Ribeira při svítání', bestTime:'Ráno 7–9 h (bez turistů)', mapsUrl:'https://maps.google.com/?q=Cais+da+Ribeira+Porto' },
-      { name:'Livraria Lello (interiér)', bestTime:'Při otevření (9:30)', mapsUrl:'https://maps.google.com/?q=Livraria+Lello+Porto' },
-      { name:'Torre dos Clérigos (výhled)', bestTime:'Západ slunce', mapsUrl:'https://maps.google.com/?q=Torre+dos+Clerigos+Porto' },
-      { name:'Passeio das Virtudes', bestTime:'Západ slunce s výhledem na Douro', mapsUrl:'https://maps.google.com/?q=Passeio+das+Virtudes+Porto' }
+      { name:'Miradouro da Vitória', bestTime:'Západ slunce (18–21 h)', photoQuery:'Miradouro da Vitória, Porto', mapsUrl:'https://maps.google.com/?q=Miradouro+da+Vitoria+Porto' },
+      { name:'Ponte Dom Luís I – horní pásmo', bestTime:'Zlatá hodina', photoQuery:'Dom Luís I Bridge', mapsUrl:'https://maps.google.com/?q=Ponte+Dom+Luis+I+Porto' },
+      { name:'Ribeira při svítání', bestTime:'Ráno 7–9 h (bez turistů)', photoQuery:'Cais da Ribeira', mapsUrl:'https://maps.google.com/?q=Cais+da+Ribeira+Porto' },
+      { name:'Livraria Lello (interiér)', bestTime:'Při otevření (9:30)', photoQuery:'Livraria Lello', mapsUrl:'https://maps.google.com/?q=Livraria+Lello+Porto' },
+      { name:'Torre dos Clérigos (výhled)', bestTime:'Západ slunce', photoQuery:'Torre dos Clérigos', mapsUrl:'https://maps.google.com/?q=Torre+dos+Clerigos+Porto' },
+      { name:'Passeio das Virtudes', bestTime:'Západ slunce s výhledem na Douro', photoQuery:'Jardins das Virtudes', mapsUrl:'https://maps.google.com/?q=Passeio+das+Virtudes+Porto' }
     ]
   },
   {
@@ -448,21 +448,21 @@ const CITIES = [
       { emoji:'🍕', name:'Glovo', desc:'Rozvoz jídla', url:'https://apps.apple.com/pt/app/glovo-food-delivery/id951812684' }
     ],
     itineraries: [
-      { day:'Den 1', title:'Plážový okruh', color:'#22d3ee', steps:[
+      { day:'Den 1', title:'Plážový okruh', color:'#22d3ee', photoQuery:'Praia Dona Ana', steps:[
         '🏖️ Praia da Batata – ranní koupání (10 min pěšky od centra)',
         '🚶 Pobřežní stezka → Praia Dona Ana (~2,5 km, nádherné výhledy na útesy)',
         '📸 Praia do Camilo – foto z vrcholu schodiště vytesaného do skal',
         '🦐 Oběd na terase – Restaurante Dona Ana nebo Camilo',
         '🌅 Západ slunce z pevnosti Fortaleza do Pinhão nebo z Bataty'
       ]},
-      { day:'Den 2', title:'Ponta da Piedade', color:'#f59e0b', steps:[
+      { day:'Den 2', title:'Ponta da Piedade', color:'#f59e0b', photoQuery:'Ponta da Piedade', steps:[
         '🚕 Taxi na Ponta da Piedade (~7 €) – ideálně ráno (méně turistů)',
         '🪨 Prohlídka skalních oblouků a grott – must-see Algarve',
         '🚤 Výlet člunem skrze jeskyně (sezónní, od spodního přístavu)',
         '🚶 Pěšky zpět pobřežní stezkou: Piedade → Camilo → Dona Ana → Batata (3 km)',
         '🍹 Večeře nebo drink v centru Lagosu'
       ]},
-      { day:'Den 3', title:'Sagres & konec Evropy', color:'#a78bfa', steps:[
+      { day:'Den 3', title:'Sagres & konec Evropy', color:'#a78bfa', photoQuery:'Cape St. Vincent, Portugal', steps:[
         '🚌 Bus EVA z terminálu na Sagres (~1,5 hod., cca 5 €)',
         '🏰 Pevnost Sagres (Fortaleza de Sagres) – historické místo na útesech',
         '🌊 Cabo de São Vicente – nejjižnější bod pevninské Evropy, majáky a obchůdky',
@@ -470,12 +470,12 @@ const CITIES = [
       ]}
     ],
     photoSpots: [
-      { name:'Ponta da Piedade', bestTime:'Ráno 8–10 h (zlatá hodina)', mapsUrl:'https://maps.google.com/?q=Ponta+da+Piedade+Lagos+Portugal' },
-      { name:'Praia do Camilo (z vrcholu)', bestTime:'Odpoledne 14–17 h', mapsUrl:'https://maps.google.com/?q=Praia+do+Camilo+Lagos+Portugal' },
-      { name:'Arco de Lagos (historická brána)', bestTime:'Západ slunce', mapsUrl:'https://maps.google.com/?q=Arco+de+Lagos+Portugal' },
-      { name:'Praia da Batata (svítání)', bestTime:'Sunrise (6:30–8 h)', mapsUrl:'https://maps.google.com/?q=Praia+da+Batata+Lagos+Portugal' },
-      { name:'Cabo de São Vicente', bestTime:'Západ slunce (nejlepší v Evropě)', mapsUrl:'https://maps.google.com/?q=Cabo+de+Sao+Vicente+Portugal' },
-      { name:'Praia Dona Ana (útesy shora)', bestTime:'Poledne – stíny v útesech', mapsUrl:'https://maps.google.com/?q=Praia+Dona+Ana+Lagos+Portugal' }
+      { name:'Ponta da Piedade', bestTime:'Ráno 8–10 h (zlatá hodina)', photoQuery:'Ponta da Piedade', mapsUrl:'https://maps.google.com/?q=Ponta+da+Piedade+Lagos+Portugal' },
+      { name:'Praia do Camilo (z vrcholu)', bestTime:'Odpoledne 14–17 h', photoQuery:'Praia do Camilo', mapsUrl:'https://maps.google.com/?q=Praia+do+Camilo+Lagos+Portugal' },
+      { name:'Arco de Lagos (historická brána)', bestTime:'Západ slunce', photoQuery:'Lagos, Portugal', mapsUrl:'https://maps.google.com/?q=Arco+de+Lagos+Portugal' },
+      { name:'Praia da Batata (svítání)', bestTime:'Sunrise (6:30–8 h)', photoQuery:'Praia da Batata', mapsUrl:'https://maps.google.com/?q=Praia+da+Batata+Lagos+Portugal' },
+      { name:'Cabo de São Vicente', bestTime:'Západ slunce (nejlepší v Evropě)', photoQuery:'Cape St. Vincent, Portugal', mapsUrl:'https://maps.google.com/?q=Cabo+de+Sao+Vicente+Portugal' },
+      { name:'Praia Dona Ana (útesy shora)', bestTime:'Poledne – stíny v útesech', photoQuery:'Praia Dona Ana', mapsUrl:'https://maps.google.com/?q=Praia+Dona+Ana+Lagos+Portugal' }
     ],
     transportSections: [
       {
@@ -876,6 +876,12 @@ function switchTab(tabId) {
       btn.style.background = '';
     }
   });
+  if (tabId === 'overview') {
+    setTimeout(() => {
+      _triggerPhotoFetch('itin', city.id);
+      _triggerPhotoFetch('ps',   city.id);
+    }, 200);
+  }
 }
 
 // ===========================
@@ -1270,6 +1276,10 @@ function _renderItinerariesInner(city) {
         <img src="${photo}" class="w-full h-full object-cover" alt="" loading="lazy">
         ${isEdit ? `<button onclick="deleteItemPhoto('itin','${cityId}','${itemId}')" class="absolute top-2 right-2 bg-slate-900/90 text-red-400 rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold cursor-pointer transition active:scale-90">×</button>` : ''}
         ${!photo.startsWith('data:') && isEdit ? `<button onclick="downloadUrlPhotoOffline('itin','${cityId}','${itemId}')" class="absolute bottom-2 right-2 bg-slate-900/90 text-yellow-400 text-[10px] font-bold px-2 py-1 rounded-lg cursor-pointer transition active:scale-90">↓ Offline (WiFi)</button>` : ''}
+      </div>`
+    : it.photoQuery ? `
+      <div id="ph-${safeId}" class="mb-3 h-16 rounded-xl bg-slate-800/30 border border-dashed border-slate-700/40 flex items-center justify-center">
+        <span class="text-[10px] text-slate-600 flex items-center gap-1.5"><span class="spin" style="display:inline-block">⟳</span> Načítám foto…</span>
       </div>` : '';
 
     const photoPanel = panelOpen ? `
@@ -1393,6 +1403,10 @@ function _renderPhotoSpotsInner(city) {
         <img src="${photo}" class="w-full h-full object-cover" alt="" loading="lazy">
         ${isEdit ? `<button onclick="deleteItemPhoto('ps','${cityId}','${itemId}')" class="absolute top-2 right-2 bg-slate-900/90 text-red-400 rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold cursor-pointer transition active:scale-90">×</button>` : ''}
         ${!photo.startsWith('data:') && isEdit ? `<button onclick="downloadUrlPhotoOffline('ps','${cityId}','${itemId}')" class="absolute bottom-2 right-2 bg-slate-900/90 text-yellow-400 text-[10px] font-bold px-2 py-1 rounded-lg cursor-pointer transition active:scale-90">↓ Offline (WiFi)</button>` : ''}
+      </div>`
+    : s.photoQuery ? `
+      <div id="ph-${safeId}" class="mb-2 h-14 rounded-xl bg-slate-800/30 border border-dashed border-slate-700/40 flex items-center justify-center">
+        <span class="text-[10px] text-slate-600 flex items-center gap-1.5"><span class="spin" style="display:inline-block">⟳</span> Načítám foto…</span>
       </div>` : '';
 
     const photoPanel = panelOpen ? `
@@ -2677,6 +2691,93 @@ async function fetchNearby(btn, category) {
 }
 
 // ===========================
+// AUTO-FETCH PHOTOS FROM WIKIPEDIA
+// ===========================
+
+const _fetchingPhotos = new Set(); // guard against duplicate concurrent fetches
+
+function _triggerPhotoFetch(type, cityId) {
+  const items = type === 'itin' ? getCustomItineraries(cityId) : getCustomPhotoSpots(cityId);
+  const pending = items.filter(it => it.photoQuery && !loadPhoto(it._id));
+  if (!pending.length) return;
+  if (!navigator.onLine) return;
+  const wifi = isOnWifi();
+  if (wifi === false) return; // confirmed mobile data – skip
+  scheduleFetchPhotos(type, cityId, pending);
+}
+
+function scheduleFetchPhotos(type, cityId, items) {
+  items.forEach(item => {
+    const key = `${type}_${cityId}_${item._id}`;
+    if (_fetchingPhotos.has(key)) return;
+    if (loadPhoto(item._id)) return;
+    _fetchingPhotos.add(key);
+    fetchAndStorePhoto(type, cityId, item)
+      .finally(() => _fetchingPhotos.delete(key));
+  });
+}
+
+async function fetchAndStorePhoto(type, cityId, item) {
+  try {
+    const imgUrl = await fetchWikipediaThumb(item.photoQuery);
+    if (!imgUrl) return;
+
+    const resp = await fetch(imgUrl);
+    if (!resp.ok) return;
+    const blob = await resp.blob();
+    const dataUrl = await blobToDataUrl(blob);
+    const compressed = await compressImage(dataUrl);
+    if (!savePhoto(item._id, compressed)) return;
+
+    // Update placeholder in-place without full re-render
+    const safeId = item._id.replace(/[^a-z0-9]/gi, '_');
+    const ph = document.getElementById(`ph-${safeId}`);
+    if (!ph) return;
+
+    const isEdit = !!_editMode[`${type}_${cityId}`];
+    const h = type === 'itin' ? 160 : 130;
+    const deleteBtn = isEdit
+      ? `<button onclick="deleteItemPhoto('${type}','${cityId}','${item._id}')" class="absolute top-2 right-2 bg-slate-900/90 text-red-400 rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold cursor-pointer transition active:scale-90">×</button>`
+      : '';
+    ph.outerHTML = `
+      <div class="relative ${type === 'itin' ? 'mb-3' : 'mb-2'} rounded-xl overflow-hidden animate-fade-in" style="height:${h}px">
+        <img src="${compressed}" class="w-full h-full object-cover" alt="" loading="lazy">
+        ${deleteBtn}
+      </div>`;
+  } catch {
+    // Network or CORS error – silently remove placeholder spinner
+    const safeId = item._id.replace(/[^a-z0-9]/gi, '_');
+    const ph = document.getElementById(`ph-${safeId}`);
+    if (ph) ph.remove();
+  }
+}
+
+async function fetchWikipediaThumb(query) {
+  const url = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(query)}&prop=pageimages&piprop=thumbnail&pithumbsize=900&format=json&origin=*`;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 10000);
+  try {
+    const resp = await fetch(url, { signal: ctrl.signal });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    const pages = data?.query?.pages;
+    if (!pages) return null;
+    return Object.values(pages)[0]?.thumbnail?.source ?? null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function blobToDataUrl(blob) {
+  return new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onload  = e => res(e.target.result);
+    reader.onerror = rej;
+    reader.readAsDataURL(blob);
+  });
+}
+
+// ===========================
 // CUSTOM DATA – ITINERARIES & PHOTO SPOTS
 // ===========================
 
@@ -2778,6 +2879,7 @@ function refreshItinerariesSection(cityId) {
   const city = CITIES.find(c => c.id === cityId);
   if (!city) return;
   wrap.innerHTML = _renderItinerariesInner(city);
+  _triggerPhotoFetch('itin', cityId);
 }
 
 function refreshPhotoSpotsSection(cityId) {
@@ -2786,6 +2888,7 @@ function refreshPhotoSpotsSection(cityId) {
   const city = CITIES.find(c => c.id === cityId);
   if (!city) return;
   wrap.innerHTML = _renderPhotoSpotsInner(city);
+  _triggerPhotoFetch('ps', cityId);
 }
 
 // ===========================
