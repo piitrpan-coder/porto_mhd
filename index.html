@@ -37,12 +37,12 @@
     <div class="grid grid-cols-2 gap-4">
       <!-- Porto -->
       <button onclick="renderCity('porto')"
-        class="relative overflow-hidden rounded-2xl p-5 text-left cursor-pointer active:scale-95 transition-transform duration-150"
+        class="relative overflow-hidden rounded-2xl p-5 text-left cursor-pointer active:scale-95 transition-transform duration-150 aspect-square flex flex-col"
         style="background:linear-gradient(135deg,#1a3055 0%,#0d2240 60%,#070f1e 100%);border:1px solid rgba(251,191,36,0.35)">
         <div class="text-4xl mb-3">🚇</div>
         <h2 class="text-lg font-black text-yellow-400">Porto</h2>
         <p class="text-xs text-slate-400 mt-0.5">MHD Průvodce</p>
-        <div class="mt-3 flex flex-wrap gap-1">
+        <div class="mt-auto pt-3 flex flex-wrap gap-1">
           <span class="text-[10px] bg-yellow-500/15 text-yellow-300 px-1.5 py-0.5 rounded-full font-bold">Metro</span>
           <span class="text-[10px] bg-yellow-500/15 text-yellow-300 px-1.5 py-0.5 rounded-full font-bold">Autobus</span>
           <span class="text-[10px] bg-yellow-500/15 text-yellow-300 px-1.5 py-0.5 rounded-full font-bold">Andante</span>
@@ -50,36 +50,31 @@
       </button>
       <!-- Lagos -->
       <button onclick="renderCity('lagos')"
-        class="relative overflow-hidden rounded-2xl p-5 text-left cursor-pointer active:scale-95 transition-transform duration-150"
+        class="relative overflow-hidden rounded-2xl p-5 text-left cursor-pointer active:scale-95 transition-transform duration-150 aspect-square flex flex-col"
         style="background:linear-gradient(135deg,#082525 0%,#041515 60%,#020a0a 100%);border:1px solid rgba(34,211,238,0.35)">
         <div class="text-4xl mb-3">🏖️</div>
         <h2 class="text-lg font-black text-cyan-400">Lagos</h2>
         <p class="text-xs text-slate-400 mt-0.5">Algarve Průvodce</p>
-        <div class="mt-3 flex flex-wrap gap-1">
+        <div class="mt-auto pt-3 flex flex-wrap gap-1">
           <span class="text-[10px] bg-cyan-500/15 text-cyan-300 px-1.5 py-0.5 rounded-full font-bold">Pláže</span>
           <span class="text-[10px] bg-cyan-500/15 text-cyan-300 px-1.5 py-0.5 rounded-full font-bold">Bus EVA</span>
           <span class="text-[10px] bg-cyan-500/15 text-cyan-300 px-1.5 py-0.5 rounded-full font-bold">Trajekt</span>
         </div>
       </button>
-    </div>
-    <!-- Lisabon -->
-    <button onclick="renderCity('lisbon')"
-      class="relative overflow-hidden rounded-2xl p-5 text-left cursor-pointer active:scale-95 transition-transform duration-150 mt-4 w-full"
-      style="background:linear-gradient(135deg,#1c1008 0%,#120a04 60%,#080401 100%);border:1px solid rgba(249,115,22,0.35)">
-      <div class="flex items-center gap-4">
-        <div class="text-4xl">🚃</div>
-        <div>
-          <h2 class="text-lg font-black text-orange-400">Lisabon</h2>
-          <p class="text-xs text-slate-400 mt-0.5">Hlavní město Portugalska</p>
+      <!-- Lisabon -->
+      <button onclick="renderCity('lisbon')"
+        class="relative overflow-hidden rounded-2xl p-5 text-left cursor-pointer active:scale-95 transition-transform duration-150 aspect-square flex flex-col"
+        style="background:linear-gradient(135deg,#1c1008 0%,#120a04 60%,#080401 100%);border:1px solid rgba(249,115,22,0.35)">
+        <div class="text-4xl mb-3">🚃</div>
+        <h2 class="text-lg font-black text-orange-400">Lisabon</h2>
+        <p class="text-xs text-slate-400 mt-0.5">Hlavní město</p>
+        <div class="mt-auto pt-3 flex flex-wrap gap-1">
+          <span class="text-[10px] bg-orange-500/15 text-orange-300 px-1.5 py-0.5 rounded-full font-bold">Metro 4 linky</span>
+          <span class="text-[10px] bg-orange-500/15 text-orange-300 px-1.5 py-0.5 rounded-full font-bold">Tram 28</span>
+          <span class="text-[10px] bg-orange-500/15 text-orange-300 px-1.5 py-0.5 rounded-full font-bold">Viva Viagem</span>
         </div>
-      </div>
-      <div class="mt-3 flex flex-wrap gap-1">
-        <span class="text-[10px] bg-orange-500/15 text-orange-300 px-1.5 py-0.5 rounded-full font-bold">Metro 4 linky</span>
-        <span class="text-[10px] bg-orange-500/15 text-orange-300 px-1.5 py-0.5 rounded-full font-bold">Tram 28</span>
-        <span class="text-[10px] bg-orange-500/15 text-orange-300 px-1.5 py-0.5 rounded-full font-bold">Viva Viagem</span>
-        <span class="text-[10px] bg-orange-500/15 text-orange-300 px-1.5 py-0.5 rounded-full font-bold">Sintra & Cascais</span>
-      </div>
-    </button>
+      </button>
+    </div>
     <p class="text-center text-xs text-slate-700 mt-10">Porto MHD PWA · v2.0</p>
   </div>
 </div>
@@ -225,6 +220,7 @@ const CITIES = [
     accentCls: 'text-yellow-400',
     timezone: 'Europe/Lisbon',
     timeLabel: 'Čas v Portu',
+    bodyBg: 'radial-gradient(ellipse at 25% 0%, rgba(251,191,36,0.13) 0%, #060c18 55%)',
     tabs: [
       { id:'overview', label:'Přehled',    icon:'📋' },
       { id:'routes',   label:'Trasy',      icon:'🗺️' },
@@ -346,6 +342,7 @@ const CITIES = [
     accentCls: 'text-cyan-400',
     timezone: 'Europe/Lisbon',
     timeLabel: 'Čas v Lagosu',
+    bodyBg: 'radial-gradient(ellipse at 75% 0%, rgba(34,211,238,0.12) 0%, #030e0e 55%)',
     tabs: [
       { id:'overview',  label:'Přehled',  icon:'📋' },
       { id:'routes',    label:'Trasy',    icon:'🗺️' },
@@ -557,6 +554,7 @@ const CITIES = [
     accentCls: 'text-orange-400',
     timezone: 'Europe/Lisbon',
     timeLabel: 'Čas v Lisabonu',
+    bodyBg: 'radial-gradient(ellipse at 50% 0%, rgba(249,115,22,0.13) 0%, #0d0800 55%)',
     tabs: [
       { id:'overview',   label:'Přehled',  icon:'📋' },
       { id:'routes',     label:'Trasy',    icon:'🗺️' },
@@ -566,10 +564,10 @@ const CITIES = [
     ],
     welcome: { title:'Lisabon', subtitle:'Průvodce hlavním městem Portugalska' },
     arrivalBullets: [
-      'Metro Vermelha (Červená) z letiště → přestup na Alameda (Zelená) nebo Oriente (Modrá)',
-      'Z letiště do centra (Baixa-Chiado): ~30 min metrem s 1 přestupem',
-      'Viva Viagem karta: 0,50 € u automatů na letišti – nabij Zapping nebo jízdenky',
-      'Uber / Bolt z letiště do centra: ~12–18 € (spolehlivější a levnější než taxi)'
+      'Vlak z Lagosu: IC přes Tunes → Faro → Lisboa Oriente (~3,5–4 hod, ~19–25 €) – rezervuj na cp.pt',
+      'Oriente je přímý metro uzel – linka Vermelha i Azul na nástupišti, do centra 15–20 min',
+      'Odlet zpět: metro Vermelha z centra → Aeroporto Humberto Delgado (~25 min, bez přestupu)',
+      'Uber / Bolt na letiště: ~12–18 € ze středu, 20–30 min – pohodlnější s kufry'
     ],
     overviewItems: [
       { icon:'🚇', label:'Metro – 4 linky', detail:'Azul, Verde, Amarela, Vermelha · provoz 6:30–1:00', time:'~1,65 € Zapping / 2,00 € papír', badge:'MHD', badgeColor:'#2563eb' },
@@ -1092,6 +1090,7 @@ const _photoPanel = {};  // 'itin_porto_<id>' / 'ps_porto_<id>' → bool
 function showCityPicker() {
   document.getElementById('city-picker').classList.remove('hidden');
   document.getElementById('city-app').classList.add('hidden');
+  document.body.style.background = '#080f1c';
   if (clockInterval) { clearInterval(clockInterval); clockInterval = null; }
   if (window._cdInterval) { clearInterval(window._cdInterval); window._cdInterval = null; }
   if (window._weatherInterval) { clearInterval(window._weatherInterval); window._weatherInterval = null; }
@@ -1110,6 +1109,7 @@ function renderCity(cityId) {
 
   document.getElementById('city-picker').classList.add('hidden');
   document.getElementById('city-app').classList.remove('hidden');
+  document.body.style.background = city.bodyBg || '#080f1c';
 
   // Header
   document.getElementById('city-emoji').textContent = city.emoji;
