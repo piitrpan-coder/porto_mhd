@@ -343,10 +343,10 @@ const CITIES = [
       'Bus EVA terminál: Rua da Porta de Portugal (u tržnice, ~7 min od ubytování)'
     ],
     overviewItems: [
-      { label:'Praia da Batata', detail:'700 m – zátoková, klidná', time:'10 min pěšky', badge:'Nejbližší', badgeColor:'#06b6d4' },
-      { label:'Praia Dona Ana', detail:'Zlaté útesy, ikonická pláž Algarve', time:'35 min / taxi 7–9 €', badge:'Ikonická', badgeColor:'#d97706' },
-      { label:'Ponta da Piedade', detail:'Skalní oblouky – must-see!', time:'Taxi ~7 €', badge:'Must-see', badgeColor:'#9333ea' },
-      { label:'Bus EVA', detail:'Terminál: Rua da Porta de Portugal', time:'→ Luz, Sagres, Portimão', badge:'Doprava', badgeColor:'#2563eb' }
+      { icon:'🏖️', label:'Praia da Batata', detail:'700 m – zátoková, klidná', time:'10 min pěšky', badge:'Nejbližší', badgeColor:'#06b6d4' },
+      { icon:'🌅', label:'Praia Dona Ana', detail:'Zlaté útesy, ikonická pláž Algarve', time:'35 min / taxi 7–9 €', badge:'Ikonická', badgeColor:'#d97706' },
+      { icon:'🪨', label:'Ponta da Piedade', detail:'Skalní oblouky – must-see!', time:'Taxi ~7 €', badge:'Must-see', badgeColor:'#9333ea' },
+      { icon:'🚌', label:'Bus EVA', detail:'Terminál: Rua da Porta de Portugal', time:'→ Luz, Sagres, Portimão', badge:'Doprava', badgeColor:'#2563eb' }
     ],
     tipBullets: [
       'Nejbližší pláž Batata je 10 min pěšky – ideální pro ranní koupání',
@@ -845,6 +845,7 @@ function renderCity(cityId) {
     fetchLagosWeather();
     if (window._lagosWeatherInterval) clearInterval(window._lagosWeatherInterval);
     window._lagosWeatherInterval = setInterval(fetchLagosWeather, 1800000);
+    applyPlaces();
   }
   initMap();
   updateOnlineStatus();
@@ -962,7 +963,58 @@ function renderOverview(city) {
         <div class="flex items-center gap-1.5 text-sm text-amber-300"><span>🌅</span><span id="lagos-sunrise">–:–</span></div>
         <div class="flex items-center gap-1.5 text-sm text-indigo-300"><span>🌇</span><span id="lagos-sunset">–:–</span></div>
       </div>
-    </div>` : '';
+    </div>
+    <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4">
+      <div class="flex items-center justify-between gap-2">
+        <h3 class="text-base font-extrabold text-slate-300 shrink-0">🗺️ Okolí</h3>
+        <div class="flex items-center gap-2 min-w-0">
+          <div class="relative min-w-0" id="nearby-dd-wrap">
+            <button onclick="toggleNearbyDd(event)" id="nearby-dd-btn"
+              class="flex items-center gap-1.5 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 cursor-pointer w-full">
+              <span id="nearby-dd-label" class="truncate max-w-[120px]">📍 Moje poloha (GPS)</span>
+              <svg id="nearby-dd-arrow" class="w-4 h-4 shrink-0 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="nearby-dd-menu" class="hidden absolute right-0 top-full mt-1 bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl z-40 w-64 max-h-60 overflow-y-auto">
+            </div>
+          </div>
+          <button onclick="openPlacesModal()" class="shrink-0 text-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-cyan-400 px-3 py-2 rounded-xl cursor-pointer transition" title="Správa míst">⚙️</button>
+        </div>
+      </div>
+      <div class="relative">
+        <div class="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1" style="scrollbar-width:none">
+          <button onclick="fetchNearby(this,'supermarket')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🛒</span><span class="text-sm font-bold">Super.</span></button>
+          <button onclick="fetchNearby(this,'cafe')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">☕</span><span class="text-sm font-bold">Kavárny</span></button>
+          <button onclick="fetchNearby(this,'fast_food')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🍔</span><span class="text-sm font-bold">Fast food</span></button>
+          <button onclick="fetchNearby(this,'bar')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🍺</span><span class="text-sm font-bold">Bary</span></button>
+        </div>
+        <div class="absolute right-0 top-0 bottom-1 w-10 bg-gradient-to-l from-slate-900/60 to-transparent pointer-events-none rounded-r-2xl"></div>
+      </div>
+      <div id="nearby-results" class="space-y-2"></div>
+    </div>
+    <details class="bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden">
+      <summary class="flex items-center justify-between px-5 py-4 cursor-pointer select-none">
+        <span class="text-base font-extrabold uppercase tracking-wider text-slate-400">🚌 Doprava – přehled</span>
+        ${chevron}
+      </summary>
+      <div class="px-5 pb-5 border-t border-slate-800 pt-4 space-y-4">
+        ${(city.transportSections || []).slice(0, 3).map(sec => `
+          <div>
+            <p class="text-sm font-bold mb-2" style="color:${sec.titleColor}">${sec.title}</p>
+            <div class="space-y-1.5 bg-slate-950/30 p-3 rounded-xl">
+              ${sec.items.map(item => `
+                <div class="flex items-start justify-between gap-3 text-xs">
+                  <span class="text-slate-400 shrink-0">${item.key}</span>
+                  <span class="text-slate-200 font-semibold text-right">${item.value}</span>
+                </div>`).join('')}
+            </div>
+            ${sec.linkUrl ? `<a href="${sec.linkUrl}" target="_blank" rel="noopener"
+              class="mt-2 flex items-center justify-center gap-2 py-2 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold transition cursor-pointer" style="color:${sec.titleColor}">
+              <span>${sec.linkLabel}</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+            </a>` : ''}
+          </div>`).join('<div class="border-t border-slate-800/60 my-1"></div>')}
+      </div>
+    </details>` : '';
 
   const portoExtra = city.extras === 'porto' ? `
     <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4 cursor-pointer active:opacity-80 transition-opacity" onclick="fetchWeather(true)" title="Klepnutím obnovit počasí">
