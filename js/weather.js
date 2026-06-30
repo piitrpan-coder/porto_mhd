@@ -12,8 +12,39 @@ function fetchWeather(manual = false) {
 }
 
 const WeatherModule = {
+  showSkeleton(city) {
+    const td = (id) => `${city.id}-${id}`;
+    const el = (id) => document.getElementById(td(id));
+    
+    const iconEl = el('weather-icon');
+    if (iconEl) iconEl.innerHTML = '<span class="inline-block w-12 h-12 rounded-full skeleton-pulse"></span>';
+    
+    const tempEl = el('weather-temp');
+    if (tempEl) tempEl.innerHTML = '<span class="inline-block w-20 h-10 skeleton-pulse"></span>';
+    
+    const descEl = el('weather-desc');
+    if (descEl) descEl.innerHTML = '<span class="inline-block w-24 h-4 skeleton-pulse"></span>';
+    
+    const windEl = el('weather-wind');
+    if (windEl) windEl.innerHTML = '<span class="inline-block w-16 h-4 skeleton-pulse"></span>';
+    
+    const uvBadge = el('uv-badge');
+    if (uvBadge) uvBadge.innerHTML = '<span class="inline-block w-14 h-4 skeleton-pulse"></span>';
+    
+    const fcIcon = el('fc-icon');
+    if (fcIcon) fcIcon.innerHTML = '<span class="inline-block w-8 h-8 rounded-full skeleton-pulse"></span>';
+    
+    const fcTemp = el('fc-temp');
+    if (fcTemp) fcTemp.innerHTML = '<span class="inline-block w-14 h-5 skeleton-pulse"></span>';
+    
+    const uvMax = el('uv-max');
+    if (uvMax) uvMax.innerHTML = '<span class="inline-block w-8 h-5 skeleton-pulse"></span>';
+  },
+
   async fetch(city, manual = false) {
     if (!city.weatherLat || !city.weatherLng) return;
+
+    this.showSkeleton(city);
 
     const iEl = document.getElementById(`${city.id}-weather-icon`);
     if (manual && iEl) iEl.style.opacity = '0.3';

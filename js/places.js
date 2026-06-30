@@ -109,13 +109,19 @@ function renderPlacesModal() {
   const list = document.getElementById('modal-poi-list');
   if (!list) return;
   list.innerHTML = pois.length === 0
-    ? '<p class="text-sm text-slate-500 text-center py-5">Zatím žádná místa.</p>'
+    ? `<div class="text-center py-8 px-4 border border-dashed border-slate-800 rounded-2xl bg-slate-950/20">
+         <div class="text-4xl mb-3">📍</div>
+         <p class="text-sm font-bold text-slate-300">Zatím žádná uložená místa</p>
+         <p class="text-xs text-slate-500 mt-1.5 max-w-[280px] mx-auto leading-relaxed">
+           Vyhledej si zajímavá místa v okolí na kartě Přehled a klikni na <strong>+ Uložit</strong>, nebo zadej vlastní souřadnice níže.
+         </p>
+       </div>`
     : pois.map((p, i) =>
       '<div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/40 border border-slate-800/50 gap-2">'
       + '<div class="truncate flex-1 cursor-pointer" data-addr="' + p.address.replace(/"/g, '&quot;') + '" onclick="copyToClipboard(this.dataset.addr)">'
       + '<span class="text-sm font-bold text-slate-200 block truncate">' + p.emoji + ' ' + p.name + '</span>'
       + '<span class="text-xs text-slate-500 block truncate">' + p.address + ' <span class="text-slate-700">· klepni pro kopírování</span></span></div>'
-      + '<button onclick="deletePoi(' + i + ')" class="shrink-0 text-slate-500 hover:text-red-400 text-base px-2 py-1 transition cursor-pointer select-none">✕</button>'
+      + '<button onclick="deletePoi(' + i + ')" class="shrink-0 text-slate-500 hover:text-red-400 text-base px-2 py-1 transition cursor-pointer select-none" aria-label="Odstranit ' + p.name + '">✕</button>'
       + '</div>'
     ).join('');
 }

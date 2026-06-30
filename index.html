@@ -92,13 +92,26 @@
     body.light-theme #city-picker button h2.text-yellow-400 { color: #d97706 !important; }
     body.light-theme #city-picker button h2.text-cyan-400 { color: #0891b2 !important; }
     body.light-theme #city-picker button h2.text-orange-400 { color: #ea580c !important; }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .skeleton-pulse {
+      animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      background-color: #334155;
+      border-radius: 0.375rem;
+    }
+    body.light-theme .skeleton-pulse {
+      background-color: #cbd5e1;
+    }
   </style>
 </head>
 <body class="bg-[#080f1c] text-slate-100 font-sans antialiased">
 
 <!-- ===== CITY PICKER ===== -->
 <div id="city-picker" class="min-h-screen flex flex-col pt-safe relative">
-  <button onclick="toggleTheme()" id="picker-theme-toggle" class="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-2xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 transition cursor-pointer select-none" title="Změnit režim">☀️</button>
+  <button onclick="toggleTheme()" id="picker-theme-toggle" class="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-2xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 transition cursor-pointer select-none" title="Změnit režim" aria-label="Přepnout barevný režim">☀️</button>
   <div class="max-w-md mx-auto w-full px-4 py-10 flex-1 flex flex-col">
     <div class="mb-10 text-center">
       <div class="text-5xl mb-4">🧭</div>
@@ -155,7 +168,7 @@
   <!-- Header -->
   <header id="app-header" class="sticky top-0 z-30 bg-slate-900/95 border-b border-slate-800 backdrop-blur pt-safe px-4 py-3">
     <div class="flex items-center justify-between">
-      <button onclick="showCityPicker()" class="flex items-center space-x-2 text-slate-400 hover:text-slate-200 transition cursor-pointer active:scale-90">
+      <button onclick="showCityPicker()" class="flex items-center space-x-2 text-slate-400 hover:text-slate-200 transition cursor-pointer active:scale-90" aria-label="Zpět na výběr města">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
         </svg>
@@ -166,7 +179,7 @@
         <h1 id="city-name-header" class="text-lg font-black"></h1>
       </div>
       <div class="flex items-center space-x-3">
-        <button onclick="toggleTheme()" id="theme-toggle" class="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer select-none" title="Změnit režim">☀️</button>
+        <button onclick="toggleTheme()" id="theme-toggle" class="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer select-none" title="Změnit režim" aria-label="Přepnout barevný režim">☀️</button>
         <div class="flex items-center space-x-1.5">
           <div id="connection-status" class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></div>
           <span id="connection-status-text" class="text-sm text-green-400 font-semibold">Online</span>
@@ -196,7 +209,7 @@
           </div>
           <div id="sticky-valid" class="text-xs text-slate-500 mt-1 truncate">Jízdenka platí</div>
         </div>
-        <button onclick="cancelCountdown()" class="shrink-0 w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-xl transition cursor-pointer text-lg">✕</button>
+        <button onclick="cancelCountdown()" class="shrink-0 w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-xl transition cursor-pointer text-lg" aria-label="Ukončit odpočet jízdenky">✕</button>
       </div>
     </div>
   </div>
@@ -216,7 +229,7 @@
     <!-- Sticky header -->
     <div class="sticky top-0 bg-[#080f1c] border-b border-slate-800 px-4 py-3 flex items-center justify-between z-10">
       <h2 class="text-sm font-black text-slate-100">📍 Správa míst</h2>
-      <button onclick="closePlacesModal()" class="text-slate-400 hover:text-slate-100 transition text-2xl leading-none cursor-pointer select-none">×</button>
+      <button onclick="closePlacesModal()" class="text-slate-400 hover:text-slate-100 transition text-2xl leading-none cursor-pointer select-none" aria-label="Zavřít správu míst">×</button>
     </div>
     <div class="px-4 py-4 space-y-6 pb-safe">
 
@@ -1315,7 +1328,7 @@ function renderOverview(city) {
           <span class="text-xs font-bold px-2.5 py-1 rounded-full shrink-0" style="background:${item.badgeColor}25;color:${item.badgeColor}">${item.badge}</span>
         </div>
         <p class="text-sm text-slate-400 leading-relaxed">${item.detail}</p>
-        <p class="text-xs text-slate-600 mt-1">${item.time}</p>
+        <p class="text-xs text-slate-400 mt-1">${item.time}</p>
       </div>
     </div>`).join('');
 
@@ -1828,7 +1841,7 @@ function _renderItinerariesInner(city) {
   if (!items.length && !isEdit) return '';
 
   const mainChevron = `<svg class="w-5 h-5 text-slate-500 shrink-0 details-arrow transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>`;
-  const subChevron  = `<svg class="w-4 h-4 text-slate-600 shrink-0 details-arrow transition-transform duration-200 ml-auto" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>`;
+  const subChevron  = `<svg class="w-4 h-4 text-slate-500 shrink-0 details-arrow transition-transform duration-200 ml-auto" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>`;
 
   const days = items.map(it => {
     const itemId   = it._id;
@@ -1844,7 +1857,7 @@ function _renderItinerariesInner(city) {
       </div>`
     : it.photoQuery ? `
       <div id="ph-${safeId}" class="mb-3 h-16 rounded-xl bg-slate-800/30 border border-dashed border-slate-700/40 flex items-center justify-center">
-        <span class="text-[10px] text-slate-600 flex items-center gap-1.5"><span class="spin" style="display:inline-block">⟳</span> Načítám foto…</span>
+        <span class="text-[10px] text-slate-400 flex items-center gap-1.5"><span class="spin" style="display:inline-block">⟳</span> Načítám foto…</span>
       </div>` : '';
 
     const photoPanel = panelOpen ? `
@@ -1865,7 +1878,7 @@ function _renderItinerariesInner(city) {
             Uložit URL
           </button>
         </div>
-        <p class="text-[9px] text-slate-600">Fotografie z galerie jsou uloženy offline. URL foto vyžaduje připojení – pro offline přístup použij tlačítko ↓ na náhledu.</p>
+        <p class="text-[9px] text-slate-500">Fotografie z galerie jsou uloženy offline. URL foto vyžaduje připojení – pro offline přístup použij tlačítko ↓ na náhledu.</p>
       </div>` : '';
 
     const steps = it.steps.map(s =>
@@ -1878,9 +1891,9 @@ function _renderItinerariesInner(city) {
     const editControls = isEdit ? `
       <div class="flex items-center gap-1.5 shrink-0 ml-2">
         <button onclick="event.stopPropagation();openPhotoPanel('itin','${cityId}','${itemId}')"
-                class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-yellow-400 transition cursor-pointer text-sm active:scale-90">📷</button>
+                class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-yellow-400 transition cursor-pointer text-sm active:scale-90" aria-label="Přidat nebo změnit fotografii">📷</button>
         <button onclick="event.stopPropagation();deleteItineraryItem('${cityId}','${itemId}')"
-                class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-900/20 hover:bg-red-900/40 text-red-400 hover:text-red-300 transition cursor-pointer text-lg font-bold active:scale-90">×</button>
+                class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-900/20 hover:bg-red-900/40 text-red-400 hover:text-red-300 transition cursor-pointer text-lg font-bold active:scale-90" aria-label="Odstranit den">×</button>
       </div>` : '';
 
     return `
@@ -1918,7 +1931,7 @@ function _renderItinerariesInner(city) {
       </button>
     </div>
     <button onclick="resetItinerariesToDefault('${cityId}')"
-            class="w-full text-[11px] text-slate-600 hover:text-slate-400 text-center py-1.5 transition cursor-pointer mt-1">
+            class="w-full text-[11px] text-slate-500 hover:text-slate-400 text-center py-1.5 transition cursor-pointer mt-1">
       Obnovit výchozí itineráře
     </button>` : '';
 
@@ -1939,6 +1952,7 @@ function _renderItinerariesInner(city) {
         </div>
       </summary>
       <div class="px-4 pb-4 pt-3 border-t border-slate-800 space-y-2">
+        <div id="itin-photo-progress-${cityId}" class="mb-2 hidden"></div>
         ${days}
         ${addForm}
       </div>
@@ -1971,7 +1985,7 @@ function _renderPhotoSpotsInner(city) {
       </div>`
     : s.photoQuery ? `
       <div id="ph-${safeId}" class="mb-2 h-14 rounded-xl bg-slate-800/30 border border-dashed border-slate-700/40 flex items-center justify-center">
-        <span class="text-[10px] text-slate-600 flex items-center gap-1.5"><span class="spin" style="display:inline-block">⟳</span> Načítám foto…</span>
+        <span class="text-[10px] text-slate-400 flex items-center gap-1.5"><span class="spin" style="display:inline-block">⟳</span> Načítám foto…</span>
       </div>` : '';
 
     const photoPanel = panelOpen ? `
@@ -1992,7 +2006,7 @@ function _renderPhotoSpotsInner(city) {
             Uložit URL
           </button>
         </div>
-        <p class="text-[9px] text-slate-600">Fotografie z galerie jsou uloženy offline. URL foto vyžaduje připojení – pro offline použij ↓ na náhledu.</p>
+        <p class="text-[9px] text-slate-500">Fotografie z galerie jsou uloženy offline. URL foto vyžaduje připojení – pro offline použij ↓ na náhledu.</p>
       </div>` : '';
 
     const mapsBtn = s.mapsUrl ? `<a href="${s.mapsUrl}" target="_blank" rel="noopener" class="shrink-0 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-300 active:scale-95 transition-transform">Mapa</a>` : '';
@@ -2000,9 +2014,9 @@ function _renderPhotoSpotsInner(city) {
     const editControls = isEdit ? `
       <div class="flex items-center gap-1.5 shrink-0">
         <button onclick="openPhotoPanel('ps','${cityId}','${itemId}')"
-                class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-yellow-400 transition cursor-pointer text-sm active:scale-90">📷</button>
+                class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-yellow-400 transition cursor-pointer text-sm active:scale-90" aria-label="Přidat nebo změnit fotografii">📷</button>
         <button onclick="deletePhotoSpotItem('${cityId}','${itemId}')"
-                class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-900/20 hover:bg-red-900/40 text-red-400 hover:text-red-300 transition cursor-pointer text-lg font-bold active:scale-90">×</button>
+                class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-900/20 hover:bg-red-900/40 text-red-400 hover:text-red-300 transition cursor-pointer text-lg font-bold active:scale-90" aria-label="Odstranit foto místo">×</button>
       </div>` : '';
 
     return `
@@ -2034,7 +2048,7 @@ function _renderPhotoSpotsInner(city) {
       </button>
     </div>
     <button onclick="resetPhotoSpotsToDefault('${cityId}')"
-            class="w-full text-[11px] text-slate-600 hover:text-slate-400 text-center py-1.5 transition cursor-pointer mt-1">
+            class="w-full text-[11px] text-slate-500 hover:text-slate-400 text-center py-1.5 transition cursor-pointer mt-1">
       Obnovit výchozí foto tipy
     </button>` : '';
 
@@ -2055,6 +2069,7 @@ function _renderPhotoSpotsInner(city) {
         </div>
       </summary>
       <div class="px-5 pb-4 pt-3 border-t border-slate-800">
+        <div id="ps-photo-progress-${cityId}" class="mb-2 hidden"></div>
         ${spotItems}
         ${addForm}
       </div>

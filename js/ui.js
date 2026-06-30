@@ -203,6 +203,9 @@ function switchTab(tabId) {
     if (!sec || !btn) return;
     if (tab.id === tabId) {
       sec.classList.remove('hidden');
+      sec.classList.remove('animate-fade-in');
+      sec.offsetHeight; // force reflow
+      sec.classList.add('animate-fade-in');
       btn.style.color = city.color;
       btn.style.background = 'rgba(255,255,255,0.07)';
       if (tabId === 'places') applyPlaces();
@@ -236,6 +239,9 @@ function renderCity(cityId) {
 
   // Save last opened city
   localStorage.setItem('app_last_city', cityId);
+
+  // Lifecycle enter
+  CityLifecycle.enter(city);
 
   // Setup city-app header colors
   document.getElementById('city-picker').classList.add('hidden');
@@ -324,14 +330,46 @@ function locateMeLagos() {
 // PHOTO MANAGEMENT & PHOTO SPOT LOGIC
 // ==========================================
 const _fetchingPhotos = new Set();
+const _photoProgress = {
+  itin: { total: 0, loaded: 0 },
+  ps: { total: 0, loaded: 0 }
+};
+
+function updatePhotoProgressUI(type, cityId) {
+  const el = document.getElementById(`${type}-photo-progress-${cityId}`);
+  if (!el) return;
+  const progress = _photoProgress[type];
+  if (progress.loaded >= progress.total || progress.total === 0) {
+    el.classList.add('hidden');
+    el.innerHTML = '';
+  } else {
+    el.classList.remove('hidden');
+    el.innerHTML = `
+      <div class="flex items-center justify-between text-xs text-slate-400 bg-slate-800/40 border border-slate-700/30 rounded-xl px-3.5 py-2.5 animate-pulse">
+        <div class="flex items-center gap-2">
+          <span class="spin text-yellow-400">⏳</span>
+          <span>Ukládám offline fotky...</span>
+        </div>
+        <span class="font-bold font-mono text-yellow-400">${progress.loaded} / ${progress.total}</span>
+      </div>`;
+  }
+}
 
 function _triggerPhotoFetch(type, cityId) {
   const items = type === 'itin' ? getCustomItineraries(cityId) : getCustomPhotoSpots(cityId);
   const pending = items.filter(it => it.photoQuery && !loadPhoto(it._id));
-  if (!pending.length) return;
+  if (!pending.length) {
+    _photoProgress[type] = { total: 0, loaded: 0 };
+    updatePhotoProgressUI(type, cityId);
+    return;
+  }
   if (!navigator.onLine) return;
   const wifi = isOnWifi();
   if (wifi === false) return;
+
+  _photoProgress[type] = { total: pending.length, loaded: 0 };
+  updatePhotoProgressUI(type, cityId);
+
   scheduleFetchPhotos(type, cityId, pending);
 }
 
@@ -342,7 +380,11 @@ function scheduleFetchPhotos(type, cityId, items) {
     if (loadPhoto(item._id)) return;
     _fetchingPhotos.add(key);
     fetchAndStorePhoto(type, cityId, item)
-      .finally(() => _fetchingPhotos.delete(key));
+      .finally(() => {
+        _fetchingPhotos.delete(key);
+        _photoProgress[type].loaded++;
+        updatePhotoProgressUI(type, cityId);
+      });
   });
 }
 

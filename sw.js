@@ -1,9 +1,7 @@
-const CACHE_NAME = "porto-mhd-v1.4";
+const CACHE_NAME = "porto-mhd-v1.5";
 const ASSETS = [
   "./",
   "./index.html",
-  "./porto.html",
-  "./lagos.html",
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png",
