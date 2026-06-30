@@ -1185,6 +1185,7 @@ const CityLifecycle = {
 // NAVIGATION
 // ===========================
 function showCityPicker() {
+  localStorage.removeItem('app_last_city');
   document.getElementById('city-picker').classList.remove('hidden');
   document.getElementById('city-app').classList.add('hidden');
   document.getElementById('app-header').style.borderColor = '';
@@ -1199,6 +1200,8 @@ function showCityPicker() {
 function renderCity(cityId) {
   const city = CITIES.find(c => c.id === cityId);
   if (!city) return;
+
+  localStorage.setItem('app_last_city', cityId);
 
   // Lifecycle enter
   CityLifecycle.enter(city);
@@ -1289,6 +1292,23 @@ function renderOverview(city) {
       <span class="text-base text-slate-300 leading-relaxed">${b}</span>
     </li>`).join('');
 
+  const home = PlacesManager.loadHome(city.id);
+  const homeLabel = home?.name || home?.address || 'Ubytování';
+  const quickHomeCard = `
+    <div class="bg-slate-900/60 border hover:border-slate-800/80 rounded-2xl p-4 active:scale-[0.98] transition cursor-pointer flex items-center justify-between gap-4 mb-1"
+         onclick="navigateHome()"
+         style="border-color:${city.color}40">
+      <div class="flex items-center gap-3 min-w-0">
+        <span class="text-3xl shrink-0">🏠</span>
+        <div class="min-w-0">
+          <div class="text-sm font-black text-slate-100">Navigovat na ubytování</div>
+          <div id="overview-home-address" class="text-xs text-slate-400 mt-0.5 truncate max-w-[240px]">${homeLabel}</div>
+        </div>
+      </div>
+      <span class="text-lg font-bold" style="color:${city.color}">➔</span>
+    </div>
+  `;
+
   const cards = city.overviewItems.map(item => `
     <div class="bg-slate-900/60 rounded-2xl p-5 border border-slate-800 flex items-center gap-4">
       <span class="text-3xl shrink-0">${item.icon || '🚌'}</span>
@@ -1365,8 +1385,10 @@ function renderOverview(city) {
         <div class="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1" style="scrollbar-width:none">
           <button onclick="fetchNearby(this,'supermarket')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🛒</span><span class="text-sm font-bold">Super.</span></button>
           <button onclick="fetchNearby(this,'cafe')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">☕</span><span class="text-sm font-bold">Kavárny</span></button>
+          <button onclick="fetchNearby(this,'restaurant')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🍽️</span><span class="text-sm font-bold">Restaurace</span></button>
           <button onclick="fetchNearby(this,'fast_food')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🍔</span><span class="text-sm font-bold">Fast food</span></button>
           <button onclick="fetchNearby(this,'bar')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🍺</span><span class="text-sm font-bold">Bary</span></button>
+          <button onclick="fetchNearby(this,'pharmacy')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">💊</span><span class="text-sm font-bold">Lékárny</span></button>
         </div>
         <div class="absolute right-0 top-0 bottom-1 w-10 bg-gradient-to-l from-slate-900/60 to-transparent pointer-events-none rounded-r-2xl"></div>
       </div>
@@ -1453,8 +1475,10 @@ function renderOverview(city) {
         <div class="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1" style="scrollbar-width:none">
           <button onclick="fetchNearby(this,'supermarket')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🛒</span><span class="text-sm font-bold">Super.</span></button>
           <button onclick="fetchNearby(this,'cafe')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">☕</span><span class="text-sm font-bold">Kavárny</span></button>
+          <button onclick="fetchNearby(this,'restaurant')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🍽️</span><span class="text-sm font-bold">Restaurace</span></button>
           <button onclick="fetchNearby(this,'fast_food')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🍔</span><span class="text-sm font-bold">Fast food</span></button>
           <button onclick="fetchNearby(this,'bar')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🍺</span><span class="text-sm font-bold">Bary</span></button>
+          <button onclick="fetchNearby(this,'pharmacy')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">💊</span><span class="text-sm font-bold">Lékárny</span></button>
         </div>
         <div class="absolute right-0 top-0 bottom-1 w-10 bg-gradient-to-l from-slate-900/60 to-transparent pointer-events-none rounded-r-2xl"></div>
       </div>
@@ -1545,8 +1569,10 @@ function renderOverview(city) {
         <div class="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1" style="scrollbar-width:none">
           <button onclick="fetchNearby(this,'supermarket')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🛒</span><span class="text-sm font-bold">Super.</span></button>
           <button onclick="fetchNearby(this,'cafe')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">☕</span><span class="text-sm font-bold">Kavárny</span></button>
+          <button onclick="fetchNearby(this,'restaurant')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🍽️</span><span class="text-sm font-bold">Restaurace</span></button>
           <button onclick="fetchNearby(this,'fast_food')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🍔</span><span class="text-sm font-bold">Fast food</span></button>
           <button onclick="fetchNearby(this,'bar')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🍺</span><span class="text-sm font-bold">Bary</span></button>
+          <button onclick="fetchNearby(this,'pharmacy')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">💊</span><span class="text-sm font-bold">Lékárny</span></button>
         </div>
         <div class="absolute right-0 top-0 bottom-1 w-10 bg-gradient-to-l from-slate-900/60 to-transparent pointer-events-none rounded-r-2xl"></div>
       </div>
@@ -1570,6 +1596,7 @@ function renderOverview(city) {
       </summary>
       <ul class="px-5 pb-5 space-y-4 border-t border-slate-800 pt-4">${arrivals}</ul>
     </details>
+    ${quickHomeCard}
     <div class="space-y-3">${cards}</div>
     <details class="bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden">
       <summary class="flex items-center justify-between px-5 py-4 cursor-pointer select-none">
@@ -2871,6 +2898,16 @@ function locateMeLagos() {
   );
 }
 
+function navigateHome() {
+  const home = loadHome();
+  if (!home || !home.lat || !home.lng) {
+    showToast('Nebylo nalezeno ubytování.');
+    return;
+  }
+  const url = `https://www.google.com/maps/dir/?api=1&destination=${home.lat},${home.lng}&travelmode=transit`;
+  window.open(url, '_blank', 'noopener');
+}
+
 // ===========================
 // WEATHER MODULE (generic for all cities)
 // ===========================
@@ -3046,6 +3083,11 @@ function applyPlaces() {
     opts.push({ val: 'poi_' + i, label: (p.emoji || '📍') + ' ' + p.name });
   });
   populateNearbyDd(opts);
+
+  const overviewHomeLabel = document.getElementById('overview-home-address');
+  if (overviewHomeLabel) {
+    overviewHomeLabel.textContent = home?.name || home?.address || 'Ubytování';
+  }
 }
 
 function renderPlacesModal() {
@@ -3154,8 +3196,10 @@ let _gpsPosTime = 0;
 const NEARBY_CFG = {
   supermarket: { tag: '"shop"="supermarket"', label: 'Supermarket', radius: 1000 },
   cafe:        { tag: '"amenity"="cafe"',      label: 'Kavárna',     radius: 600  },
+  restaurant:  { tag: '"amenity"="restaurant"',label: 'Restaurace',   radius: 800  },
   fast_food:   { tag: '"amenity"="fast_food"', label: 'Fast food',   radius: 600  },
-  bar:         { tag: '"amenity"="bar"',        label: 'Bar',         radius: 600  }
+  bar:         { tag: '"amenity"="bar"',        label: 'Bar',         radius: 600  },
+  pharmacy:    { tag: '"amenity"="pharmacy"',  label: 'Lékárna',      radius: 1000 }
 };
 
 // ===========================
@@ -3709,6 +3753,14 @@ function deleteItemPhoto(type, cityId, itemId) {
   if (type === 'itin') refreshItinerariesSection(cityId);
   else                 refreshPhotoSpotsSection(cityId);
   showToast('Fotografie smazána.');
+}
+
+// Auto-load last active city if set
+const lastCity = localStorage.getItem('app_last_city');
+if (lastCity) {
+  setTimeout(() => {
+    renderCity(lastCity);
+  }, 50);
 }
 
 // ===========================
