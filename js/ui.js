@@ -776,6 +776,7 @@ function toggleInteractiveMap() {
       toggleBtn.textContent = '🗺️ Přepnout na schéma metra';
     }
     initLeafletMap();
+    _initOfflineTilesUI();
   } else {
     staticMap.classList.remove('hidden');
     interactiveMap.classList.add('hidden');
@@ -873,5 +874,103 @@ function initLeafletMap() {
   } catch (e) {
     console.error('[Leaflet] Map init failed:', e);
     container.innerHTML = `<p class="text-xs text-red-400 text-center py-5">Chyba při načítání interaktivní mapy.</p>`;
+  }
+}
+
+// ==========================================
+// OFFLINE TILE CACHING
+// ==========================================
+
+const CITY_TILE_BOUNDS = {
+  porto:  { minLat: 41.10, maxLat: 41.22, minLng: -8.72, maxLng: -8.55 },
+  lagos:  { minLat: 37.03, maxLat: 37.16, minLng: -8.78, maxLng: -8.58 },
+  lisbon: { minLat: 38.66, maxLat: 38.80, minLng: -9.23, maxLng: -9.07 }
+};
+
+function _lngToTileX(lng, z) {
+  return Math.floor((lng + 180) / 360 * Math.pow(2, z));
+}
+
+function _latToTileY(lat, z) {
+  const r = lat * Math.PI / 180;
+  return Math.floor((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * Math.pow(2, z));
+}
+
+function _buildTileUrls(cityId) {
+  const bounds = CITY_TILE_BOUNDS[cityId];
+  if (!bounds) return [];
+  const urls = [];
+  for (const z of [13, 14, 15]) {
+    const x0 = _lngToTileX(bounds.minLng, z);
+    const x1 = _lngToTileX(bounds.maxLng, z);
+    const y0 = _latToTileY(bounds.maxLat, z);
+    const y1 = _latToTileY(bounds.minLat, z);
+    for (let x = x0; x <= x1; x++) {
+      for (let y = y0; y <= y1; y++) {
+        urls.push(`https://tile.openstreetmap.org/${z}/${x}/${y}.png`);
+      }
+    }
+  }
+  return urls;
+}
+
+async function downloadOfflineTiles() {
+  if (!currentCity) return;
+  const cityId = currentCity.id;
+  const urls = _buildTileUrls(cityId);
+  if (!urls.length) { showToast('Pro toto město není offline mapa dostupná.'); return; }
+
+  const btn = document.getElementById('offline-tiles-btn');
+  const statusEl = document.getElementById('offline-tiles-status');
+  if (btn) { btn.disabled = true; btn.classList.add('opacity-60'); }
+
+  let cache;
+  try {
+    cache = await caches.open('porto-tiles-v1');
+  } catch {
+    showToast('Cache API není dostupné.');
+    if (btn) { btn.disabled = false; btn.classList.remove('opacity-60'); }
+    return;
+  }
+
+  let done = 0;
+  const update = () => {
+    const pct = Math.round(done / urls.length * 100);
+    if (statusEl) statusEl.textContent = `Stahuji dlaždice… ${done} / ${urls.length} (${pct} %)`;
+  };
+  update();
+
+  for (const url of urls) {
+    try {
+      const existing = await cache.match(url);
+      if (!existing) {
+        const resp = await fetch(url, { mode: 'cors' });
+        if (resp && resp.ok) await cache.put(url, resp);
+      }
+    } catch {}
+    done++;
+    if (done % 10 === 0 || done === urls.length) update();
+  }
+
+  localStorage.setItem(`offline-tiles-${cityId}`, Date.now().toString());
+  if (statusEl) statusEl.textContent = `✓ Uloženo ${urls.length} dlaždic — mapa funguje offline`;
+  if (btn) {
+    btn.disabled = false;
+    btn.classList.remove('opacity-60');
+    btn.textContent = '🔄 Obnovit offline mapu';
+  }
+  showToast('Mapa uložena offline ✓');
+}
+
+function _initOfflineTilesUI() {
+  if (!currentCity) return;
+  const cityId = currentCity.id;
+  const ts = localStorage.getItem(`offline-tiles-${cityId}`);
+  const statusEl = document.getElementById('offline-tiles-status');
+  if (ts && statusEl) {
+    const d = new Date(parseInt(ts));
+    statusEl.textContent = `✓ Offline mapa uložena ${d.toLocaleDateString('cs-CZ')} ${d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })}`;
+    const btn = document.getElementById('offline-tiles-btn');
+    if (btn) btn.textContent = '🔄 Obnovit offline mapu';
   }
 }

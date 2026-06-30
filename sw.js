@@ -1,4 +1,6 @@
 const CACHE_NAME = "porto-mhd-v1.6";
+const TILES_CACHE = "porto-tiles-v1";
+
 const ASSETS = [
   "./",
   "./index.html",
@@ -29,13 +31,13 @@ self.addEventListener("install", event => {
   );
 });
 
-// Activate Event (Cleanup old caches)
+// Activate Event — keep both app cache and tiles cache
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys().then(keys => {
       return Promise.all(
         keys.map(key => {
-          if (key !== CACHE_NAME) {
+          if (key !== CACHE_NAME && key !== TILES_CACHE) {
             console.log("Removing old cache:", key);
             return caches.delete(key);
           }
@@ -45,12 +47,32 @@ self.addEventListener("activate", event => {
   );
 });
 
-// Fetch Event (Cache-First strategy)
+// Fetch Event
 self.addEventListener("fetch", event => {
-  // Only handle local or CDN-cached network requests
+  const url = event.request.url;
+
+  // OSM tile requests — cache-first from TILES_CACHE
+  if (url.includes("tile.openstreetmap.org")) {
+    event.respondWith(
+      caches.open(TILES_CACHE).then(cache =>
+        cache.match(event.request).then(cached => {
+          if (cached) return cached;
+          return fetch(event.request).then(resp => {
+            if (resp && resp.status === 200) {
+              cache.put(event.request, resp.clone());
+            }
+            return resp;
+          }).catch(() => undefined);
+        })
+      )
+    );
+    return;
+  }
+
+  // App shell and CDN resources — cache-first
   if (
-    event.request.url.startsWith(self.location.origin) ||
-    event.request.url.startsWith("https://cdn.jsdelivr.net")
+    url.startsWith(self.location.origin) ||
+    url.startsWith("https://cdn.jsdelivr.net")
   ) {
     event.respondWith(
       caches.match(event.request).then(cachedResponse => {
@@ -60,7 +82,6 @@ self.addEventListener("fetch", event => {
 
         return fetch(event.request)
           .then(networkResponse => {
-            // Cache newly requested basic resources dynamically if appropriate
             if (
               networkResponse &&
               networkResponse.status === 200 &&
@@ -74,7 +95,6 @@ self.addEventListener("fetch", event => {
             return networkResponse;
           })
           .catch(() => {
-            // Offline fallback for navigation requests
             if (event.request.mode === "navigate") {
               return caches.match("./index.html");
             }

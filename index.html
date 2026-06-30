@@ -1253,7 +1253,7 @@ function renderOverview(city) {
     <details class="bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden">
       <summary class="flex items-center justify-between px-5 py-4 cursor-pointer select-none">
         <span class="text-base font-extrabold uppercase tracking-wider text-slate-400">🚨 Nouzové kontakty</span>
-        \${chevron}
+        ${chevron}
       </summary>
       <div class="px-5 pb-5 border-t border-slate-800 pt-4 space-y-3">
         <div class="flex items-center justify-between bg-slate-950/40 p-3 rounded-xl">
@@ -1283,7 +1283,7 @@ function renderOverview(city) {
     <details class="bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden">
       <summary class="flex items-center justify-between px-5 py-4 cursor-pointer select-none">
         <span class="text-base font-extrabold uppercase tracking-wider text-slate-400">💵 Spropitné & Ceny</span>
-        \${chevron}
+        ${chevron}
       </summary>
       <div class="px-5 pb-5 border-t border-slate-800 pt-4 text-sm text-slate-300 space-y-3 leading-relaxed">
         <p><strong>Restaurace:</strong> Spropitné není povinné a není započítané v ceně. Běžně se dává 5–10 % za dobré služby, nebo stačí zaokrouhlit částku nahoru.</p>
@@ -1628,10 +1628,16 @@ function renderOverview(city) {
     ${quickHomeCard}
     
     <!-- Denní plánovač -->
-    <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4">
+    <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-3">
       <div class="flex items-center justify-between">
         <h3 class="text-base font-extrabold text-slate-200">📅 Denní plánovač</h3>
-        <span class="text-xs text-slate-500 font-semibold uppercase tracking-wider">Můj program</span>
+        <div class="flex items-center gap-1">
+          <button onclick="navigatePlannerDate('${city.id}', -1)"
+            class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 cursor-pointer active:scale-90 transition select-none text-sm">‹</button>
+          <span id="planner-date-label-${city.id}" class="text-xs font-bold text-slate-300 px-2 min-w-[52px] text-center">Dnes</span>
+          <button onclick="navigatePlannerDate('${city.id}', 1)"
+            class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 cursor-pointer active:scale-90 transition select-none text-sm">›</button>
+        </div>
       </div>
       <div class="flex gap-2">
         <input id="planner-add-input-${city.id}" type="text" placeholder="Co máš v plánu? (např. 10:00 Most Dom Luis)"
@@ -2230,7 +2236,17 @@ function renderMap(city) {
     <!-- Interactive OSM Leaflet Map view -->
     <div id="map-interactive-view" class="${leafletHidden} space-y-2">
       <div id="leaflet-map" class="w-full bg-slate-900/60 rounded-xl border border-slate-800 overflow-hidden" style="height:420px"></div>
-      <p class="text-[10px] text-slate-500 italic">Interaktivní mapa vyžaduje internet. Zobrazuje polohu ubytování (🏠) a uložených míst (📍).</p>
+      <p class="text-[10px] text-slate-500 italic">Interaktivní mapa zobrazuje ubytování (🏠) a uložená místa (📍).</p>
+      <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 space-y-2">
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-xs font-bold text-slate-400">🗺️ Offline mapa</span>
+          <button id="offline-tiles-btn" onclick="downloadOfflineTiles()"
+            class="text-xs font-bold px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-green-400 transition cursor-pointer active:scale-95 select-none">
+            ⬇ Uložit mapu offline
+          </button>
+        </div>
+        <p id="offline-tiles-status" class="text-[10px] text-slate-500 leading-relaxed"></p>
+      </div>
     </div>`;
 }
 

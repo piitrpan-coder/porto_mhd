@@ -33,13 +33,29 @@ const PlacesManager = {
     const pois = this.loadPois(cityId);
     pois.splice(index, 1);
     this.savePois(cityId, pois);
+  },
+
+  toggleFavorite(cityId, index) {
+    const pois = this.loadPois(cityId);
+    if (pois[index]) {
+      pois[index].favorite = !pois[index].favorite;
+      this.savePois(cityId, pois);
+    }
   }
 };
+
+let _poiFilter = 'all';
+
+function setPoiFilter(filter) {
+  _poiFilter = filter;
+  renderPlacesModal();
+}
 
 function loadHome() { return PlacesManager.loadHome(currentCity?.id); }
 function loadPois() { return PlacesManager.loadPois(currentCity?.id); }
 function savePois(pois) { PlacesManager.savePois(currentCity?.id, pois); }
 function deletePoi(index) { PlacesManager.deletePoi(currentCity?.id, index); renderPlacesModal(); applyPlaces(); }
+function togglePoiFavorite(index) { PlacesManager.toggleFavorite(currentCity?.id, index); renderPlacesModal(); applyPlaces(); }
 
 function addPoi() {
   const emoji   = (document.getElementById('modal-poi-emoji')?.value.trim()   || '📍');
@@ -86,8 +102,11 @@ function applyPlaces() {
     { val: 'gps',  label: '📍 Moje poloha (GPS)' },
     { val: 'home', label: '🏠 ' + (home?.name || 'Ubytování') }
   ];
-  pois.filter(p => p.lat && p.lng).forEach((p, i) => {
-    opts.push({ val: 'poi_' + i, label: (p.emoji || '📍') + ' ' + p.name });
+  // Favorites first, then the rest
+  const sorted = [...pois].sort((a, b) => (b.favorite ? 1 : 0) - (a.favorite ? 1 : 0));
+  sorted.filter(p => p.lat && p.lng).forEach((p, i) => {
+    const heart = p.favorite ? '❤️ ' : '';
+    opts.push({ val: 'poi_' + pois.indexOf(p), label: heart + (p.emoji || '📍') + ' ' + p.name });
   });
   populateNearbyDd(opts);
 
@@ -137,18 +156,42 @@ function renderPlacesModal() {
   const lti = document.getElementById('modal-home-lat');     if (lti) lti.value = h.lat;
   const lni = document.getElementById('modal-home-lng');     if (lni) lni.value = h.lng;
 
-  const pois = PlacesManager.loadPois(currentCity.id);
+  const allPois = PlacesManager.loadPois(currentCity.id);
   const list = document.getElementById('modal-poi-list');
   if (!list) return;
-  list.innerHTML = pois.length === 0
-    ? `<div class="text-center py-8 px-4 border border-dashed border-slate-800 rounded-2xl bg-slate-950/20">
-         <div class="text-4xl mb-3">📍</div>
-         <p class="text-sm font-bold text-slate-300">Zatím žádná uložená místa</p>
-         <p class="text-xs text-slate-500 mt-1.5 max-w-[280px] mx-auto leading-relaxed">
-           Vyhledej si zajímavá místa v okolí na kartě Přehled a klikni na <strong>+ Uložit</strong>, nebo zadej vlastní souřadnice níže.
-         </p>
-       </div>`
-    : pois.map((p, i) => {
+
+  const hasFavs = allPois.some(p => p.favorite);
+  const filterBar = `
+    <div class="flex gap-1.5 mb-3">
+      <button onclick="setPoiFilter('all')"
+        class="px-3 py-1.5 rounded-full text-xs font-bold border transition cursor-pointer select-none ${_poiFilter === 'all' ? 'bg-yellow-500/15 border-yellow-600/30 text-yellow-400' : 'bg-slate-800 border-slate-700 text-slate-400'}">
+        Vše (${allPois.length})
+      </button>
+      <button onclick="setPoiFilter('fav')"
+        class="px-3 py-1.5 rounded-full text-xs font-bold border transition cursor-pointer select-none ${_poiFilter === 'fav' ? 'bg-red-500/15 border-red-600/30 text-red-400' : 'bg-slate-800 border-slate-700 text-slate-400'}">
+        ❤️ Oblíbené (${allPois.filter(p => p.favorite).length})
+      </button>
+    </div>`;
+
+  const pois = _poiFilter === 'fav' ? allPois.filter(p => p.favorite) : allPois;
+
+  if (allPois.length === 0) {
+    list.innerHTML = `<div class="text-center py-8 px-4 border border-dashed border-slate-800 rounded-2xl bg-slate-950/20">
+       <div class="text-4xl mb-3">📍</div>
+       <p class="text-sm font-bold text-slate-300">Zatím žádná uložená místa</p>
+       <p class="text-xs text-slate-500 mt-1.5 max-w-[280px] mx-auto leading-relaxed">
+         Vyhledej si zajímavá místa v okolí na kartě Přehled a klikni na <strong>+ Uložit</strong>, nebo zadej vlastní souřadnice níže.
+       </p>
+     </div>`;
+    return;
+  }
+
+  const emptyFav = _poiFilter === 'fav' && pois.length === 0
+    ? `<p class="text-xs text-slate-500 italic text-center py-4">Žádná oblíbená místa. Klepni na 🤍 u místa pro přidání.</p>`
+    : '';
+
+  list.innerHTML = filterBar + emptyFav + pois.map((p) => {
+      const i = allPois.indexOf(p);
       if (_editingPoiIdx === i) {
         return `
           <div class="p-3.5 rounded-xl bg-slate-950/40 border border-slate-700/50 space-y-2.5">
@@ -163,14 +206,16 @@ function renderPlacesModal() {
           </div>`;
       }
       const noteHtml = p.note ? `<div class="text-[10px] text-yellow-400/80 mt-0.5 font-medium truncate">📝 ${p.note}</div>` : '';
+      const heartIcon = p.favorite ? '❤️' : '🤍';
       return `
-        <div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/40 border border-slate-800/50 gap-2">
+        <div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/40 border ${p.favorite ? 'border-red-900/40' : 'border-slate-800/50'} gap-2">
           <div class="truncate flex-1 cursor-pointer" data-addr="${p.address.replace(/"/g, '&quot;')}" onclick="copyToClipboard(this.dataset.addr)">
             <span class="text-sm font-bold text-slate-200 block truncate">${p.emoji || '📍'} ${p.name}</span>
             <span class="text-xs text-slate-500 block truncate">${p.address} <span class="text-slate-700">· klepni pro kopírování</span></span>
             ${noteHtml}
           </div>
           <div class="flex items-center gap-1 shrink-0">
+            <button onclick="togglePoiFavorite(${i})" class="text-lg px-1.5 py-1.5 transition cursor-pointer select-none active:scale-90" aria-label="Oblíbené">${heartIcon}</button>
             <button onclick="startEditPoi(${i})" class="text-slate-400 hover:text-yellow-400 text-sm px-1.5 py-1.5 transition cursor-pointer select-none" aria-label="Upravit">✏️</button>
             <button onclick="deletePoi(${i})" class="text-slate-500 hover:text-red-400 text-base px-1.5 py-1.5 transition cursor-pointer select-none" aria-label="Odstranit ${p.name}">✕</button>
           </div>
