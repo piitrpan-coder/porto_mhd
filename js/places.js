@@ -310,9 +310,40 @@ function nominatimSearch(inputId, resultsId) {
   if (!list) return;
   clearTimeout(_nominatimTimer);
   if (query.trim().length < 3) { list.classList.add('hidden'); list.innerHTML = ''; return; }
+
+  const coordMatch = query.trim().match(/^(-?\d+(?:\.\d+)?)[,\s]+(-?\d+(?:\.\d+)?)$/);
+
   _nominatimTimer = setTimeout(() => {
     list.innerHTML = '<div class="px-3 py-2 text-slate-500 text-xs">Hledám…</div>';
     list.classList.remove('hidden');
+
+    if (coordMatch) {
+      const lat = parseFloat(coordMatch[1]), lon = parseFloat(coordMatch[2]);
+      if (lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
+        fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lon + '&format=json', {
+          headers: { 'Accept-Language': 'cs,en' }
+        })
+          .then(r => r.json())
+          .then(data => {
+            const name = data.name || data.display_name?.split(',')[0] || 'Zadané souřadnice';
+            list.innerHTML = '<div class="px-3 py-2.5 cursor-pointer hover:bg-slate-700 active:bg-slate-600 transition">'
+              + '<div class="font-semibold text-slate-100 text-xs">' + name + '</div>'
+              + '<div class="text-[10px] text-slate-400 truncate">' + (data.display_name || lat + ', ' + lon) + '</div></div>';
+            list.querySelector('div > div').parentElement.addEventListener('click', () =>
+              nominatimFill(resultsId, { ...data, lat: String(lat), lon: String(lon) })
+            );
+          })
+          .catch(() => {
+            const fallback = { lat: String(lat), lon: String(lon), name: 'Zadané souřadnice', display_name: lat + ', ' + lon };
+            list.innerHTML = '<div class="px-3 py-2.5 cursor-pointer hover:bg-slate-700 active:bg-slate-600 transition">'
+              + '<div class="font-semibold text-slate-100 text-xs">Zadané souřadnice</div>'
+              + '<div class="text-[10px] text-slate-400">' + lat + ', ' + lon + '</div></div>';
+            list.querySelector('div > div').parentElement.addEventListener('click', () => nominatimFill(resultsId, fallback));
+          });
+        return;
+      }
+    }
+
     fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(query) + '&format=json&limit=5&addressdetails=1', {
       headers: { 'Accept-Language': 'cs,en' }
     })
