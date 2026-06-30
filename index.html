@@ -62,6 +62,24 @@
         </div>
       </button>
     </div>
+    <!-- Lisabon -->
+    <button onclick="renderCity('lisbon')"
+      class="relative overflow-hidden rounded-2xl p-5 text-left cursor-pointer active:scale-95 transition-transform duration-150 mt-4 w-full"
+      style="background:linear-gradient(135deg,#1c1008 0%,#120a04 60%,#080401 100%);border:1px solid rgba(249,115,22,0.35)">
+      <div class="flex items-center gap-4">
+        <div class="text-4xl">🚃</div>
+        <div>
+          <h2 class="text-lg font-black text-orange-400">Lisabon</h2>
+          <p class="text-xs text-slate-400 mt-0.5">Hlavní město Portugalska</p>
+        </div>
+      </div>
+      <div class="mt-3 flex flex-wrap gap-1">
+        <span class="text-[10px] bg-orange-500/15 text-orange-300 px-1.5 py-0.5 rounded-full font-bold">Metro 4 linky</span>
+        <span class="text-[10px] bg-orange-500/15 text-orange-300 px-1.5 py-0.5 rounded-full font-bold">Tram 28</span>
+        <span class="text-[10px] bg-orange-500/15 text-orange-300 px-1.5 py-0.5 rounded-full font-bold">Viva Viagem</span>
+        <span class="text-[10px] bg-orange-500/15 text-orange-300 px-1.5 py-0.5 rounded-full font-bold">Sintra & Cascais</span>
+      </div>
+    </button>
     <p class="text-center text-xs text-slate-700 mt-10">Porto MHD PWA · v2.0</p>
   </div>
 </div>
@@ -529,6 +547,186 @@ const CITIES = [
       }
     ],
     extras: null
+  },
+  {
+    id: 'lisbon',
+    name: 'Lisabon',
+    emoji: '🚃',
+    subtitle: 'Průvodce hlavním městem',
+    color: '#f97316',
+    accentCls: 'text-orange-400',
+    timezone: 'Europe/Lisbon',
+    timeLabel: 'Čas v Lisabonu',
+    tabs: [
+      { id:'overview',   label:'Přehled',  icon:'📋' },
+      { id:'routes',     label:'Trasy',    icon:'🗺️' },
+      { id:'info',       label:'Tahák',    icon:'📖' },
+      { id:'map',        label:'Mapa',     icon:'🚇' },
+      { id:'transport',  label:'Doprava',  icon:'🚌' }
+    ],
+    welcome: { title:'Lisabon', subtitle:'Průvodce hlavním městem Portugalska' },
+    arrivalBullets: [
+      'Metro Vermelha (Červená) z letiště → přestup na Alameda (Zelená) nebo Oriente (Modrá)',
+      'Z letiště do centra (Baixa-Chiado): ~30 min metrem s 1 přestupem',
+      'Viva Viagem karta: 0,50 € u automatů na letišti – nabij Zapping nebo jízdenky',
+      'Uber / Bolt z letiště do centra: ~12–18 € (spolehlivější a levnější než taxi)'
+    ],
+    overviewItems: [
+      { icon:'🚇', label:'Metro – 4 linky', detail:'Azul, Verde, Amarela, Vermelha · provoz 6:30–1:00', time:'~1,65 € Zapping / 2,00 € papír', badge:'MHD', badgeColor:'#2563eb' },
+      { icon:'🚃', label:'Tram 28', detail:'Ikonická tramvaj přes Alfamu a Graçu – musíš zkusit!', time:'Stejná cena jako metro (Viva Viagem)', badge:'Turistický tip', badgeColor:'#d97706' },
+      { icon:'🏰', label:'Alfama & Castelo', detail:'Historické centrum – dlážděné uličky, výhledy na Tejo', time:'15 min od Baixa pěšky nebo Tram 28', badge:'Must-see', badgeColor:'#9333ea' },
+      { icon:'🗺️', label:'Belém', detail:'Torre de Belém, Mosteiro dos Jerónimos, Pastéis', time:'Tram 15E nebo Uber ~8 €', badge:'Výlet', badgeColor:'#16a34a' }
+    ],
+    tipBullets: [
+      'Kup Viva Viagem kartu (0,50 €) hned na letišti – platí na metro, bus i tram',
+      'Tram 28 bývá přeplněná turisty – alternativa je Bus 737 (stejná trasa, méně lidí, bez fronty)',
+      'Miradouro da Graça: lepší výhled než Santa Catarina, méně turistů – jdi ráno',
+      'Pastéis de Belém: fronta je rychlá, stojí to za to – sedni si dovnitř, ne na ulici',
+      'Sintra a Cascais jsou výborné jednodenní výlety – vlak CP z Rossio nebo Cais do Sodré'
+    ],
+    routes: [
+      {
+        from:'Letiště', to:'Centrum (Baixa-Chiado)',
+        badge:'Metro Vermelha', badgeColor:'#dc2626', duration:'~30 min',
+        description:'Metro Vermelha (Červená) z letiště → přestup na Alameda (Zelená linka) → Baixa-Chiado. Nebo Vermelha → Oriente → Azul → Baixa-Chiado.',
+        mapsUrl:'https://www.google.com/maps/dir/?api=1&origin=Aeroporto+Humberto+Delgado+Lisboa&destination=Baixa-Chiado+Lisboa&travelmode=transit',
+        mapsLabel:'Google Maps – Transit'
+      },
+      {
+        from:'Centrum', to:'Belém',
+        badge:'Tram 15E', badgeColor:'#16a34a', duration:'~30 min',
+        description:'Tram 15E z Praça da Figueira nebo Praça do Comércio → Belém (zastávka Belém nebo Mosteiro). Alternativa: Bus 728.',
+        mapsUrl:'https://www.google.com/maps/dir/?api=1&origin=Praca+do+Comercio+Lisboa&destination=Torre+de+Belem+Lisboa&travelmode=transit',
+        mapsLabel:'Google Maps – Transit'
+      },
+      {
+        from:'Centrum', to:'Sintra (výlet)',
+        badge:'Vlak CP', badgeColor:'#7c3aed', duration:'~40 min',
+        description:'Vlak CP z Rossio nebo Oriente → Sintra. Jezdí každých 30 min, jízdné ~2,60 €. Viva Viagem karta funguje i na vlak Linha de Sintra.',
+        mapsUrl:'https://www.google.com/maps/dir/?api=1&origin=Rossio+Lisboa&destination=Sintra+Portugal&travelmode=transit',
+        mapsLabel:'Google Maps – Transit'
+      },
+      {
+        from:'Centrum', to:'Cascais (výlet)',
+        badge:'Vlak CP', badgeColor:'#0891b2', duration:'~40 min',
+        description:'Vlak CP z Cais do Sodré → Cascais. Jezdí každých 20 min, 10 zastávek podél Atlantiku. Jízdné ~2,60 €.',
+        mapsUrl:'https://www.google.com/maps/dir/?api=1&origin=Cais+do+Sodre+Lisboa&destination=Cascais+Portugal&travelmode=transit',
+        mapsLabel:'Google Maps – Transit'
+      },
+      {
+        from:'Centrum', to:'Parque das Nações',
+        badge:'Metro Azul/Vermelha', badgeColor:'#2563eb', duration:'~25 min',
+        description:'Metro Azul nebo Vermelha → Oriente. Moderní čtvrť, oceanárium, nákupní centrum Vasco da Gama, výstaviště.',
+        mapsUrl:'https://www.google.com/maps/dir/?api=1&origin=Baixa-Chiado+Lisboa&destination=Parque+das+Nacoes+Lisboa&travelmode=transit',
+        mapsLabel:'Google Maps – Transit'
+      }
+    ],
+    infoSections: [
+      { type:'accordion', title:'💳 Karta Viva Viagem',
+        body:'<p>Plastová karta za <strong>0,50 €</strong> u automatů na metru a letišti. Nabij jako <strong>Zapping</strong> (kredit, ~1,65 € za jízdu) nebo kup balíček jízdenek. Platí na metro, bus Carris, tram i vlak CP v Lisabonu.</p>' },
+      { type:'accordion', title:'🚇 Metro – 4 linky a přestupy',
+        body:'<p><strong>Vermelha (Červená)</strong>: Letiště ↔ Alameda ↔ Oriente ↔ São Sebastião<br><strong>Azul (Modrá)</strong>: Reboleira ↔ Marquês de Pombal ↔ Baixa-Chiado ↔ Oriente ↔ Santa Apolónia<br><strong>Verde (Zelená)</strong>: Cais do Sodré ↔ Baixa-Chiado ↔ Alameda ↔ Telheiras<br><strong>Amarela (Žlutá)</strong>: Rato ↔ Marquês de Pombal ↔ Odivelas<br><br>Přestupy: Marquês de Pombal (A+Y) · Baixa-Chiado (A+G) · São Sebastião (A+R) · Alameda (G+R) · Oriente (A+R)<br>Provoz: 6:30–1:00 denně.</p>' },
+      { type:'accordion', title:'🚃 Tram 28 – ikonická tramvaj',
+        body:'<p>Nejslavnější dopravní prostředek Lisabonu. Trasa: Martim Moniz → Alfama → Graça → Campo de Ourique. Jede historickými uličkami, výhledy na Alfamu. <strong>Bývá přeplněná turisty</strong> – pozor na kapsáře. Alternativa: Bus 737 (stejná trasa, méně lidí).</p>' },
+      { type:'accordion', title:'🌙 Noční doprava',
+        body:'<p>Metro jezdí do 1:00. Poté fungují noční autobusy (označení N–). Uber a Bolt jsou v Lisabonu v noci velmi dobře dostupné.</p>' },
+      { type:'accordion', title:'🏖️ Výlety z Lisabonu',
+        body:'<p><strong>Sintra</strong> (40 min): vlak CP z Rossio – romantické paláce v mlze, UNESCO. Teplota bývá o 5–10 °C nižší!<br><strong>Cascais</strong> (40 min): vlak CP z Cais do Sodré – přímořské letovisko, pláže, chill atmosféra.<br><strong>Arrábida</strong> (~1 hod. autem): nejkrásnější pláže okolí Lisabonu – potřebuješ auto nebo organizovaný výlet.</p>' }
+    ],
+    mapTitle:'Mapa metra Lisabon',
+    mapNote:'Schematická mapa – není v přesném geografickém měřítku. Pinch to zoom na dotykovém zařízení.',
+    extras: null,
+    apps: [
+      { emoji:'🚕', name:'Bolt', desc:'Taxi a ridesharing (velmi aktivní v Lisabonu)', url:'https://apps.apple.com/app/bolt-request-a-ride/id675033630' },
+      { emoji:'🚕', name:'Uber', desc:'Taxi alternativa', url:'https://apps.apple.com/app/uber-request-a-ride/id368677368' },
+      { emoji:'💳', name:'MB Way', desc:'Mobilní platby v Portugalsku', url:'https://apps.apple.com/pt/app/mb-way/id890614143' },
+      { emoji:'🚇', name:'Carris Metro', desc:'Jízdní řády MHD Lisabon', url:'https://apps.apple.com/pt/app/carris-metropolitana/id1491912516' },
+      { emoji:'🚂', name:'CP Comboios', desc:'Vlakové jízdní řády (Sintra, Cascais)', url:'https://apps.apple.com/pt/app/cp-comboios-de-portugal/id501758310' },
+      { emoji:'🍕', name:'Glovo', desc:'Rozvoz jídla', url:'https://apps.apple.com/pt/app/glovo-food-delivery/id951812684' }
+    ],
+    itineraries: [
+      { day:'Den 1', title:'Alfama & historické centrum', color:'#f97316', photoQuery:'Alfama Lisbon tram', steps:[
+        '🏰 Castelo de São Jorge – ranní výhled na celý Lisabon bez davů (otevírá 9:00)',
+        '🚃 Tram 28 z Alfamy dolů do Baixa (sestup – kratší fronta, lépe si sedni)',
+        '⛪ Sé de Lisboa – katedrála ze 12. století, vstup zdarma',
+        '🌊 Praça do Comércio a Cais das Colunas – kafe u řeky Tejo',
+        '🍷 Večeře v Bairro Alto nebo Cais do Sodré – nejlepší bary a restaurace'
+      ]},
+      { day:'Den 2', title:'Belém', color:'#f59e0b', photoQuery:'Torre de Belem sunset', steps:[
+        '🚃 Tram 15E z Praça do Comércio do Belém (30 min)',
+        '🏛️ Mosteiro dos Jerónimos – gotický kostel UNESCO, pohřebiště Vasca da Gamy',
+        '🐟 Pastéis de Belém – kultovní pastel de nata od roku 1837!',
+        '🗼 Torre de Belém – ikona Lisabonu, fotit za odlivu (ostrůvek přístupný)',
+        '⚓ Padrão dos Descobrimentos – výhled z vrcholu na řeku a most 25 de Abril'
+      ]},
+      { day:'Den 3', title:'Sintra (jednodenní výlet)', color:'#a78bfa', photoQuery:'Pena Palace Sintra', steps:[
+        '🚂 Vlak CP z Rossio → Sintra (~40 min, každých 30 min)',
+        '🏰 Palác Pena – barevný zámek v oblacích, přijď hned po otevření (9:30)',
+        '🌿 Quinta da Regaleira – tajemný palác se Zasvěcovací studnou',
+        '🛍️ Oběd a procházka historickým centrem Sintry',
+        '🚂 Vlak zpět do Lisabonu – výhled na atlantické pobřeží'
+      ]}
+    ],
+    photoSpots: [
+      { name:'Miradouro da Graça', bestTime:'Ráno 8–10 h (zlatá hodina, méně turistů)', photoQuery:'Miradouro da Graca Lisboa', mapsUrl:'https://maps.google.com/?q=Miradouro+da+Graca+Lisboa' },
+      { name:'Miradouro das Portas do Sol', bestTime:'Západ slunce (17–20 h)', photoQuery:'Miradouro das Portas do Sol Alfama', mapsUrl:'https://maps.google.com/?q=Miradouro+das+Portas+do+Sol+Lisboa' },
+      { name:'Ponte 25 de Abril (z Belému)', bestTime:'Zlatá hodina ráno nebo večer', photoQuery:'Ponte 25 de Abril Lisboa', mapsUrl:'https://maps.google.com/?q=Ponte+25+de+Abril+Lisboa' },
+      { name:'Torre de Belém', bestTime:'Ráno 10–12 h (za odlivu – ostrůvek přístupný)', photoQuery:'Torre de Belem Lisboa', mapsUrl:'https://maps.google.com/?q=Torre+de+Belem+Lisboa' },
+      { name:'Elevador de Santa Justa', bestTime:'Západ slunce ze střešní plošiny', photoQuery:'Elevador de Santa Justa Lisboa', mapsUrl:'https://maps.google.com/?q=Elevador+de+Santa+Justa+Lisboa' },
+      { name:'Baixa & Praça do Comércio', bestTime:'Ráno 7–9 h – bez davů, zlaté světlo', photoQuery:'Praca do Comercio Lisboa', mapsUrl:'https://maps.google.com/?q=Praca+do+Comercio+Lisboa' }
+    ],
+    transportSections: [
+      {
+        title:'🚇 Metro (Metropolitano)', titleColor:'#2563eb',
+        content:'4 linky, provoz 6:30–1:00. Karta Viva Viagem (0,50 €) u automatů na metru a letišti.',
+        items:[
+          {key:'Zapping (kredit)',   value:'~1,65 € za jízdu (nejlevnější)'},
+          {key:'Papírová jízdenka', value:'2,00 € (jednorázová)'},
+          {key:'24h jízdenka',      value:'6,60 € (neomezené jízdy)'},
+          {key:'Letiště → centrum', value:'~30 min, 1 přestup'}
+        ],
+        linkUrl:'https://www.metrolisboa.pt', linkLabel:'Web Metra Lisboa – jízdní řády'
+      },
+      {
+        title:'🚕 Taxi / Uber / Bolt', titleColor:'#f59e0b',
+        content:'Bolt a Uber jsou v Lisabonu velmi aktivní a spolehlivé. Taxi k dispozici po celém městě.',
+        items:[
+          {key:'Letiště → centrum',  value:'Bolt/Uber ~12–18 €, taxi ~15–22 €'},
+          {key:'Centrum → Belém',    value:'Bolt/Uber ~7–10 €'},
+          {key:'Noční příplatek',    value:'20–25 % navíc (22:00–6:00)'},
+          {key:'Centrum → Sintra',   value:'Taxi ~40–60 € (lepší jet vlakem)'}
+        ]
+      },
+      {
+        title:'🚃 Tram & Bus Carris', titleColor:'#dc2626',
+        content:'Historické tramvaje a husté autobusové sítě. Stejná cena jako metro s Viva Viagem kartou.',
+        items:[
+          {key:'Tram 28',  value:'Martim Moniz → Alfama → Graça (ikonická)'},
+          {key:'Tram 15E', value:'Praça Figueira → Belém (~30 min)'},
+          {key:'Bus 737',  value:'Alternativa Tram 28 (méně turistů, bez fronty)'}
+        ],
+        linkUrl:'https://www.carris.pt', linkLabel:'Web Carris – jízdní řády'
+      },
+      {
+        title:'🚂 Vlak CP – výlety', titleColor:'#7c3aed',
+        content:'Jednodenní výlety z Lisabonu vlakem CP. Viva Viagem funguje na linky Sintra a Cascais.',
+        items:[
+          {key:'→ Sintra',  value:'40 min z Rossio, každých 30 min, ~2,60 €'},
+          {key:'→ Cascais', value:'40 min z Cais do Sodré, každých 20 min, ~2,60 €'},
+          {key:'→ Porto',   value:'Alfa Pendular ~2h50, ~25–45 € (rezervace nutná)'}
+        ],
+        linkUrl:'https://www.cp.pt', linkLabel:'Web CP – jízdní řády a lístky'
+      },
+      {
+        title:'⛴️ Trajekt přes Tejo', titleColor:'#0891b2',
+        content:'Lodní spojení z Cais do Sodré nebo Terreiro do Paço přes řeku Tejo.',
+        items:[
+          {key:'→ Cacilhas',  value:'~10 min, ~1,40 € – nejkratší trasa'},
+          {key:'→ Montijo',   value:'~35 min, přes přístav u nákupního centra'},
+          {key:'Tip',         value:'Nejlevnější "plavba" po Tejo s panoramatem Lisabonu'}
+        ]
+      }
+    ]
   }
 ];
 
@@ -786,6 +984,100 @@ const LAGOS_MAP_SVG = `<svg width="540" height="380" viewBox="0 0 540 380" class
 
               </svg>`;
 
+const LISBON_MAP_SVG = `<svg width="540" height="380" viewBox="0 0 540 380" class="select-none">
+
+  <!-- Pozadí -->
+  <rect x="0" y="0" width="540" height="380" fill="#050d1a"/>
+
+  <!-- Rio Tejo (jižní okraj) -->
+  <path d="M 0 350 Q 270 330 540 345" stroke="#0ea5e9" stroke-width="18" fill="none" opacity="0.15"/>
+  <text x="440" y="348" fill="#38bdf8" font-size="9" opacity="0.5" font-weight="bold">Rio Tejo</text>
+
+  <!-- ===== METRO LINKY ===== -->
+
+  <!-- Azul (Modrá): Reboleira → Marquês de Pombal → Baixa-Chiado → São Sebastião → Oriente → Santa Apolónia -->
+  <path d="M 40,200 L 490,200" stroke="#2563eb" stroke-width="4" fill="none" stroke-linecap="round"/>
+
+  <!-- Amarela (Žlutá): Odivelas → Marquês de Pombal → Rato -->
+  <path d="M 185,48 L 185,305" stroke="#ca8a04" stroke-width="4" fill="none" stroke-linecap="round"/>
+
+  <!-- Verde (Zelená): Cais do Sodré → Baixa-Chiado → Alameda → Telheiras -->
+  <path d="M 110,328 L 245,200 L 355,242 L 370,58" stroke="#16a34a" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Vermelha (Červená): São Sebastião → Alameda → Oriente → Aeroporto -->
+  <path d="M 305,200 L 355,242 L 415,200 L 495,58" stroke="#dc2626" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- ===== STANICE ===== -->
+
+  <!-- Reboleira (Azul – západ, terminus) -->
+  <circle cx="40" cy="200" r="4" fill="#2563eb" stroke="#fff" stroke-width="1.5"/>
+  <text x="45" y="195" fill="#93c5fd" font-size="8.5" font-weight="bold">Reboleira</text>
+
+  <!-- Odivelas (Žlutá – sever, terminus) -->
+  <circle cx="185" cy="48" r="4" fill="#ca8a04" stroke="#fff" stroke-width="1.5"/>
+  <text x="192" y="44" fill="#fcd34d" font-size="8.5" font-weight="bold">Odivelas</text>
+
+  <!-- Telheiras (Zelená – sever, terminus) -->
+  <circle cx="370" cy="58" r="4" fill="#16a34a" stroke="#fff" stroke-width="1.5"/>
+  <text x="377" y="54" fill="#86efac" font-size="8.5" font-weight="bold">Telheiras</text>
+
+  <!-- Aeroporto (Červená – přestupní bod, terminus) -->
+  <circle cx="495" cy="58" r="7" fill="#dc2626" stroke="#fff" stroke-width="2"/>
+  <text x="460" y="46" fill="#fca5a5" font-size="10.5" font-weight="bold">✈ Aeroporto</text>
+
+  <!-- Marquês de Pombal (Azul + Žlutá – PŘESTUP) -->
+  <circle cx="185" cy="200" r="8" fill="#f1f5f9" stroke="#1e293b" stroke-width="2"/>
+  <text x="185" cy="200" fill="#f8fafc" font-size="9" font-weight="bold" text-anchor="middle" dominant-baseline="middle"></text>
+  <text x="140" y="188" fill="#e2e8f0" font-size="9" font-weight="bold" text-anchor="middle">Marquês</text>
+  <text x="140" y="199" fill="#e2e8f0" font-size="9" font-weight="bold" text-anchor="middle">de Pombal</text>
+  <text x="140" y="210" fill="#94a3b8" font-size="7.5" text-anchor="middle">A + Y</text>
+
+  <!-- Rato (Žlutá – jih, terminus) -->
+  <circle cx="185" cy="305" r="4" fill="#ca8a04" stroke="#fff" stroke-width="1.5"/>
+  <text x="192" y="301" fill="#fcd34d" font-size="8.5" font-weight="bold">Rato</text>
+
+  <!-- Cais do Sodré (Zelená – jih, terminus) -->
+  <circle cx="110" cy="328" r="4" fill="#16a34a" stroke="#fff" stroke-width="1.5"/>
+  <text x="55" y="324" fill="#86efac" font-size="8.5" font-weight="bold">Cais do Sodré</text>
+
+  <!-- Baixa-Chiado (Azul + Zelená – PŘESTUP) -->
+  <circle cx="245" cy="200" r="8" fill="#f1f5f9" stroke="#1e293b" stroke-width="2"/>
+  <text x="245" y="220" fill="#e2e8f0" font-size="9" font-weight="bold" text-anchor="middle">Baixa-Chiado</text>
+  <text x="245" y="231" fill="#94a3b8" font-size="7.5" text-anchor="middle">A + G</text>
+
+  <!-- São Sebastião (Azul + Červená – PŘESTUP) -->
+  <circle cx="305" cy="200" r="8" fill="#f1f5f9" stroke="#1e293b" stroke-width="2"/>
+  <text x="305" y="185" fill="#e2e8f0" font-size="9" font-weight="bold" text-anchor="middle">São Sebastião</text>
+  <text x="305" y="196" fill="#94a3b8" font-size="7.5" text-anchor="middle">A + R</text>
+
+  <!-- Alameda (Zelená + Červená – PŘESTUP) -->
+  <circle cx="355" cy="242" r="8" fill="#f1f5f9" stroke="#1e293b" stroke-width="2"/>
+  <text x="355" y="261" fill="#e2e8f0" font-size="9" font-weight="bold" text-anchor="middle">Alameda</text>
+  <text x="355" y="272" fill="#94a3b8" font-size="7.5" text-anchor="middle">G + R</text>
+
+  <!-- Oriente (Azul + Červená – PŘESTUP, vlakový uzel) -->
+  <circle cx="415" cy="200" r="8" fill="#f1f5f9" stroke="#1e293b" stroke-width="2"/>
+  <text x="415" y="185" fill="#f97316" font-size="9.5" font-weight="bold" text-anchor="middle">Oriente</text>
+  <text x="415" y="196" fill="#94a3b8" font-size="7.5" text-anchor="middle">A + R · 🚂</text>
+
+  <!-- Santa Apolónia (Azul – východ, terminus + vlak) -->
+  <circle cx="490" cy="200" r="4" fill="#2563eb" stroke="#fff" stroke-width="1.5"/>
+  <text x="495" y="212" fill="#93c5fd" font-size="8" font-weight="bold">Sta. Apolónia 🚂</text>
+
+  <!-- ===== LEGENDA ===== -->
+  <rect x="10" y="310" width="140" height="65" rx="6" fill="#0f172a" opacity="0.85"/>
+  <text x="18" y="324" fill="#94a3b8" font-size="8" font-weight="bold" text-transform="uppercase">METRO LINKY</text>
+  <circle cx="20" cy="336" r="4" fill="#2563eb"/>
+  <text x="28" y="340" fill="#93c5fd" font-size="8">Azul – Reboleira ↔ Sta. Apolónia</text>
+  <circle cx="20" cy="350" r="4" fill="#ca8a04"/>
+  <text x="28" y="354" fill="#fcd34d" font-size="8">Amarela – Odivelas ↔ Rato</text>
+  <circle cx="20" cy="364" r="4" fill="#16a34a"/>
+  <text x="28" y="368" fill="#86efac" font-size="8">Verde – Telheiras ↔ Cais do Sodré</text>
+  <circle cx="20" cy="378" r="4" fill="#dc2626"/>
+  <text x="28" y="379" fill="#fca5a5" font-size="8">Vermelha – São Sebastião ↔ ✈</text>
+
+</svg>`;
+
 // ===========================
 // STATE
 // ===========================
@@ -804,6 +1096,7 @@ function showCityPicker() {
   if (window._cdInterval) { clearInterval(window._cdInterval); window._cdInterval = null; }
   if (window._weatherInterval) { clearInterval(window._weatherInterval); window._weatherInterval = null; }
   if (window._lagosWeatherInterval) { clearInterval(window._lagosWeatherInterval); window._lagosWeatherInterval = null; }
+  if (window._lisbonWeatherInterval) { clearInterval(window._lisbonWeatherInterval); window._lisbonWeatherInterval = null; }
   if (window.depRefreshTimers) {
     Object.values(window.depRefreshTimers).forEach(t => clearTimeout(t));
     window.depRefreshTimers = {};
@@ -845,6 +1138,12 @@ function renderCity(cityId) {
     fetchLagosWeather();
     if (window._lagosWeatherInterval) clearInterval(window._lagosWeatherInterval);
     window._lagosWeatherInterval = setInterval(fetchLagosWeather, 1800000);
+    applyPlaces();
+  }
+  if (city.id === 'lisbon') {
+    fetchLisbonWeather();
+    if (window._lisbonWeatherInterval) clearInterval(window._lisbonWeatherInterval);
+    window._lisbonWeatherInterval = setInterval(fetchLisbonWeather, 1800000);
     applyPlaces();
   }
   initMap();
@@ -1016,6 +1315,94 @@ function renderOverview(city) {
       </div>
     </details>` : '';
 
+  const lisbonExtra = city.id === 'lisbon' ? `
+    <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4 cursor-pointer active:opacity-80 transition-opacity" onclick="fetchLisbonWeather(true)" title="Klepnutím obnovit">
+      <div class="flex items-center gap-4">
+        <span id="lisbon-weather-icon" class="text-5xl leading-none" style="transition:opacity 0.15s">🌡️</span>
+        <div class="flex-1">
+          <div class="flex items-baseline gap-2">
+            <span id="lisbon-weather-temp" class="text-5xl font-black text-slate-100">–°C</span>
+            <span id="lisbon-uv-badge" class="text-sm text-orange-400 font-mono">UV –</span>
+          </div>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Lisabon počasí</span>
+            <span id="lisbon-weather-desc" class="text-sm text-slate-300 font-semibold">načítám…</span>
+          </div>
+          <div id="lisbon-weather-stale" class="hidden text-[10px] text-amber-400/70 mt-0.5"></div>
+        </div>
+      </div>
+      <div class="grid grid-cols-3 gap-2">
+        <div class="bg-slate-800/60 rounded-xl p-3 text-center">
+          <div class="text-xs text-slate-500 mb-1">Zítra</div>
+          <div id="lisbon-fc-icon" class="text-xl">–</div>
+          <div id="lisbon-fc-temp" class="text-sm font-bold text-slate-300 font-mono">–</div>
+        </div>
+        <div class="bg-slate-800/60 rounded-xl p-3 text-center">
+          <div class="text-xs text-slate-500 mb-1">Vítr</div>
+          <div id="lisbon-weather-wind" class="text-lg font-black text-slate-300 font-mono">– km/h</div>
+        </div>
+        <div class="bg-slate-800/60 rounded-xl p-3 text-center">
+          <div class="text-xs text-slate-500 mb-1">UV Max</div>
+          <div id="lisbon-uv-max" class="text-lg font-black text-orange-400">–</div>
+        </div>
+      </div>
+      <div id="lisbon-sun-row" class="hidden items-center justify-center gap-6 border-t border-slate-800 pt-3">
+        <div class="flex items-center gap-1.5 text-sm text-amber-300"><span>🌅</span><span id="lisbon-sunrise">–:–</span></div>
+        <div class="flex items-center gap-1.5 text-sm text-indigo-300"><span>🌇</span><span id="lisbon-sunset">–:–</span></div>
+      </div>
+    </div>
+    <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4">
+      <div class="flex items-center justify-between gap-2">
+        <h3 class="text-base font-extrabold text-slate-300 shrink-0">🗺️ Okolí</h3>
+        <div class="flex items-center gap-2 min-w-0">
+          <div class="relative min-w-0" id="nearby-dd-wrap">
+            <button onclick="toggleNearbyDd(event)" id="nearby-dd-btn"
+              class="flex items-center gap-1.5 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 cursor-pointer w-full">
+              <span id="nearby-dd-label" class="truncate max-w-[120px]">📍 Moje poloha (GPS)</span>
+              <svg id="nearby-dd-arrow" class="w-4 h-4 shrink-0 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="nearby-dd-menu" class="hidden absolute right-0 top-full mt-1 bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl z-40 w-64 max-h-60 overflow-y-auto">
+            </div>
+          </div>
+          <button onclick="openPlacesModal()" class="shrink-0 text-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-orange-400 px-3 py-2 rounded-xl cursor-pointer transition" title="Správa míst">⚙️</button>
+        </div>
+      </div>
+      <div class="relative">
+        <div class="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1" style="scrollbar-width:none">
+          <button onclick="fetchNearby(this,'supermarket')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🛒</span><span class="text-sm font-bold">Super.</span></button>
+          <button onclick="fetchNearby(this,'cafe')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">☕</span><span class="text-sm font-bold">Kavárny</span></button>
+          <button onclick="fetchNearby(this,'fast_food')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🍔</span><span class="text-sm font-bold">Fast food</span></button>
+          <button onclick="fetchNearby(this,'bar')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🍺</span><span class="text-sm font-bold">Bary</span></button>
+        </div>
+        <div class="absolute right-0 top-0 bottom-1 w-10 bg-gradient-to-l from-slate-900/60 to-transparent pointer-events-none rounded-r-2xl"></div>
+      </div>
+      <div id="nearby-results" class="space-y-2"></div>
+    </div>
+    <details class="bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden">
+      <summary class="flex items-center justify-between px-5 py-4 cursor-pointer select-none">
+        <span class="text-base font-extrabold uppercase tracking-wider text-slate-400">🚌 Doprava – přehled</span>
+        ${chevron}
+      </summary>
+      <div class="px-5 pb-5 border-t border-slate-800 pt-4 space-y-4">
+        ${(city.transportSections || []).slice(0, 3).map(sec => `
+          <div>
+            <p class="text-sm font-bold mb-2" style="color:${sec.titleColor}">${sec.title}</p>
+            <div class="space-y-1.5 bg-slate-950/30 p-3 rounded-xl">
+              ${sec.items.map(item => `
+                <div class="flex items-start justify-between gap-3 text-xs">
+                  <span class="text-slate-400 shrink-0">${item.key}</span>
+                  <span class="text-slate-200 font-semibold text-right">${item.value}</span>
+                </div>`).join('')}
+            </div>
+            ${sec.linkUrl ? `<a href="${sec.linkUrl}" target="_blank" rel="noopener"
+              class="mt-2 flex items-center justify-center gap-2 py-2 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold transition cursor-pointer" style="color:${sec.titleColor}">
+              <span>${sec.linkLabel}</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+            </a>` : ''}
+          </div>`).join('<div class="border-t border-slate-800/60 my-1"></div>')}
+      </div>
+    </details>` : '';
+
   const portoExtra = city.extras === 'porto' ? `
     <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4 cursor-pointer active:opacity-80 transition-opacity" onclick="fetchWeather(true)" title="Klepnutím obnovit počasí">
       <div class="flex items-center gap-4">
@@ -1092,6 +1479,7 @@ function renderOverview(city) {
 
   return `
     ${lagosExtra}
+    ${lisbonExtra}
     ${portoExtra}
     <details class="bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden" open>
       <summary class="flex items-center justify-between px-5 py-4 cursor-pointer select-none">
@@ -1549,7 +1937,7 @@ function _renderPhotoSpotsInner(city) {
 }
 
 function renderMap(city) {
-  const svg = city.id === 'porto' ? PORTO_MAP_SVG : LAGOS_MAP_SVG;
+  const svg = city.id === 'porto' ? PORTO_MAP_SVG : city.id === 'lisbon' ? LISBON_MAP_SVG : LAGOS_MAP_SVG;
   return `
     <h2 class="text-lg font-black text-slate-100">${city.emoji} ${city.mapTitle}</h2>
     <div class="relative bg-slate-900/60 rounded-xl border border-slate-800 overflow-hidden" style="height:420px">
@@ -2347,6 +2735,53 @@ async function fetchLagosWeather(manual = false) {
       sunRow.classList.add('flex');
     }
     const staleEl = document.getElementById('lagos-weather-stale');
+    if (staleEl) {
+      if (weatherRes.fromCache && weatherRes.cachedAt) {
+        staleEl.textContent = 'Offline · naposledy ' + localHHMM(weatherRes.cachedAt, timezone);
+        staleEl.className = 'text-[10px] text-amber-400/70 mt-0.5';
+      } else { staleEl.className = 'hidden'; }
+    }
+    if (manual && !weatherRes.fromCache) showToast('Počasí aktualizováno ✓');
+    if (manual && weatherRes.fromCache) showToast('Offline – zobrazena stará data.');
+  } catch {
+    if (manual) showToast('Nepodařilo se načíst – zkontroluj připojení.');
+  } finally {
+    if (iEl) setTimeout(() => { iEl.style.opacity = '1'; }, 200);
+  }
+}
+
+// ===========================
+// LISABON – POČASÍ
+// ===========================
+async function fetchLisbonWeather(manual = false) {
+  const timezone = 'Europe/Lisbon';
+  const iEl = document.getElementById('lisbon-weather-icon');
+  if (manual && iEl) iEl.style.opacity = '0.3';
+  try {
+    const weatherRes = await apiFetch(
+      'https://api.open-meteo.com/v1/forecast?latitude=38.72&longitude=-9.14&current=temperature_2m,weathercode,windspeed_10m,uv_index&daily=temperature_2m_max,temperature_2m_min,weathercode,uv_index_max,sunrise,sunset&forecast_days=2&timezone=Europe%2FLisbon',
+      { _timeout: 8000 }, 'weather_lisbon'
+    );
+    if (!document.getElementById('lisbon-weather-icon')) return;
+    const { current: c, daily: d } = weatherRes.data;
+    document.getElementById('lisbon-weather-icon').textContent = WMO.icons[c.weathercode] ?? '🌡️';
+    document.getElementById('lisbon-weather-temp').textContent = Math.round(c.temperature_2m) + '°C';
+    document.getElementById('lisbon-weather-desc').textContent = WMO.labels[c.weathercode] ?? 'Počasí';
+    document.getElementById('lisbon-uv-badge').textContent = 'UV ' + (c.uv_index != null ? Math.round(c.uv_index) : '–');
+    document.getElementById('lisbon-weather-wind').textContent = Math.round(c.windspeed_10m) + ' km/h';
+    document.getElementById('lisbon-uv-max').textContent = d.uv_index_max?.[0] != null ? Math.round(d.uv_index_max[0]) : '–';
+    const fcIcon = document.getElementById('lisbon-fc-icon');
+    const fcTemp = document.getElementById('lisbon-fc-temp');
+    if (fcIcon && d.weathercode?.[1]) fcIcon.textContent = WMO.icons[d.weathercode[1]] ?? '🌡️';
+    if (fcTemp && d.temperature_2m_min?.[1] != null) fcTemp.textContent = Math.round(d.temperature_2m_min[1]) + '–' + Math.round(d.temperature_2m_max[1]) + '°C';
+    const sunRow = document.getElementById('lisbon-sun-row');
+    if (sunRow && d.sunrise?.[0] && d.sunset?.[0]) {
+      document.getElementById('lisbon-sunrise').textContent = d.sunrise[0].split('T')[1];
+      document.getElementById('lisbon-sunset').textContent = d.sunset[0].split('T')[1];
+      sunRow.classList.remove('hidden');
+      sunRow.classList.add('flex');
+    }
+    const staleEl = document.getElementById('lisbon-weather-stale');
     if (staleEl) {
       if (weatherRes.fromCache && weatherRes.cachedAt) {
         staleEl.textContent = 'Offline · naposledy ' + localHHMM(weatherRes.cachedAt, timezone);
