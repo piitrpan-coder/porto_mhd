@@ -791,6 +791,8 @@ const LAGOS_MAP_SVG = `<svg width="540" height="380" viewBox="0 0 540 380" class
 // ===========================
 let currentCity = null;
 let clockInterval = null;
+const _editMode   = {};  // 'itin_porto' / 'ps_porto' → bool
+const _photoPanel = {};  // 'itin_porto_<id>' / 'ps_porto_<id>' → bool
 
 // ===========================
 // NAVIGATION
@@ -1245,57 +1247,238 @@ function renderAppsSection(city) {
 }
 
 function renderItinerariesSection(city) {
-  if (!city.itineraries || !city.itineraries.length) return '';
+  return `<div id="itin-wrap-${city.id}">${_renderItinerariesInner(city)}</div>`;
+}
+
+function _renderItinerariesInner(city) {
+  const cityId = city.id;
+  const items   = getCustomItineraries(cityId);
+  const isEdit  = !!_editMode[`itin_${cityId}`];
+  if (!items.length && !isEdit) return '';
+
   const mainChevron = `<svg class="w-5 h-5 text-slate-500 shrink-0 details-arrow transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>`;
-  const subChevron = `<svg class="w-4 h-4 text-slate-600 shrink-0 details-arrow transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>`;
-  const days = city.itineraries.map(it => {
+  const subChevron  = `<svg class="w-4 h-4 text-slate-600 shrink-0 details-arrow transition-transform duration-200 ml-auto" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>`;
+
+  const days = items.map(it => {
+    const itemId   = it._id;
+    const safeId   = itemId.replace(/[^a-z0-9]/gi, '_');
+    const photo    = loadPhoto(itemId);
+    const panelOpen = !!_photoPanel[`itin_${cityId}_${itemId}`];
+
+    const photoThumb = photo ? `
+      <div class="relative mb-3 rounded-xl overflow-hidden" style="height:160px">
+        <img src="${photo}" class="w-full h-full object-cover" alt="" loading="lazy">
+        ${isEdit ? `<button onclick="deleteItemPhoto('itin','${cityId}','${itemId}')" class="absolute top-2 right-2 bg-slate-900/90 text-red-400 rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold cursor-pointer transition active:scale-90">×</button>` : ''}
+        ${!photo.startsWith('data:') && isEdit ? `<button onclick="downloadUrlPhotoOffline('itin','${cityId}','${itemId}')" class="absolute bottom-2 right-2 bg-slate-900/90 text-yellow-400 text-[10px] font-bold px-2 py-1 rounded-lg cursor-pointer transition active:scale-90">↓ Offline (WiFi)</button>` : ''}
+      </div>` : '';
+
+    const photoPanel = panelOpen ? `
+      <div class="mb-3 p-3 bg-slate-950 rounded-xl border border-slate-700 space-y-2.5">
+        <p class="text-[10px] uppercase tracking-wider font-bold text-slate-500">Přidat fotografii</p>
+        <label class="block cursor-pointer">
+          <span class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold px-4 py-2.5 rounded-xl transition active:scale-95">
+            📷 Fotoaparát nebo galerie
+          </span>
+          <input type="file" accept="image/*" capture="environment" class="hidden"
+                 onchange="handlePhotoFileChange(this,'itin','${cityId}','${itemId}')">
+        </label>
+        <div class="flex gap-2">
+          <input id="purl-${safeId}" type="url" placeholder="nebo URL fotografie (https://…)"
+                 class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-slate-500 transition">
+          <button onclick="saveUrlPhoto('purl-${safeId}','itin','${cityId}','${itemId}')"
+                  class="bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-600/40 text-yellow-400 text-xs font-bold px-3 py-2.5 rounded-xl transition cursor-pointer shrink-0 active:scale-95">
+            Uložit URL
+          </button>
+        </div>
+        <p class="text-[9px] text-slate-600">Fotografie z galerie jsou uloženy offline. URL foto vyžaduje připojení – pro offline přístup použij tlačítko ↓ na náhledu.</p>
+      </div>` : '';
+
     const steps = it.steps.map(s =>
       `<li class="flex items-start gap-3">
         <span class="w-1.5 h-1.5 rounded-full shrink-0 mt-2" style="background:${it.color}"></span>
         <span class="text-sm text-slate-300 leading-relaxed">${s}</span>
       </li>`
     ).join('');
+
+    const editControls = isEdit ? `
+      <div class="flex items-center gap-1.5 shrink-0 ml-2">
+        <button onclick="event.stopPropagation();openPhotoPanel('itin','${cityId}','${itemId}')"
+                class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-yellow-400 transition cursor-pointer text-sm active:scale-90">📷</button>
+        <button onclick="event.stopPropagation();deleteItineraryItem('${cityId}','${itemId}')"
+                class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-900/20 hover:bg-red-900/40 text-red-400 hover:text-red-300 transition cursor-pointer text-lg font-bold active:scale-90">×</button>
+      </div>` : '';
+
     return `
-      <details class="border border-slate-800 rounded-xl overflow-hidden">
+      <details class="border ${isEdit ? 'border-slate-700' : 'border-slate-800'} rounded-xl overflow-hidden">
         <summary class="flex items-center justify-between px-4 py-3.5 cursor-pointer select-none bg-slate-950/40">
-          <div class="flex items-center gap-3">
-            <span class="text-xs font-black px-2.5 py-1 rounded-full" style="background:${it.color}25;color:${it.color}">${it.day}</span>
-            <span class="text-sm font-bold text-slate-200">${it.title}</span>
+          <div class="flex items-center gap-3 flex-1 min-w-0">
+            <span class="text-xs font-black px-2.5 py-1 rounded-full shrink-0" style="background:${it.color}25;color:${it.color}">${it.day}</span>
+            <span class="text-sm font-bold text-slate-200 truncate">${it.title}</span>
           </div>
-          ${subChevron}
+          ${editControls}
+          ${!isEdit ? subChevron : ''}
         </summary>
-        <ul class="px-4 pb-4 pt-3 space-y-3 border-t border-slate-800 bg-slate-950/20">${steps}</ul>
+        <div class="px-4 pb-4 pt-3 border-t border-slate-800 bg-slate-950/20">
+          ${photoThumb}${photoPanel}
+          <ul class="space-y-3">${steps}</ul>
+        </div>
       </details>`;
   }).join('');
+
+  const addForm = isEdit ? `
+    <div class="border-2 border-dashed border-slate-700 rounded-xl p-4 space-y-3 mt-1">
+      <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Přidat nový den</p>
+      <div class="flex gap-2">
+        <input id="itin-add-day-${cityId}" type="text" placeholder="Den 4" maxlength="20"
+               class="w-20 shrink-0 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-slate-500 transition">
+        <input id="itin-add-title-${cityId}" type="text" placeholder="Název výletu…" maxlength="60"
+               class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-slate-500 transition">
+      </div>
+      <textarea id="itin-add-steps-${cityId}" rows="4"
+               placeholder="Každý krok na nový řádek:&#10;☕ Snídaně v kavárně&#10;🏛️ Prohlídka muzea"
+               class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-slate-500 transition resize-none"></textarea>
+      <button onclick="submitAddItinerary('${cityId}')"
+              class="w-full bg-yellow-500 hover:bg-yellow-400 active:scale-95 text-slate-950 font-black text-sm py-2.5 rounded-xl transition cursor-pointer">
+        + Přidat den
+      </button>
+    </div>
+    <button onclick="resetItinerariesToDefault('${cityId}')"
+            class="w-full text-[11px] text-slate-600 hover:text-slate-400 text-center py-1.5 transition cursor-pointer mt-1">
+      Obnovit výchozí itineráře
+    </button>` : '';
+
+  const editBtnCls = isEdit
+    ? 'text-yellow-400 bg-yellow-500/15 border border-yellow-600/30'
+    : 'text-slate-500 hover:text-slate-300 bg-slate-800 border border-slate-700';
+
   return `
-    <details class="bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden">
+    <details class="bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden" ${isEdit ? 'open' : ''}>
       <summary class="flex items-center justify-between px-5 py-4 cursor-pointer select-none">
         <span class="text-base font-extrabold uppercase tracking-wider text-slate-400">🗓️ Denní itineráře</span>
-        ${mainChevron}
+        <div class="flex items-center gap-2">
+          <button onclick="event.stopPropagation();toggleItinEdit('${cityId}')"
+                  class="text-xs font-bold px-2.5 py-1.5 rounded-lg transition cursor-pointer ${editBtnCls}">
+            ${isEdit ? '✓ Hotovo' : '✏️ Upravit'}
+          </button>
+          ${!isEdit ? mainChevron : ''}
+        </div>
       </summary>
-      <div class="px-4 pb-4 pt-3 border-t border-slate-800 space-y-2">${days}</div>
+      <div class="px-4 pb-4 pt-3 border-t border-slate-800 space-y-2">
+        ${days}
+        ${addForm}
+      </div>
     </details>`;
 }
 
 function renderPhotoSpotsSection(city) {
-  if (!city.photoSpots || !city.photoSpots.length) return '';
+  return `<div id="ps-wrap-${city.id}">${_renderPhotoSpotsInner(city)}</div>`;
+}
+
+function _renderPhotoSpotsInner(city) {
+  const cityId = city.id;
+  const items  = getCustomPhotoSpots(cityId);
+  const isEdit = !!_editMode[`ps_${cityId}`];
+  if (!items.length && !isEdit) return '';
+
   const chevron = `<svg class="w-5 h-5 text-slate-500 shrink-0 details-arrow transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>`;
-  const items = city.photoSpots.map(s =>
-    `<div class="flex items-center justify-between gap-3 py-3 border-b border-slate-800 last:border-0">
-      <div class="flex-1 min-w-0">
-        <div class="text-sm font-bold text-slate-100">${s.name}</div>
-        <div class="text-xs text-amber-400/80 mt-0.5">⏰ ${s.bestTime}</div>
-      </div>
-      <a href="${s.mapsUrl}" target="_blank" rel="noopener" class="shrink-0 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-300 active:scale-95 transition-transform">Mapa</a>
-    </div>`
-  ).join('');
+
+  const spotItems = items.map(s => {
+    const itemId    = s._id;
+    const safeId    = itemId.replace(/[^a-z0-9]/gi, '_');
+    const photo     = loadPhoto(itemId);
+    const panelOpen = !!_photoPanel[`ps_${cityId}_${itemId}`];
+
+    const photoThumb = photo ? `
+      <div class="relative rounded-xl overflow-hidden mb-2" style="height:130px">
+        <img src="${photo}" class="w-full h-full object-cover" alt="" loading="lazy">
+        ${isEdit ? `<button onclick="deleteItemPhoto('ps','${cityId}','${itemId}')" class="absolute top-2 right-2 bg-slate-900/90 text-red-400 rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold cursor-pointer transition active:scale-90">×</button>` : ''}
+        ${!photo.startsWith('data:') && isEdit ? `<button onclick="downloadUrlPhotoOffline('ps','${cityId}','${itemId}')" class="absolute bottom-2 right-2 bg-slate-900/90 text-yellow-400 text-[10px] font-bold px-2 py-1 rounded-lg cursor-pointer transition active:scale-90">↓ Offline (WiFi)</button>` : ''}
+      </div>` : '';
+
+    const photoPanel = panelOpen ? `
+      <div class="my-2 p-3 bg-slate-950 rounded-xl border border-slate-700 space-y-2.5">
+        <p class="text-[10px] uppercase tracking-wider font-bold text-slate-500">Přidat fotografii</p>
+        <label class="block cursor-pointer">
+          <span class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold px-4 py-2.5 rounded-xl transition active:scale-95">
+            📷 Fotoaparát nebo galerie
+          </span>
+          <input type="file" accept="image/*" capture="environment" class="hidden"
+                 onchange="handlePhotoFileChange(this,'ps','${cityId}','${itemId}')">
+        </label>
+        <div class="flex gap-2">
+          <input id="purl-${safeId}" type="url" placeholder="nebo URL fotografie (https://…)"
+                 class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-slate-500 transition">
+          <button onclick="saveUrlPhoto('purl-${safeId}','ps','${cityId}','${itemId}')"
+                  class="bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-600/40 text-yellow-400 text-xs font-bold px-3 py-2.5 rounded-xl transition cursor-pointer shrink-0 active:scale-95">
+            Uložit URL
+          </button>
+        </div>
+        <p class="text-[9px] text-slate-600">Fotografie z galerie jsou uloženy offline. URL foto vyžaduje připojení – pro offline použij ↓ na náhledu.</p>
+      </div>` : '';
+
+    const mapsBtn = s.mapsUrl ? `<a href="${s.mapsUrl}" target="_blank" rel="noopener" class="shrink-0 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-300 active:scale-95 transition-transform">Mapa</a>` : '';
+
+    const editControls = isEdit ? `
+      <div class="flex items-center gap-1.5 shrink-0">
+        <button onclick="openPhotoPanel('ps','${cityId}','${itemId}')"
+                class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-yellow-400 transition cursor-pointer text-sm active:scale-90">📷</button>
+        <button onclick="deletePhotoSpotItem('${cityId}','${itemId}')"
+                class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-900/20 hover:bg-red-900/40 text-red-400 hover:text-red-300 transition cursor-pointer text-lg font-bold active:scale-90">×</button>
+      </div>` : '';
+
+    return `
+      <div class="py-3 border-b border-slate-800 last:border-0">
+        ${photoThumb}${photoPanel}
+        <div class="flex items-center gap-3">
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-bold text-slate-100">${s.name}</div>
+            <div class="text-xs text-amber-400/80 mt-0.5">⏰ ${s.bestTime}</div>
+          </div>
+          ${mapsBtn}
+          ${editControls}
+        </div>
+      </div>`;
+  }).join('');
+
+  const addForm = isEdit ? `
+    <div class="border-2 border-dashed border-slate-700 rounded-xl p-4 space-y-3 mt-2">
+      <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Přidat foto místo</p>
+      <input id="ps-add-name-${cityId}" type="text" placeholder="Název místa" maxlength="60"
+             class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-slate-500 transition">
+      <input id="ps-add-time-${cityId}" type="text" placeholder="Nejlepší čas (např. Západ slunce 19–21 h)" maxlength="50"
+             class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-slate-500 transition">
+      <input id="ps-add-maps-${cityId}" type="url" placeholder="URL v Mapách (volitelné)"
+             class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-slate-500 transition">
+      <button onclick="submitAddPhotoSpot('${cityId}')"
+              class="w-full bg-yellow-500 hover:bg-yellow-400 active:scale-95 text-slate-950 font-black text-sm py-2.5 rounded-xl transition cursor-pointer">
+        + Přidat místo
+      </button>
+    </div>
+    <button onclick="resetPhotoSpotsToDefault('${cityId}')"
+            class="w-full text-[11px] text-slate-600 hover:text-slate-400 text-center py-1.5 transition cursor-pointer mt-1">
+      Obnovit výchozí foto tipy
+    </button>` : '';
+
+  const editBtnCls = isEdit
+    ? 'text-yellow-400 bg-yellow-500/15 border border-yellow-600/30'
+    : 'text-slate-500 hover:text-slate-300 bg-slate-800 border border-slate-700';
+
   return `
-    <details class="bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden">
+    <details class="bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden" ${isEdit ? 'open' : ''}>
       <summary class="flex items-center justify-between px-5 py-4 cursor-pointer select-none">
         <span class="text-base font-extrabold uppercase tracking-wider text-slate-400">📸 Foto tipy</span>
-        ${chevron}
+        <div class="flex items-center gap-2">
+          <button onclick="event.stopPropagation();togglePsEdit('${cityId}')"
+                  class="text-xs font-bold px-2.5 py-1.5 rounded-lg transition cursor-pointer ${editBtnCls}">
+            ${isEdit ? '✓ Hotovo' : '✏️ Upravit'}
+          </button>
+          ${!isEdit ? chevron : ''}
+        </div>
       </summary>
-      <div class="px-5 pb-4 pt-3 border-t border-slate-800">${items}</div>
+      <div class="px-5 pb-4 pt-3 border-t border-slate-800">
+        ${spotItems}
+        ${addForm}
+      </div>
     </details>`;
 }
 
@@ -2491,6 +2674,302 @@ async function fetchNearby(btn, category) {
   }).join('');
 
   results.innerHTML = stale + cards;
+}
+
+// ===========================
+// CUSTOM DATA – ITINERARIES & PHOTO SPOTS
+// ===========================
+
+function getCustomItineraries(cityId) {
+  try {
+    const s = localStorage.getItem(`custom_itin_${cityId}`);
+    if (s) return JSON.parse(s);
+  } catch {}
+  // Seed defaults with stable IDs
+  const city = CITIES.find(c => c.id === cityId);
+  return (city?.itineraries || []).map((it, i) => ({ ...it, _id: `${cityId}_itin_d${i}` }));
+}
+
+function saveCustomItineraries(cityId, items) {
+  localStorage.setItem(`custom_itin_${cityId}`, JSON.stringify(items));
+}
+
+function getCustomPhotoSpots(cityId) {
+  try {
+    const s = localStorage.getItem(`custom_ps_${cityId}`);
+    if (s) return JSON.parse(s);
+  } catch {}
+  const city = CITIES.find(c => c.id === cityId);
+  return (city?.photoSpots || []).map((ps, i) => ({ ...ps, _id: `${cityId}_ps_d${i}` }));
+}
+
+function saveCustomPhotoSpots(cityId, items) {
+  localStorage.setItem(`custom_ps_${cityId}`, JSON.stringify(items));
+}
+
+// ===========================
+// PHOTO STORAGE (localStorage base64)
+// ===========================
+
+function loadPhoto(photoId) {
+  return localStorage.getItem(`photo_${photoId}`);
+}
+
+function savePhoto(photoId, dataUrl) {
+  try {
+    localStorage.setItem(`photo_${photoId}`, dataUrl);
+    return true;
+  } catch {
+    showToast('Nedostatek místa. Smaž starší fotografie a zkus znovu.');
+    return false;
+  }
+}
+
+function deletePhoto(photoId) {
+  localStorage.removeItem(`photo_${photoId}`);
+}
+
+function compressImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const maxW = 800, maxH = 600;
+      const scale = Math.min(maxW / img.width, maxH / img.height, 1);
+      const canvas = document.createElement('canvas');
+      canvas.width  = Math.round(img.width  * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', 0.72));
+    };
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+// ===========================
+// WIFI DETECTION
+// ===========================
+
+function isOnWifi() {
+  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  if (!conn) return null;           // Safari iOS – can't detect
+  if (conn.type === 'wifi') return true;
+  if (conn.type && conn.type !== 'wifi') return false;
+  return null;
+}
+
+// ===========================
+// EDIT MODE TOGGLES & REFRESH
+// ===========================
+
+function toggleItinEdit(cityId) {
+  _editMode[`itin_${cityId}`] = !_editMode[`itin_${cityId}`];
+  refreshItinerariesSection(cityId);
+}
+
+function togglePsEdit(cityId) {
+  _editMode[`ps_${cityId}`] = !_editMode[`ps_${cityId}`];
+  refreshPhotoSpotsSection(cityId);
+}
+
+function refreshItinerariesSection(cityId) {
+  const wrap = document.getElementById(`itin-wrap-${cityId}`);
+  if (!wrap) return;
+  const city = CITIES.find(c => c.id === cityId);
+  if (!city) return;
+  wrap.innerHTML = _renderItinerariesInner(city);
+}
+
+function refreshPhotoSpotsSection(cityId) {
+  const wrap = document.getElementById(`ps-wrap-${cityId}`);
+  if (!wrap) return;
+  const city = CITIES.find(c => c.id === cityId);
+  if (!city) return;
+  wrap.innerHTML = _renderPhotoSpotsInner(city);
+}
+
+// ===========================
+// EDIT ACTIONS
+// ===========================
+
+function deleteItineraryItem(cityId, itemId) {
+  let items = getCustomItineraries(cityId);
+  deletePhoto(itemId);
+  items = items.filter(it => it._id !== itemId);
+  saveCustomItineraries(cityId, items);
+  refreshItinerariesSection(cityId);
+  showToast('Den odstraněn.');
+}
+
+function deletePhotoSpotItem(cityId, itemId) {
+  let items = getCustomPhotoSpots(cityId);
+  deletePhoto(itemId);
+  items = items.filter(ps => ps._id !== itemId);
+  saveCustomPhotoSpots(cityId, items);
+  refreshPhotoSpotsSection(cityId);
+  showToast('Místo odstraněno.');
+}
+
+function submitAddItinerary(cityId) {
+  const dayEl   = document.getElementById(`itin-add-day-${cityId}`);
+  const titleEl = document.getElementById(`itin-add-title-${cityId}`);
+  const stepsEl = document.getElementById(`itin-add-steps-${cityId}`);
+  if (!dayEl || !titleEl || !stepsEl) return;
+
+  const day   = dayEl.value.trim();
+  const title = titleEl.value.trim();
+  const steps = stepsEl.value.split('\n').map(s => s.trim()).filter(Boolean);
+
+  if (!day || !title)   { showToast('Vyplň název dne a podtitulek.'); return; }
+  if (!steps.length)    { showToast('Přidej alespoň jeden krok.'); return; }
+
+  const items  = getCustomItineraries(cityId);
+  const colors = ['#fbbf24','#a78bfa','#34d399','#60a5fa','#f87171','#fb923c'];
+  const color  = colors[items.length % colors.length];
+  items.push({ day, title, color, steps, _id: `${cityId}_itin_${Date.now()}` });
+  saveCustomItineraries(cityId, items);
+  refreshItinerariesSection(cityId);
+  showToast('Den přidán.');
+}
+
+function submitAddPhotoSpot(cityId) {
+  const nameEl = document.getElementById(`ps-add-name-${cityId}`);
+  const timeEl = document.getElementById(`ps-add-time-${cityId}`);
+  const mapsEl = document.getElementById(`ps-add-maps-${cityId}`);
+  if (!nameEl || !timeEl) return;
+
+  const name     = nameEl.value.trim();
+  const bestTime = timeEl.value.trim();
+  const mapsUrl  = mapsEl?.value.trim() || '';
+
+  if (!name || !bestTime) { showToast('Vyplň název a nejlepší čas.'); return; }
+
+  const items = getCustomPhotoSpots(cityId);
+  items.push({ name, bestTime, mapsUrl, _id: `${cityId}_ps_${Date.now()}` });
+  saveCustomPhotoSpots(cityId, items);
+  refreshPhotoSpotsSection(cityId);
+  showToast('Místo přidáno.');
+}
+
+function resetItinerariesToDefault(cityId) {
+  if (!confirm('Obnovit výchozí itineráře? Vlastní úpravy i fotografie budou ztraceny.')) return;
+  getCustomItineraries(cityId).forEach(it => deletePhoto(it._id));
+  localStorage.removeItem(`custom_itin_${cityId}`);
+  _editMode[`itin_${cityId}`] = false;
+  refreshItinerariesSection(cityId);
+  showToast('Výchozí itineráře obnoveny.');
+}
+
+function resetPhotoSpotsToDefault(cityId) {
+  if (!confirm('Obnovit výchozí foto tipy? Vlastní úpravy i fotografie budou ztraceny.')) return;
+  getCustomPhotoSpots(cityId).forEach(ps => deletePhoto(ps._id));
+  localStorage.removeItem(`custom_ps_${cityId}`);
+  _editMode[`ps_${cityId}`] = false;
+  refreshPhotoSpotsSection(cityId);
+  showToast('Výchozí foto tipy obnoveny.');
+}
+
+// ===========================
+// PHOTO PANEL & FILE HANDLING
+// ===========================
+
+function openPhotoPanel(type, cityId, itemId) {
+  const key = `${type}_${cityId}_${itemId}`;
+  _photoPanel[key] = !_photoPanel[key];
+  if (type === 'itin') refreshItinerariesSection(cityId);
+  else                 refreshPhotoSpotsSection(cityId);
+}
+
+function handlePhotoFileChange(input, type, cityId, itemId) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const wifi = isOnWifi();
+  if (wifi === false) {
+    if (!confirm('Nejsi připojen(a) k Wi-Fi. Uložit fotografii přes mobilní data?')) {
+      input.value = '';
+      return;
+    }
+  }
+
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try {
+      showToast('Zpracovávám…');
+      const compressed = await compressImage(e.target.result);
+      const ok = savePhoto(itemId, compressed);
+      if (ok) {
+        _photoPanel[`${type}_${cityId}_${itemId}`] = false;
+        showToast('Fotografie uložena offline.');
+      }
+      if (type === 'itin') refreshItinerariesSection(cityId);
+      else                 refreshPhotoSpotsSection(cityId);
+    } catch {
+      showToast('Chyba při zpracování fotografie.');
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveUrlPhoto(inputId, type, cityId, itemId) {
+  const url = document.getElementById(inputId)?.value.trim();
+  if (!url || !url.startsWith('http')) {
+    showToast('Zadej platnou URL adresu fotografie (https://…).');
+    return;
+  }
+  const ok = savePhoto(itemId, url);
+  if (ok) {
+    _photoPanel[`${type}_${cityId}_${itemId}`] = false;
+    showToast('URL fotografie uložena. Pro offline přístup použij ↓ Offline (WiFi).');
+  }
+  if (type === 'itin') refreshItinerariesSection(cityId);
+  else                 refreshPhotoSpotsSection(cityId);
+}
+
+async function downloadUrlPhotoOffline(type, cityId, itemId) {
+  const url = loadPhoto(itemId);
+  if (!url || url.startsWith('data:')) return;
+
+  const wifi = isOnWifi();
+  if (wifi === false) {
+    showToast('Stahování pro offline funguje jen na Wi-Fi. Připoj se k Wi-Fi a zkus znovu.');
+    return;
+  }
+  if (wifi === null) {
+    if (!confirm('Nelze zjistit typ připojení. Stáhnout fotografii offline?')) return;
+  }
+
+  showToast('Stahuji…');
+  try {
+    const resp = await fetch(url, { mode: 'cors' });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const blob = await resp.blob();
+    await new Promise((res, rej) => {
+      const reader = new FileReader();
+      reader.onload = async e => {
+        try {
+          const compressed = await compressImage(e.target.result);
+          const ok = savePhoto(itemId, compressed);
+          if (ok) showToast('Fotografie uložena pro offline.');
+          if (type === 'itin') refreshItinerariesSection(cityId);
+          else                 refreshPhotoSpotsSection(cityId);
+          res();
+        } catch { rej(e); }
+      };
+      reader.onerror = rej;
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    showToast('Nepodařilo se stáhnout (CORS nebo chyba sítě). Zkus uložit foto ze galerie přímo.');
+  }
+}
+
+function deleteItemPhoto(type, cityId, itemId) {
+  deletePhoto(itemId);
+  _photoPanel[`${type}_${cityId}_${itemId}`] = false;
+  if (type === 'itin') refreshItinerariesSection(cityId);
+  else                 refreshPhotoSpotsSection(cityId);
+  showToast('Fotografie smazána.');
 }
 
 // ===========================
