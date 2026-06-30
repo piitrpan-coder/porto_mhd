@@ -280,7 +280,44 @@ const CITIES = [
     ],
     mapTitle:'Mapa metra Porto',
     mapNote:'Schematická mapa – není v přesném geografickém měřítku. Pinch to zoom na dotykovém zařízení.',
-    extras:'porto'
+    extras:'porto',
+    apps: [
+      { emoji:'🚕', name:'Bolt', desc:'Taxi a ridesharing', url:'https://apps.apple.com/app/bolt-request-a-ride/id675033630' },
+      { emoji:'🚕', name:'Uber', desc:'Taxi alternativa', url:'https://apps.apple.com/app/uber-request-a-ride/id368677368' },
+      { emoji:'💳', name:'MB Way', desc:'Mobilní platby v Portugalsku', url:'https://apps.apple.com/pt/app/mb-way/id890614143' },
+      { emoji:'🍕', name:'Glovo', desc:'Rozvoz jídla', url:'https://apps.apple.com/pt/app/glovo-food-delivery/id951812684' },
+      { emoji:'🚂', name:'CP Comboios', desc:'Vlakové jízdní řády', url:'https://apps.apple.com/pt/app/cp-comboios-de-portugal/id501758310' }
+    ],
+    itineraries: [
+      { day:'Den 1', title:'Historické centrum', color:'#fbbf24', steps:[
+        '⛪ Livraria Lello – nejhezčí knihkupectví světa (rezervace online dopředu!)',
+        '🗼 Torre dos Clérigos – výhled na celé Porto',
+        '☕ Café Majestic nebo Aliados – kafe v secesním interiéru',
+        '🏛️ Palácio da Bolsa – imponující burzovní palác (prohlídka s průvodcem)',
+        '🍷 Ribeira – večeře s výhledem na řeku Douro a Gaia'
+      ]},
+      { day:'Den 2', title:'Gaia & portové víno', color:'#a78bfa', steps:[
+        '⛴️ Lanovka na Jardim do Morro – panoramatický výhled na Porto',
+        '🍾 Sklepy portového vína – Taylor\'s nebo Sandeman (degustace ~15 €)',
+        '🌉 Most Dom Luíse I. – přechod po horní pěší promenade zpět do centra',
+        '🌅 Miradouro da Vitória nebo Passeio das Virtudes – západ slunce'
+      ]},
+      { day:'Den 3', title:'Matosinhos & moře', color:'#34d399', steps:[
+        '🚇 Metro linka A do Matosinhos Sul (karta Z2)',
+        '🏖️ Praia de Matosinhos – pláž kousek od centra města',
+        '🦐 Oběd v rybí restauraci v Matosinhose – čerstvé ryby přímo z přístavu',
+        '🏠 Casa da Música – ikona moderní architektury, zastávka na cestě domů',
+        '🚌 Bus 204 z Casa da Música domů'
+      ]}
+    ],
+    photoSpots: [
+      { name:'Miradouro da Vitória', bestTime:'Západ slunce (18–21 h)', mapsUrl:'https://maps.google.com/?q=Miradouro+da+Vitoria+Porto' },
+      { name:'Ponte Dom Luís I – horní pásmo', bestTime:'Zlatá hodina', mapsUrl:'https://maps.google.com/?q=Ponte+Dom+Luis+I+Porto' },
+      { name:'Ribeira při svítání', bestTime:'Ráno 7–9 h (bez turistů)', mapsUrl:'https://maps.google.com/?q=Cais+da+Ribeira+Porto' },
+      { name:'Livraria Lello (interiér)', bestTime:'Při otevření (9:30)', mapsUrl:'https://maps.google.com/?q=Livraria+Lello+Porto' },
+      { name:'Torre dos Clérigos (výhled)', bestTime:'Západ slunce', mapsUrl:'https://maps.google.com/?q=Torre+dos+Clerigos+Porto' },
+      { name:'Passeio das Virtudes', bestTime:'Západ slunce s výhledem na Douro', mapsUrl:'https://maps.google.com/?q=Passeio+das+Virtudes+Porto' }
+    ]
   },
   {
     id: 'lagos',
@@ -404,6 +441,42 @@ const CITIES = [
     ],
     mapTitle:'Mapa Lagos a okolí',
     mapNote:'Schematická mapa – není v přesném geografickém měřítku. Pinch to zoom na dotykovém zařízení.',
+    apps: [
+      { emoji:'🚕', name:'Bolt', desc:'Taxi a ridesharing', url:'https://apps.apple.com/app/bolt-request-a-ride/id675033630' },
+      { emoji:'💳', name:'MB Way', desc:'Mobilní platby v Portugalsku', url:'https://apps.apple.com/pt/app/mb-way/id890614143' },
+      { emoji:'🚂', name:'CP Comboios', desc:'Vlakové jízdní řády', url:'https://apps.apple.com/pt/app/cp-comboios-de-portugal/id501758310' },
+      { emoji:'🍕', name:'Glovo', desc:'Rozvoz jídla', url:'https://apps.apple.com/pt/app/glovo-food-delivery/id951812684' }
+    ],
+    itineraries: [
+      { day:'Den 1', title:'Plážový okruh', color:'#22d3ee', steps:[
+        '🏖️ Praia da Batata – ranní koupání (10 min pěšky od centra)',
+        '🚶 Pobřežní stezka → Praia Dona Ana (~2,5 km, nádherné výhledy na útesy)',
+        '📸 Praia do Camilo – foto z vrcholu schodiště vytesaného do skal',
+        '🦐 Oběd na terase – Restaurante Dona Ana nebo Camilo',
+        '🌅 Západ slunce z pevnosti Fortaleza do Pinhão nebo z Bataty'
+      ]},
+      { day:'Den 2', title:'Ponta da Piedade', color:'#f59e0b', steps:[
+        '🚕 Taxi na Ponta da Piedade (~7 €) – ideálně ráno (méně turistů)',
+        '🪨 Prohlídka skalních oblouků a grott – must-see Algarve',
+        '🚤 Výlet člunem skrze jeskyně (sezónní, od spodního přístavu)',
+        '🚶 Pěšky zpět pobřežní stezkou: Piedade → Camilo → Dona Ana → Batata (3 km)',
+        '🍹 Večeře nebo drink v centru Lagosu'
+      ]},
+      { day:'Den 3', title:'Sagres & konec Evropy', color:'#a78bfa', steps:[
+        '🚌 Bus EVA z terminálu na Sagres (~1,5 hod., cca 5 €)',
+        '🏰 Pevnost Sagres (Fortaleza de Sagres) – historické místo na útesech',
+        '🌊 Cabo de São Vicente – nejjižnější bod pevninské Evropy, majáky a obchůdky',
+        '🚌 Bus EVA zpět do Lagosu – výhled na jihozápadní pobřeží'
+      ]}
+    ],
+    photoSpots: [
+      { name:'Ponta da Piedade', bestTime:'Ráno 8–10 h (zlatá hodina)', mapsUrl:'https://maps.google.com/?q=Ponta+da+Piedade+Lagos+Portugal' },
+      { name:'Praia do Camilo (z vrcholu)', bestTime:'Odpoledne 14–17 h', mapsUrl:'https://maps.google.com/?q=Praia+do+Camilo+Lagos+Portugal' },
+      { name:'Arco de Lagos (historická brána)', bestTime:'Západ slunce', mapsUrl:'https://maps.google.com/?q=Arco+de+Lagos+Portugal' },
+      { name:'Praia da Batata (svítání)', bestTime:'Sunrise (6:30–8 h)', mapsUrl:'https://maps.google.com/?q=Praia+da+Batata+Lagos+Portugal' },
+      { name:'Cabo de São Vicente', bestTime:'Západ slunce (nejlepší v Evropě)', mapsUrl:'https://maps.google.com/?q=Cabo+de+Sao+Vicente+Portugal' },
+      { name:'Praia Dona Ana (útesy shora)', bestTime:'Poledne – stíny v útesech', mapsUrl:'https://maps.google.com/?q=Praia+Dona+Ana+Lagos+Portugal' }
+    ],
     transportSections: [
       {
         title:'🚌 Bus EVA Transportes', titleColor:'#f59e0b',
@@ -728,6 +801,7 @@ function showCityPicker() {
   if (clockInterval) { clearInterval(clockInterval); clockInterval = null; }
   if (window._cdInterval) { clearInterval(window._cdInterval); window._cdInterval = null; }
   if (window._weatherInterval) { clearInterval(window._weatherInterval); window._weatherInterval = null; }
+  if (window._lagosWeatherInterval) { clearInterval(window._lagosWeatherInterval); window._lagosWeatherInterval = null; }
   if (window.depRefreshTimers) {
     Object.values(window.depRefreshTimers).forEach(t => clearTimeout(t));
     window.depRefreshTimers = {};
@@ -765,6 +839,11 @@ function renderCity(cityId) {
 
   // Init features
   if (city.extras === 'porto') initPorto();
+  if (city.id === 'lagos') {
+    fetchLagosWeather();
+    if (window._lagosWeatherInterval) clearInterval(window._lagosWeatherInterval);
+    window._lagosWeatherInterval = setInterval(fetchLagosWeather, 1800000);
+  }
   initMap();
   updateOnlineStatus();
 
@@ -841,6 +920,42 @@ function renderOverview(city) {
 
   const chevron = `<svg class="w-5 h-5 text-slate-500 shrink-0 details-arrow transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>`;
 
+  const lagosExtra = city.id === 'lagos' ? `
+    <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4 cursor-pointer active:opacity-80 transition-opacity" onclick="fetchLagosWeather(true)" title="Klepnutím obnovit">
+      <div class="flex items-center gap-4">
+        <span id="lagos-weather-icon" class="text-5xl leading-none" style="transition:opacity 0.15s">🌡️</span>
+        <div class="flex-1">
+          <div class="flex items-baseline gap-2">
+            <span id="lagos-weather-temp" class="text-5xl font-black text-slate-100">–°C</span>
+            <span id="lagos-uv-badge" class="text-sm text-orange-400 font-mono">UV –</span>
+          </div>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Lagos počasí</span>
+            <span id="lagos-weather-desc" class="text-sm text-slate-300 font-semibold">načítám…</span>
+          </div>
+          <div id="lagos-weather-stale" class="hidden text-[10px] text-amber-400/70 mt-0.5"></div>
+        </div>
+      </div>
+      <div class="grid grid-cols-3 gap-2">
+        <div class="bg-slate-800/60 rounded-xl p-3 text-center">
+          <div class="text-xs text-slate-500 mb-1">Výška vln</div>
+          <div id="lagos-wave-height" class="text-lg font-black text-cyan-400">– m</div>
+        </div>
+        <div class="bg-slate-800/60 rounded-xl p-3 text-center">
+          <div class="text-xs text-slate-500 mb-1">Perioda</div>
+          <div id="lagos-wave-period" class="text-lg font-black text-cyan-400">– s</div>
+        </div>
+        <div class="bg-slate-800/60 rounded-xl p-3 text-center">
+          <div class="text-xs text-slate-500 mb-1">UV Max</div>
+          <div id="lagos-uv-max" class="text-lg font-black text-orange-400">–</div>
+        </div>
+      </div>
+      <div id="lagos-sun-row" class="hidden items-center justify-center gap-6 border-t border-slate-800 pt-3">
+        <div class="flex items-center gap-1.5 text-sm text-amber-300"><span>🌅</span><span id="lagos-sunrise">–:–</span></div>
+        <div class="flex items-center gap-1.5 text-sm text-indigo-300"><span>🌇</span><span id="lagos-sunset">–:–</span></div>
+      </div>
+    </div>` : '';
+
   const portoExtra = city.extras === 'porto' ? `
     <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4 cursor-pointer active:opacity-80 transition-opacity" onclick="fetchWeather(true)" title="Klepnutím obnovit počasí">
       <div class="flex items-center gap-4">
@@ -872,6 +987,16 @@ function renderOverview(city) {
             <span id="fc-temp-2" class="text-xl font-black text-slate-200">–°C</span>
           </div>
         </div>
+      </div>
+      <div id="weather-sun" class="hidden items-center justify-center gap-6 border-t border-slate-800 pt-3">
+        <div class="flex items-center gap-1.5 text-sm text-amber-300"><span>🌅</span><span id="weather-sunrise">–:–</span></div>
+        <div class="flex items-center gap-1.5 text-sm text-indigo-300"><span>🌇</span><span id="weather-sunset">–:–</span></div>
+      </div>
+    </div>
+    <div id="weather-hourly-wrap" class="hidden bg-slate-900/60 rounded-2xl border border-slate-800 p-4">
+      <div class="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-3">🕐 Dnes po hodinách</div>
+      <div class="overflow-x-auto -mx-1 px-1" style="scrollbar-width:none">
+        <div id="weather-hourly" class="flex gap-2 pb-1"></div>
       </div>
     </div>
     <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4">
@@ -906,6 +1031,7 @@ function renderOverview(city) {
     </div>` : '';
 
   return `
+    ${lagosExtra}
     ${portoExtra}
     <details class="bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden" open>
       <summary class="flex items-center justify-between px-5 py-4 cursor-pointer select-none">
@@ -927,7 +1053,10 @@ function renderOverview(city) {
         ${chevron}
       </summary>
       <ul class="px-5 pb-5 space-y-4 border-t border-slate-800 pt-4">${tips}</ul>
-    </details>`;
+    </details>
+    ${renderItinerariesSection(city)}
+    ${renderPhotoSpotsSection(city)}
+    ${renderAppsSection(city)}`;
 }
 
 function renderRoutes(city) {
@@ -1089,6 +1218,85 @@ function renderBeaches(city) {
     return '';
   }).join('');
   return `<h2 class="text-xl font-black text-slate-100">🏖️ Pláže</h2>${sections}`;
+}
+
+function renderAppsSection(city) {
+  if (!city.apps || !city.apps.length) return '';
+  const chevron = `<svg class="w-5 h-5 text-slate-500 shrink-0 details-arrow transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>`;
+  const extIcon = `<svg class="w-4 h-4 text-slate-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>`;
+  const items = city.apps.map(app =>
+    `<a href="${app.url}" target="_blank" rel="noopener" class="flex items-center gap-3 p-3 bg-slate-950/40 rounded-xl active:scale-95 transition-transform cursor-pointer">
+      <span class="text-2xl">${app.emoji}</span>
+      <div class="flex-1 min-w-0">
+        <div class="text-sm font-bold text-slate-100">${app.name}</div>
+        <div class="text-xs text-slate-500">${app.desc}</div>
+      </div>
+      ${extIcon}
+    </a>`
+  ).join('');
+  return `
+    <details class="bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden">
+      <summary class="flex items-center justify-between px-5 py-4 cursor-pointer select-none">
+        <span class="text-base font-extrabold uppercase tracking-wider text-slate-400">📱 Užitečné appky</span>
+        ${chevron}
+      </summary>
+      <div class="px-4 pb-4 pt-3 border-t border-slate-800 space-y-2">${items}</div>
+    </details>`;
+}
+
+function renderItinerariesSection(city) {
+  if (!city.itineraries || !city.itineraries.length) return '';
+  const mainChevron = `<svg class="w-5 h-5 text-slate-500 shrink-0 details-arrow transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>`;
+  const subChevron = `<svg class="w-4 h-4 text-slate-600 shrink-0 details-arrow transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>`;
+  const days = city.itineraries.map(it => {
+    const steps = it.steps.map(s =>
+      `<li class="flex items-start gap-3">
+        <span class="w-1.5 h-1.5 rounded-full shrink-0 mt-2" style="background:${it.color}"></span>
+        <span class="text-sm text-slate-300 leading-relaxed">${s}</span>
+      </li>`
+    ).join('');
+    return `
+      <details class="border border-slate-800 rounded-xl overflow-hidden">
+        <summary class="flex items-center justify-between px-4 py-3.5 cursor-pointer select-none bg-slate-950/40">
+          <div class="flex items-center gap-3">
+            <span class="text-xs font-black px-2.5 py-1 rounded-full" style="background:${it.color}25;color:${it.color}">${it.day}</span>
+            <span class="text-sm font-bold text-slate-200">${it.title}</span>
+          </div>
+          ${subChevron}
+        </summary>
+        <ul class="px-4 pb-4 pt-3 space-y-3 border-t border-slate-800 bg-slate-950/20">${steps}</ul>
+      </details>`;
+  }).join('');
+  return `
+    <details class="bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden">
+      <summary class="flex items-center justify-between px-5 py-4 cursor-pointer select-none">
+        <span class="text-base font-extrabold uppercase tracking-wider text-slate-400">🗓️ Denní itineráře</span>
+        ${mainChevron}
+      </summary>
+      <div class="px-4 pb-4 pt-3 border-t border-slate-800 space-y-2">${days}</div>
+    </details>`;
+}
+
+function renderPhotoSpotsSection(city) {
+  if (!city.photoSpots || !city.photoSpots.length) return '';
+  const chevron = `<svg class="w-5 h-5 text-slate-500 shrink-0 details-arrow transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>`;
+  const items = city.photoSpots.map(s =>
+    `<div class="flex items-center justify-between gap-3 py-3 border-b border-slate-800 last:border-0">
+      <div class="flex-1 min-w-0">
+        <div class="text-sm font-bold text-slate-100">${s.name}</div>
+        <div class="text-xs text-amber-400/80 mt-0.5">⏰ ${s.bestTime}</div>
+      </div>
+      <a href="${s.mapsUrl}" target="_blank" rel="noopener" class="shrink-0 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-300 active:scale-95 transition-transform">Mapa</a>
+    </div>`
+  ).join('');
+  return `
+    <details class="bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden">
+      <summary class="flex items-center justify-between px-5 py-4 cursor-pointer select-none">
+        <span class="text-base font-extrabold uppercase tracking-wider text-slate-400">📸 Foto tipy</span>
+        ${chevron}
+      </summary>
+      <div class="px-5 pb-4 pt-3 border-t border-slate-800">${items}</div>
+    </details>`;
 }
 
 function renderMap(city) {
@@ -1787,12 +1995,12 @@ async function fetchWeather(manual = false) {
   if (manual && iEl) { iEl.style.transition = 'opacity 0.15s'; iEl.style.opacity = '0.3'; }
   try {
     const { data, fromCache, cachedAt } = await apiFetch(
-      'https://api.open-meteo.com/v1/forecast?latitude=41.15&longitude=-8.61&current=temperature_2m,weathercode,windspeed_10m&daily=temperature_2m_max,temperature_2m_min,weathercode&forecast_days=3&timezone=Europe%2FLisbon',
+      'https://api.open-meteo.com/v1/forecast?latitude=41.15&longitude=-8.61&current=temperature_2m,weathercode,windspeed_10m&daily=temperature_2m_max,temperature_2m_min,weathercode,sunrise,sunset&hourly=temperature_2m,precipitation_probability&forecast_days=3&timezone=Europe%2FLisbon',
       { _timeout: 8000 },
       'weather_porto'
     );
     if (!document.getElementById('weather-icon')) return;
-    const { current: c, daily: d } = data;
+    const { current: c, daily: d, hourly: h } = data;
     document.getElementById('weather-icon').textContent = WMO.icons[c.weathercode] ?? '🌡️';
     document.getElementById('weather-temp').textContent = Math.round(c.temperature_2m) + '°C';
     document.getElementById('weather-desc').textContent = WMO.labels[c.weathercode] ?? 'Počasí';
@@ -1802,6 +2010,38 @@ async function fetchWeather(manual = false) {
       document.getElementById('fc-temp-' + i).textContent =
         Math.round(d.temperature_2m_min[i]) + '–' + Math.round(d.temperature_2m_max[i]) + '°C';
     });
+    // Sunrise / sunset
+    const sunEl = document.getElementById('weather-sun');
+    if (sunEl && d.sunrise?.[0] && d.sunset?.[0]) {
+      document.getElementById('weather-sunrise').textContent = d.sunrise[0].split('T')[1];
+      document.getElementById('weather-sunset').textContent = d.sunset[0].split('T')[1];
+      sunEl.classList.remove('hidden');
+      sunEl.classList.add('flex');
+    }
+    // Hourly forecast (next 8 hours today)
+    const hourlyWrap = document.getElementById('weather-hourly-wrap');
+    const hourlyEl = document.getElementById('weather-hourly');
+    if (hourlyWrap && hourlyEl && h?.time?.length) {
+      const curHour = parseInt(new Intl.DateTimeFormat('en', { timeZone: timezone, hour: '2-digit', hourCycle: 'h23' }).format(new Date()));
+      const todayStr = d.sunrise[0]?.split('T')[0] || new Date().toISOString().slice(0, 10);
+      const idxs = h.time.map((t, i) => ({ t, i }))
+        .filter(({ t }) => t.startsWith(todayStr) && parseInt(t.split('T')[1]) >= curHour)
+        .slice(0, 8).map(({ i }) => i);
+      if (idxs.length) {
+        hourlyEl.innerHTML = idxs.map(i => {
+          const hr = h.time[i].split('T')[1];
+          const temp = Math.round(h.temperature_2m[i]);
+          const rain = h.precipitation_probability[i] ?? 0;
+          const rainColor = rain > 60 ? '#60a5fa' : rain > 30 ? '#fbbf24' : '#64748b';
+          return '<div class="shrink-0 bg-slate-800/60 rounded-xl px-3 py-3 text-center min-w-[54px]">'
+            + '<div class="text-xs text-slate-500 font-mono mb-1">' + hr + '</div>'
+            + '<div class="text-sm font-black text-slate-100">' + temp + '°</div>'
+            + '<div class="text-[10px] font-bold mt-1" style="color:' + rainColor + '">' + rain + '%</div>'
+            + '</div>';
+        }).join('');
+        hourlyWrap.classList.remove('hidden');
+      }
+    }
     const staleEl = document.getElementById('weather-stale');
     if (staleEl) {
       if (fromCache && cachedAt) {
@@ -1815,6 +2055,59 @@ async function fetchWeather(manual = false) {
     if (manual && fromCache) showToast('Offline – zobrazena stará data.');
   } catch {
     if (manual) showToast('Nepodařilo se načíst počasí – zkontroluj připojení.');
+  } finally {
+    if (iEl) setTimeout(() => { iEl.style.opacity = '1'; }, 200);
+  }
+}
+
+// ===========================
+// LAGOS – WEATHER + MARINE
+// ===========================
+async function fetchLagosWeather(manual = false) {
+  const timezone = 'Europe/Lisbon';
+  const iEl = document.getElementById('lagos-weather-icon');
+  if (manual && iEl) iEl.style.opacity = '0.3';
+  try {
+    const [weatherRes, marineRes] = await Promise.all([
+      apiFetch(
+        'https://api.open-meteo.com/v1/forecast?latitude=37.10&longitude=-8.67&current=temperature_2m,weathercode,uv_index&daily=uv_index_max,sunrise,sunset&forecast_days=1&timezone=Europe%2FLisbon',
+        { _timeout: 8000 }, 'weather_lagos'
+      ),
+      apiFetch(
+        'https://marine-api.open-meteo.com/v1/marine?latitude=37.10&longitude=-8.67&current=wave_height,wave_period&forecast_days=1&timezone=Europe%2FLisbon',
+        { _timeout: 8000 }, 'marine_lagos'
+      ).catch(() => null)
+    ]);
+    if (!document.getElementById('lagos-weather-icon')) return;
+    const { current: c, daily: d } = weatherRes.data;
+    document.getElementById('lagos-weather-icon').textContent = WMO.icons[c.weathercode] ?? '🌡️';
+    document.getElementById('lagos-weather-temp').textContent = Math.round(c.temperature_2m) + '°C';
+    document.getElementById('lagos-weather-desc').textContent = WMO.labels[c.weathercode] ?? 'Počasí';
+    document.getElementById('lagos-uv-badge').textContent = 'UV ' + (c.uv_index != null ? Math.round(c.uv_index) : '–');
+    document.getElementById('lagos-uv-max').textContent = d.uv_index_max?.[0] != null ? Math.round(d.uv_index_max[0]) : '–';
+    if (marineRes) {
+      const mc = marineRes.data.current;
+      document.getElementById('lagos-wave-height').textContent = mc.wave_height != null ? mc.wave_height.toFixed(1) + ' m' : '– m';
+      document.getElementById('lagos-wave-period').textContent = mc.wave_period != null ? Math.round(mc.wave_period) + ' s' : '– s';
+    }
+    const sunRow = document.getElementById('lagos-sun-row');
+    if (sunRow && d.sunrise?.[0] && d.sunset?.[0]) {
+      document.getElementById('lagos-sunrise').textContent = d.sunrise[0].split('T')[1];
+      document.getElementById('lagos-sunset').textContent = d.sunset[0].split('T')[1];
+      sunRow.classList.remove('hidden');
+      sunRow.classList.add('flex');
+    }
+    const staleEl = document.getElementById('lagos-weather-stale');
+    if (staleEl) {
+      if (weatherRes.fromCache && weatherRes.cachedAt) {
+        staleEl.textContent = 'Offline · naposledy ' + localHHMM(weatherRes.cachedAt, timezone);
+        staleEl.className = 'text-[10px] text-amber-400/70 mt-0.5';
+      } else { staleEl.className = 'hidden'; }
+    }
+    if (manual && !weatherRes.fromCache) showToast('Počasí aktualizováno ✓');
+    if (manual && weatherRes.fromCache) showToast('Offline – zobrazena stará data.');
+  } catch {
+    if (manual) showToast('Nepodařilo se načíst – zkontroluj připojení.');
   } finally {
     if (iEl) setTimeout(() => { iEl.style.opacity = '1'; }, 200);
   }
@@ -2083,6 +2376,17 @@ function populateNearbyDd(options) {
   }).join('');
 }
 
+function saveNearbyPoi(name, lat, lng) {
+  const pois = loadPois();
+  if (pois.some(p => p.lat && Math.abs(p.lat - lat) < 0.0001 && Math.abs(p.lng - lng) < 0.0001)) {
+    showToast('Místo je již uloženo.'); return;
+  }
+  pois.push({ emoji: '📍', name, address: lat.toFixed(5) + ', ' + lng.toFixed(5), lat, lng });
+  savePois(pois);
+  applyPlaces();
+  showToast('📍 ' + name + ' uloženo!');
+}
+
 async function fetchNearby(btn, category) {
   const val = _nearbyDdVal;
   const timezone = currentCity?.timezone || 'Europe/Lisbon';
@@ -2168,6 +2472,7 @@ async function fetchNearby(btn, category) {
         ? '<span class="text-[10px] font-bold text-red-400 bg-red-900/30 px-1.5 py-0.5 rounded-md ml-1">Zavřeno</span>'
         : '';
     const starsHtml = p.stars ? ' <span class="text-xs text-yellow-400 ml-1">★ ' + p.stars + '</span>' : '';
+    const safeName = p.name.replace(/"/g, '&quot;');
     return '<div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/40 gap-3">'
       + '<div class="flex-1 min-w-0">'
       + '<div class="flex items-center flex-wrap mb-0.5">'
@@ -2176,8 +2481,12 @@ async function fetchNearby(btn, category) {
       + '</div>'
       + '<span class="text-slate-500 text-xs font-mono">' + p.dist + ' m · ~' + Math.ceil(p.dist / 75) + ' min chůze</span>'
       + '</div>'
+      + '<div class="flex items-center gap-1.5 shrink-0">'
+      + '<button data-name="' + safeName + '" data-lat="' + p.elat + '" data-lng="' + p.elng + '" onclick="saveNearbyPoi(this.dataset.name,+this.dataset.lat,+this.dataset.lng)"'
+      + ' class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-400 text-xs px-2 py-2 rounded-xl font-bold transition cursor-pointer">+ Uložit</button>'
       + '<a href="https://www.google.com/maps/search/?api=1&query=' + p.elat + ',' + p.elng + '" target="_blank" rel="noopener" '
-      + 'class="shrink-0 bg-slate-700 hover:bg-slate-600 active:scale-95 text-yellow-400 text-sm px-3 py-2 rounded-xl font-bold transition">Mapa</a>'
+      + 'class="bg-slate-700 hover:bg-slate-600 active:scale-95 text-yellow-400 text-sm px-3 py-2 rounded-xl font-bold transition">Mapa</a>'
+      + '</div>'
       + '</div>';
   }).join('');
 
