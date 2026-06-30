@@ -9,6 +9,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
     @keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
@@ -287,7 +289,22 @@
       <!-- Uložená místa -->
       <div class="space-y-2 border-t border-slate-800 pt-5">
         <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-400">🗂️ Uložená místa</h3>
-        <div id="modal-poi-list"></div>
+        <div id="modal-poi-list" class="space-y-2"></div>
+      </div>
+
+      <!-- Záloha dat -->
+      <div class="space-y-3 border-t border-slate-800 pt-5">
+        <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-500">💾 Zálohování dat</h3>
+        <div class="flex gap-2">
+          <button onclick="exportBackup()"
+                  class="flex-1 py-2.5 px-3 bg-slate-850 hover:bg-slate-800 border border-slate-700/60 rounded-xl text-xs font-bold text-slate-300 transition active:scale-95 cursor-pointer text-center">
+            📥 Exportovat data
+          </button>
+          <label class="flex-1 py-2.5 px-3 bg-slate-850 hover:bg-slate-800 border border-slate-700/60 rounded-xl text-xs font-bold text-slate-300 transition active:scale-95 cursor-pointer text-center select-none">
+            📤 Importovat data
+            <input type="file" accept=".json" class="hidden" onchange="importBackup(this)">
+          </label>
+        </div>
       </div>
     </div>
   </div>
@@ -353,28 +370,28 @@ const CITIES = [
     ],
     routes: [
       {
-        from:'Letiště', to:'Ubytování',
+        from:'Letiště', to:'Ubytování', lat: 41.2424, lng: -8.6786,
         badge:'Zóna Z4', badgeColor:'#2563eb', duration:'~45 min',
         description:'Nastup na Metro E (směr Estádio do Dragão), přestup na Casa da Música, Bus 204 → Prédios de Lordelo',
         mapsUrl:'https://www.google.com/maps/dir/?api=1&origin=Aeroporto+Francisco+Sa+Carneiro+Porto&destination=Rua+Paulo+Gama+551+Porto&travelmode=transit',
         mapsLabel:'Google Maps – Transit'
       },
       {
-        from:'Ubytování', to:'Fakulta (FLUP)',
+        from:'Ubytování', to:'Fakulta (FLUP)', lat: 41.1506, lng: -8.6315,
         badge:'Zóna Z2', badgeColor:'#16a34a', duration:'~10–15 min',
         description:'Bus 204 ze zastávky Prédios de Lordelo nebo Bus 209 ze zastávky Planetário, 3 zastávky → Faculdade de Letras',
         mapsUrl:'https://www.google.com/maps/dir/?api=1&origin=Rua+Paulo+Gama+551+Porto&destination=Faculdade+de+Letras+da+Universidade+do+Porto&travelmode=transit',
         mapsLabel:'Google Maps – Transit'
       },
       {
-        from:'Ubytování', to:'Centrum (Aliados)',
+        from:'Ubytování', to:'Centrum (Aliados)', lat: 41.1485, lng: -8.6110,
         badge:'Zóna Z2', badgeColor:'#16a34a', duration:'~20 min',
         description:'Bus 200 nebo 207 ze zastávky Planetário → Praça Filipa de Lencastre / Aliados',
         mapsUrl:'https://www.google.com/maps/dir/?api=1&origin=Rua+Paulo+Gama+551+Porto&destination=Avenida+dos+Aliados+Porto&travelmode=transit',
         mapsLabel:'Google Maps – Transit'
       },
       {
-        from:'Ubytování', to:'Campanhã',
+        from:'Ubytování', to:'Campanhã', lat: 41.1492, lng: -8.5855,
         badge:'Zóna Z2', badgeColor:'#dc2626', duration:'~30 min',
         warning:'⚠ V neděli ráno první spoj až po 6:00!',
         description:'Bus 207 přímo ze zastávky Planetário na Estação Campanhã',
@@ -482,21 +499,21 @@ const CITIES = [
     ],
     routes: [
       {
-        from:'Nádraží', to:'Ubytování',
+        from:'Nádraží', to:'Ubytování', lat: 37.1081, lng: -8.6723,
         badge:'Pěšky', badgeColor:'#16a34a', duration:'~10 min',
         description:'Z Estação de Lagos pěšky do ubytování Rua Cândido Guerreiro, cca 700 m po rovinatém terénu.',
         mapsUrl:'https://www.google.com/maps/dir/?api=1&origin=Estacao+de+Lagos+Portugal&destination=Rua+Candido+Guerreiro+Lagos&travelmode=walking',
         mapsLabel:'Google Maps – Pěšky'
       },
       {
-        from:'Ubytování', to:'Praia da Batata',
+        from:'Ubytování', to:'Praia da Batata', lat: 37.0984, lng: -8.6677,
         badge:'Pěšky', badgeColor:'#16a34a', duration:'~10 min / 700 m',
         description:'Pěšky k pevnosti Ponta da Bandeira a pláži Batata – nejkratší cesta k moři z ubytování.',
         mapsUrl:'https://www.google.com/maps/dir/?api=1&origin=Rua+Candido+Guerreiro+Lagos&destination=Praia+da+Batata+Lagos&travelmode=walking',
         mapsLabel:'Google Maps – Pěšky'
       },
       {
-        from:'Ubytování', to:'Dona Ana + Camilo',
+        from:'Ubytování', to:'Dona Ana + Camilo', lat: 37.0914, lng: -8.6692,
         badge:'Pěšky + Taxi', badgeColor:'#d97706', duration:'35–40 min / ~8 €',
         description:'Pobřežní stezka 2,5 km nebo taxi 7–9 €. Dona Ana a Camilo jsou vedle sebe – navštiv obě!',
         mapsUrl:'https://www.google.com/maps/dir/?api=1&origin=Rua+Candido+Guerreiro+Lagos&destination=Praia+Dona+Ana+Lagos&travelmode=walking',
@@ -505,7 +522,7 @@ const CITIES = [
         mapsLabel2:'Trasa – Camilo'
       },
       {
-        from:'Ubytování', to:'Meia Praia',
+        from:'Ubytování', to:'Meia Praia', lat: 37.1118, lng: -8.6477,
         badge:'Trajekt ⛴️', badgeColor:'#0891b2', duration:'~15 min',
         warning:'⚠ Sezónní trajekt! Provoz duben–říjen.',
         description:'Trajekt ze Mariny de Lagos na Meia Praia (8 km písečná pláž). Sezónní provoz, cca 3–5 € zpáteční.',
@@ -513,7 +530,7 @@ const CITIES = [
         mapsLabel:'Google Maps – Transit'
       },
       {
-        from:'Ubytování', to:'Praia da Luz',
+        from:'Ubytování', to:'Praia da Luz', lat: 37.0864, lng: -8.7286,
         badge:'Bus EVA', badgeColor:'#2563eb', duration:'~20 min',
         description:'6 km na západ, bus EVA z terminálu Rua da Porta de Portugal → Luz. Klidnější vesnice, méně turistů.',
         mapsUrl:'https://www.google.com/maps/dir/?api=1&origin=Rua+Candido+Guerreiro+Lagos&destination=Praia+da+Luz+Portugal&travelmode=transit',
@@ -702,35 +719,35 @@ const CITIES = [
     ],
     routes: [
       {
-        from:'Letiště', to:'Centrum (Baixa-Chiado)',
+        from:'Letiště', to:'Centrum (Baixa-Chiado)', lat: 38.7756, lng: -9.1354,
         badge:'Metro Vermelha', badgeColor:'#dc2626', duration:'~30 min',
         description:'Metro Vermelha (Červená) z letiště → přestup na Alameda (Zelená linka) → Baixa-Chiado. Nebo Vermelha → Oriente → Azul → Baixa-Chiado.',
         mapsUrl:'https://www.google.com/maps/dir/?api=1&origin=Aeroporto+Humberto+Delgado+Lisboa&destination=Baixa-Chiado+Lisboa&travelmode=transit',
         mapsLabel:'Google Maps – Transit'
       },
       {
-        from:'Centrum', to:'Belém',
+        from:'Centrum', to:'Belém', lat: 38.6916, lng: -9.2160,
         badge:'Tram 15E', badgeColor:'#16a34a', duration:'~30 min',
         description:'Tram 15E z Praça da Figueira nebo Praça do Comércio → Belém (zastávka Belém nebo Mosteiro). Alternativa: Bus 728.',
         mapsUrl:'https://www.google.com/maps/dir/?api=1&origin=Praca+do+Comercio+Lisboa&destination=Torre+de+Belem+Lisboa&travelmode=transit',
         mapsLabel:'Google Maps – Transit'
       },
       {
-        from:'Centrum', to:'Sintra (výlet)',
+        from:'Centrum', to:'Sintra (výlet)', lat: 38.7989, lng: -9.3881,
         badge:'Vlak CP', badgeColor:'#7c3aed', duration:'~40 min',
-        description:'Vlak CP z Rossio nebo Oriente → Sintra. Jezdí každých 30 min, jízdné ~2,60 €. Viva Viagem karta funguje i na vlak Linha de Sintra.',
+        description:'Vlak CP z Rossio nebo Oriente → Sintra. Jezdí každých 30 min, jízně ~2,60 €. Viva Viagem karta funguje i na vlak Linha de Sintra.',
         mapsUrl:'https://www.google.com/maps/dir/?api=1&origin=Rossio+Lisboa&destination=Sintra+Portugal&travelmode=transit',
         mapsLabel:'Google Maps – Transit'
       },
       {
-        from:'Centrum', to:'Cascais (výlet)',
+        from:'Centrum', to:'Cascais (výlet)', lat: 38.6979, lng: -9.4217,
         badge:'Vlak CP', badgeColor:'#0891b2', duration:'~40 min',
         description:'Vlak CP z Cais do Sodré → Cascais. Jezdí každých 20 min, 10 zastávek podél Atlantiku. Jízdné ~2,60 €.',
         mapsUrl:'https://www.google.com/maps/dir/?api=1&origin=Cais+do+Sodre+Lisboa&destination=Cascais+Portugal&travelmode=transit',
         mapsLabel:'Google Maps – Transit'
       },
       {
-        from:'Centrum', to:'Parque das Nações',
+        from:'Centrum', to:'Parque das Nações', lat: 38.7672, lng: -9.0978,
         badge:'Metro Azul/Vermelha', badgeColor:'#2563eb', duration:'~25 min',
         description:'Metro Azul nebo Vermelha → Oriente. Moderní čtvrť, oceanárium, nákupní centrum Vasco da Gama, výstaviště.',
         mapsUrl:'https://www.google.com/maps/dir/?api=1&origin=Baixa-Chiado+Lisboa&destination=Parque+das+Nacoes+Lisboa&travelmode=transit',
@@ -1399,6 +1416,9 @@ function renderOverview(city) {
           <button onclick="fetchNearby(this,'fast_food')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🍔</span><span class="text-sm font-bold">Fast food</span></button>
           <button onclick="fetchNearby(this,'bar')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🍺</span><span class="text-sm font-bold">Bary</span></button>
           <button onclick="fetchNearby(this,'pharmacy')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">💊</span><span class="text-sm font-bold">Lékárny</span></button>
+          <button onclick="fetchNearby(this,'atm')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🏧</span><span class="text-sm font-bold">Bankomat</span></button>
+          <button onclick="fetchNearby(this,'fuel')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">⛽</span><span class="text-sm font-bold">Benzínka</span></button>
+          <button onclick="fetchNearby(this,'laundry')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🧺</span><span class="text-sm font-bold">Prádelna</span></button>
         </div>
         <div class="absolute right-0 top-0 bottom-1 w-10 bg-gradient-to-l from-slate-900/60 to-transparent pointer-events-none rounded-r-2xl"></div>
       </div>
@@ -1489,6 +1509,9 @@ function renderOverview(city) {
           <button onclick="fetchNearby(this,'fast_food')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🍔</span><span class="text-sm font-bold">Fast food</span></button>
           <button onclick="fetchNearby(this,'bar')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🍺</span><span class="text-sm font-bold">Bary</span></button>
           <button onclick="fetchNearby(this,'pharmacy')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">💊</span><span class="text-sm font-bold">Lékárny</span></button>
+          <button onclick="fetchNearby(this,'atm')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🏧</span><span class="text-sm font-bold">Bankomat</span></button>
+          <button onclick="fetchNearby(this,'fuel')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">⛽</span><span class="text-sm font-bold">Benzínka</span></button>
+          <button onclick="fetchNearby(this,'laundry')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🧺</span><span class="text-sm font-bold">Prádelna</span></button>
         </div>
         <div class="absolute right-0 top-0 bottom-1 w-10 bg-gradient-to-l from-slate-900/60 to-transparent pointer-events-none rounded-r-2xl"></div>
       </div>
@@ -1583,6 +1606,9 @@ function renderOverview(city) {
           <button onclick="fetchNearby(this,'fast_food')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🍔</span><span class="text-sm font-bold">Fast food</span></button>
           <button onclick="fetchNearby(this,'bar')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🍺</span><span class="text-sm font-bold">Bary</span></button>
           <button onclick="fetchNearby(this,'pharmacy')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">💊</span><span class="text-sm font-bold">Lékárny</span></button>
+          <button onclick="fetchNearby(this,'atm')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🏧</span><span class="text-sm font-bold">Bankomat</span></button>
+          <button onclick="fetchNearby(this,'fuel')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">⛽</span><span class="text-sm font-bold">Benzínka</span></button>
+          <button onclick="fetchNearby(this,'laundry')" class="nearby-cat-btn shrink-0 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-5 px-6 rounded-2xl transition cursor-pointer select-none flex flex-col items-center gap-2"><span class="text-3xl">🧺</span><span class="text-sm font-bold">Prádelna</span></button>
         </div>
         <div class="absolute right-0 top-0 bottom-1 w-10 bg-gradient-to-l from-slate-900/60 to-transparent pointer-events-none rounded-r-2xl"></div>
       </div>
@@ -1608,6 +1634,22 @@ function renderOverview(city) {
     </details>
     ${exchangeWidget}
     ${quickHomeCard}
+    
+    <!-- Denní plánovač -->
+    <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-extrabold text-slate-200">📅 Denní plánovač</h3>
+        <span class="text-xs text-slate-500 font-semibold uppercase tracking-wider">Můj program</span>
+      </div>
+      <div class="flex gap-2">
+        <input id="planner-add-input-${city.id}" type="text" placeholder="Co máš v plánu? (např. 10:00 Most Dom Luis)"
+               class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-slate-500 transition">
+        <button onclick="addPlannerItem('${city.id}')"
+                class="bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-black text-sm px-4 py-2.5 rounded-xl transition cursor-pointer active:scale-95">+</button>
+      </div>
+      <div id="planner-items-${city.id}" class="space-y-2.5"></div>
+    </div>
+
     <div class="space-y-3">${cards}</div>
     <details class="bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden">
       <summary class="flex items-center justify-between px-5 py-4 cursor-pointer select-none">
@@ -1699,6 +1741,25 @@ function renderRouteCard(route, city) {
        </a>` : '';
   const btns = (btn1 || btn2) ? `<div class="flex gap-2 flex-wrap">${btn1}${btn2}</div>` : '';
 
+  // Distance badges
+  let distBadges = '';
+  if (route.lat && route.lng && typeof haversineM === 'function') {
+    const home = PlacesManager.loadHome(city.id);
+    const gps = typeof window.getGpsPos === 'function' ? window.getGpsPos() : null;
+    const parts = [];
+    if (home && home.lat && home.lng) {
+      const km = (haversineM(home.lat, home.lng, route.lat, route.lng) / 1000).toFixed(1);
+      parts.push(`<span class="text-[10px] text-slate-400 bg-slate-800/60 px-2 py-0.5 rounded-lg font-mono">🏠 ${km} km</span>`);
+    }
+    if (gps && gps.lat && gps.lng) {
+      const km = (haversineM(gps.lat, gps.lng, route.lat, route.lng) / 1000).toFixed(1);
+      parts.push(`<span class="text-[10px] text-slate-400 bg-slate-800/60 px-2 py-0.5 rounded-lg font-mono">📍 ${km} km</span>`);
+    }
+    if (parts.length > 0) {
+      distBadges = `<div class="flex gap-1.5 flex-wrap">${parts.join('')}</div>`;
+    }
+  }
+
   const shareTitle = `${route.from} → ${route.to}`;
   const shareText = `${route.from} → ${route.to} (${route.badge}, ${route.duration}): ${route.description}`;
   const shareUrl = route.mapsUrl || '';
@@ -1712,7 +1773,10 @@ function renderRouteCard(route, city) {
             <svg class="w-4 h-4 text-slate-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
             <span class="text-lg font-black text-slate-100">${route.to}</span>
           </div>
-          <span class="text-xs font-bold px-2.5 py-1 rounded-full mt-2 inline-block" style="background:${route.badgeColor}25;color:${route.badgeColor}">${route.badge}</span>
+          <div class="flex items-center gap-2 flex-wrap mt-1.5">
+            <span class="text-xs font-bold px-2.5 py-1 rounded-full inline-block" style="background:${route.badgeColor}25;color:${route.badgeColor}">${route.badge}</span>
+            ${distBadges}
+          </div>
         </div>
         <span class="text-base font-black shrink-0" style="color:${city.color}">${route.duration}</span>
       </div>
@@ -1735,6 +1799,67 @@ function renderRouteCard(route, city) {
 }
 }
 
+function renderPhrasebookWidget() {
+  const PHRASES = [
+    { cat: 'gen', cz: 'Dobrý den / Ahoj', pt: 'Bom dia / Olá', pron: 'bõu díja / olá' },
+    { cat: 'gen', cz: 'Děkuji (muž / žena)', pt: 'Obrigado / Obrigada', pron: 'obrigádu / obrigáda' },
+    { cat: 'gen', cz: 'Prosím', pt: 'Por favor', pron: 'pur favór' },
+    { cat: 'gen', cz: 'Ano / Ne', pt: 'Sim / Não', pron: 'sĩ / näu' },
+    { cat: 'gen', cz: 'Mluvíte anglicky?', pt: 'Fala inglês?', pron: 'fála inglês?' },
+    { cat: 'gen', cz: 'Nerozumím', pt: 'Não entendo', pron: 'näu ẽtẽdu' },
+    
+    { cat: 'rest', cz: 'Účet, prosím', pt: 'A conta, por favor', pron: 'a kõta pur favór' },
+    { cat: 'rest', cz: 'Chtěl(a) bych pivo / víno', pt: 'Eu queria uma cerveja / um vinho', pron: 'eu keríja úma serveža / ũ víňu' },
+    { cat: 'rest', cz: 'Vodu, prosím', pt: 'Água, por favor', pron: 'água pur favór' },
+    { cat: 'rest', cz: 'Jídelní lístek', pt: 'A ementa / O menu', pron: 'a emẽta / u menu' },
+    { cat: 'rest', cz: 'Bylo to vynikající!', pt: 'Estava delicioso!', pron: 'eštáva deli-sjozu' },
+    
+    { cat: 'tran', cz: 'Kde je zastávka?', pt: 'Onde fica a paragem?', pron: 'õdi fíka a parážẽj' },
+    { cat: 'tran', cz: 'Jízdenka / Karta', pt: 'Bilhete / Cartão', pron: 'biľéti / kartäu' },
+    { cat: 'tran', cz: 'Nádraží / Stanice', pt: 'Estação', pron: 'ešta-säu' },
+    { cat: 'tran', cz: 'Vlak / Autobus / Metro', pt: 'Comboio / Autocarro / Metro', pron: 'kõboju / autukáru / metro' },
+    
+    { cat: 'emerg', cz: 'Pomoc!', pt: 'Socorro!', pron: 'sukóru' },
+    { cat: 'emerg', cz: 'Potřebuji doktora', pt: 'Preciso de um médico', pron: 'presízu di ũ médiku' },
+    { cat: 'emerg', cz: 'Kde je lékárna / nemocnice?', pt: 'Onde fica a farmácia / o hospital?', pron: 'õdi fíka a farmásja / u ošpitál' },
+    { cat: 'emerg', cz: 'Zavolejte policii', pt: 'Chame a polícia', pron: 'šámi a pulísja' }
+  ];
+
+  const phraseItemsHtml = PHRASES.map(p => `
+    <div data-cat="${p.cat}" class="phrase-item p-3 rounded-xl bg-slate-950/30 border border-slate-800/40">
+      <div class="flex justify-between items-start gap-2">
+        <span class="phrase-cz text-xs text-slate-400 font-medium">${p.cz}</span>
+        <span class="phrase-pt text-sm font-black text-slate-200">${p.pt}</span>
+      </div>
+      <div class="text-[10px] text-slate-500 italic mt-0.5">výslovnost: ${p.pron}</div>
+    </div>
+  `).join('');
+
+  return `
+    <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4 mt-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-extrabold text-slate-200">🗣️ Užitečné fráze</h3>
+        <span class="text-xs text-slate-500 font-semibold uppercase tracking-wider">Offline slovníček</span>
+      </div>
+      <input id="phrase-search" type="text" placeholder="Hledat frázi (česky / portugalsky)…"
+             oninput="filterPhrases()"
+             class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-slate-500 transition">
+      
+      <div class="flex gap-2 overflow-x-auto pb-1" style="scrollbar-width:none">
+        <button onclick="selectPhraseCat('all')" id="pcat-all" class="pcat-btn shrink-0 text-xs bg-yellow-500/15 border border-yellow-600/30 text-yellow-400 font-bold px-3 py-1.5 rounded-lg cursor-pointer">Vše</button>
+        <button onclick="selectPhraseCat('gen')" id="pcat-gen" class="pcat-btn shrink-0 text-xs bg-slate-800 border border-slate-700 text-slate-300 font-bold px-3 py-1.5 rounded-lg cursor-pointer">👋 Obecné</button>
+        <button onclick="selectPhraseCat('rest')" id="pcat-rest" class="pcat-btn shrink-0 text-xs bg-slate-800 border border-slate-700 text-slate-300 font-bold px-3 py-1.5 rounded-lg cursor-pointer">🍽️ Gastro</button>
+        <button onclick="selectPhraseCat('tran')" id="pcat-tran" class="pcat-btn shrink-0 text-xs bg-slate-800 border border-slate-700 text-slate-300 font-bold px-3 py-1.5 rounded-lg cursor-pointer">🚌 Doprava</button>
+        <button onclick="selectPhraseCat('emerg')" id="pcat-emerg" class="pcat-btn shrink-0 text-xs bg-slate-800 border border-slate-700 text-slate-300 font-bold px-3 py-1.5 rounded-lg cursor-pointer">🚨 Nouze</button>
+      </div>
+
+      <div id="phrase-list" class="space-y-2 max-h-64 overflow-y-auto pr-1">
+        ${phraseItemsHtml}
+      </div>
+    </div>
+  `;
+}
+
 function renderInfo(city) {
   const sections = city.infoSections.map(sec => {
     if (sec.type !== 'accordion') return '';
@@ -1749,7 +1874,9 @@ function renderInfo(city) {
         <div class="px-5 pb-5 text-sm text-slate-300 leading-relaxed border-t border-slate-800 pt-4">${sec.body}</div>
       </details>`;
   }).join('');
-  return `<h2 class="text-xl font-black text-slate-100">📖 Tahák</h2>${sections}`;
+  
+  const phrasebook = renderPhrasebookWidget();
+  return `<h2 class="text-xl font-black text-slate-100">📖 Tahák</h2>${sections}${phrasebook}`;
 }
 
 function renderBeaches(city) {
@@ -2078,21 +2205,42 @@ function _renderPhotoSpotsInner(city) {
 
 function renderMap(city) {
   const svg = city.id === 'porto' ? PORTO_MAP_SVG : city.id === 'lisbon' ? LISBON_MAP_SVG : LAGOS_MAP_SVG;
+  const toggleBtnText = typeof _interactiveMapActive !== 'undefined' && _interactiveMapActive ? '🗺️ Přepnout na schéma metra' : '🗺️ Přepnout na interaktivní mapu (OSM)';
+  const staticHidden = typeof _interactiveMapActive !== 'undefined' && _interactiveMapActive ? 'hidden' : '';
+  const leafletHidden = typeof _interactiveMapActive !== 'undefined' && _interactiveMapActive ? '' : 'hidden';
+  
   return `
-    <h2 class="text-lg font-black text-slate-100">${city.emoji} ${city.mapTitle}</h2>
-    <div class="relative bg-slate-900/60 rounded-xl border border-slate-800 overflow-hidden" style="height:420px">
-      <div class="absolute right-2 top-2 z-10 flex flex-col gap-1">
-        <button onclick="zoomMap(1.2)" class="w-8 h-8 rounded bg-slate-800 border border-slate-700 font-bold text-slate-100 flex items-center justify-center active:scale-90 cursor-pointer select-none text-lg">+</button>
-        <button onclick="zoomMap(0.8)" class="w-8 h-8 rounded bg-slate-800 border border-slate-700 font-bold text-slate-100 flex items-center justify-center active:scale-90 cursor-pointer select-none text-lg">−</button>
-        <button onclick="resetZoom()" class="w-8 h-8 rounded bg-slate-800 border border-slate-700 text-[10px] font-bold text-slate-100 flex items-center justify-center active:scale-90 cursor-pointer select-none">RST</button>
-      </div>
-      <div id="map-container" class="overflow-hidden w-full h-full flex items-center justify-center touch-none">
-        <div id="map-svg-wrapper" class="origin-center transition-transform duration-200" style="min-width:540px;min-height:400px">
-          ${svg}
+    <div class="flex items-center justify-between gap-3 mb-2">
+      <h2 class="text-lg font-black text-slate-100">${city.emoji} ${city.mapTitle}</h2>
+    </div>
+    
+    <button id="map-toggle-btn" onclick="toggleInteractiveMap()"
+      class="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold text-yellow-400 transition cursor-pointer text-center select-none mb-3">
+      ${toggleBtnText}
+    </button>
+    
+    <!-- Static SVG Map view -->
+    <div id="map-static-view" class="${staticHidden} space-y-2">
+      <div class="relative bg-slate-900/60 rounded-xl border border-slate-800 overflow-hidden" style="height:420px">
+        <div class="absolute right-2 top-2 z-10 flex flex-col gap-1">
+          <button onclick="zoomMap(1.2)" class="w-8 h-8 rounded bg-slate-800 border border-slate-700 font-bold text-slate-100 flex items-center justify-center active:scale-90 cursor-pointer select-none text-lg" aria-label="Přiblížit mapu">+</button>
+          <button onclick="zoomMap(0.8)" class="w-8 h-8 rounded bg-slate-800 border border-slate-700 font-bold text-slate-100 flex items-center justify-center active:scale-90 cursor-pointer select-none text-lg" aria-label="Oddálit mapu">−</button>
+          <button onclick="resetZoom()" class="w-8 h-8 rounded bg-slate-800 border border-slate-700 text-[10px] font-bold text-slate-100 flex items-center justify-center active:scale-90 cursor-pointer select-none" aria-label="Resetovat přiblížení">RST</button>
+        </div>
+        <div id="map-container" class="overflow-hidden w-full h-full flex items-center justify-center touch-none">
+          <div id="map-svg-wrapper" class="origin-center transition-transform duration-200" style="min-width:540px;min-height:400px">
+            ${svg}
+          </div>
         </div>
       </div>
+      <p class="text-[10px] text-slate-500 italic">${city.mapNote}</p>
     </div>
-    <p class="text-[10px] text-slate-600 italic">${city.mapNote}</p>`;
+    
+    <!-- Interactive OSM Leaflet Map view -->
+    <div id="map-interactive-view" class="${leafletHidden} space-y-2">
+      <div id="leaflet-map" class="w-full bg-slate-900/60 rounded-xl border border-slate-800 overflow-hidden" style="height:420px"></div>
+      <p class="text-[10px] text-slate-500 italic">Interaktivní mapa vyžaduje internet. Zobrazuje polohu ubytování (🏠) a uložených míst (📍).</p>
+    </div>`;
 }
 
 function renderWallet(city) {
@@ -2195,6 +2343,7 @@ function renderTransport(city) {
 <script src="js/nearby.js"></script>
 <script src="js/places.js"></script>
 <script src="js/porto.js"></script>
+<script src="js/planner.js"></script>
 <script src="js/ui.js"></script>
 
 <script>

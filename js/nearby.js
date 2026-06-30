@@ -15,8 +15,13 @@ const NEARBY_CFG = {
   restaurant:  { tag: '"amenity"="restaurant"', label: 'Restaurace',  radius: 800  },
   fast_food:   { tag: '"amenity"="fast_food"', label: 'Fast food',   radius: 600  },
   bar:         { tag: '"amenity"="bar"',        label: 'Bar',         radius: 600  },
-  pharmacy:    { tag: '"amenity"="pharmacy"',  label: 'Lékárna',      radius: 1000 }
+  pharmacy:    { tag: '"amenity"="pharmacy"',   label: 'Lékárna',     radius: 1000 },
+  atm:         { tag: '"amenity"="atm"',        label: 'Bankomat',    radius: 800  },
+  fuel:        { tag: '"amenity"="fuel"',       label: 'Benzínka',    radius: 1500 },
+  laundry:     { tag: '"shop"="laundry"',       label: 'Prádelna',    radius: 1000 }
 };
+
+window.getGpsPos = () => _gpsPos;
 
 function haversineM(la1, ln1, la2, ln2) {
   const R = 6371000, r = d => d * Math.PI / 180;

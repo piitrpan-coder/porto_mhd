@@ -269,3 +269,18 @@ function copyToClipboard(text) {
     showToast('📋 Zkopírováno!');
   });
 }
+
+function updateOnlineStatus() {
+  const statusIndicator = document.getElementById('connection-status');
+  const statusText = document.getElementById('connection-status-text');
+  if (!statusIndicator || !statusText) return;
+  if (navigator.onLine) {
+    statusIndicator.className = 'w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse';
+    statusText.textContent = 'Online';
+    statusText.className = 'text-sm text-green-400 font-semibold';
+  } else {
+    statusIndicator.className = 'w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse';
+    statusText.textContent = 'Offline';
+    statusText.className = 'text-sm text-red-400 font-semibold';
+  }
+}

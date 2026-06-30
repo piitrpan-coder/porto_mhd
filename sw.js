@@ -1,4 +1,4 @@
-const CACHE_NAME = "porto-mhd-v1.5";
+const CACHE_NAME = "porto-mhd-v1.6";
 const ASSETS = [
   "./",
   "./index.html",
@@ -10,8 +10,11 @@ const ASSETS = [
   "./js/nearby.js",
   "./js/places.js",
   "./js/porto.js",
+  "./js/planner.js",
   "./js/ui.js",
-  "https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"
+  "https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4",
+  "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js",
+  "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
 ];
 
 // Install Event
