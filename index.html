@@ -1349,14 +1349,6 @@ function renderOverview(city) {
       </div>
     </div>`).join('');
 
-  const tips = city.tipBullets.map(t => `
-    <li class="flex items-start gap-3">
-      <span class="text-lg shrink-0 mt-0.5">💡</span>
-      <span class="text-base text-slate-300 leading-relaxed">${t}</span>
-    </li>`).join('');
-
-  const chevron = `<svg class="w-5 h-5 text-slate-500 shrink-0 details-arrow transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>`;
-
   const lagosExtra = city.id === 'lagos' ? `
     <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4 cursor-pointer active:opacity-80 transition-opacity" onclick="fetchWeather(true)" title="Klepnutím obnovit">
       <div class="flex items-center gap-4">
