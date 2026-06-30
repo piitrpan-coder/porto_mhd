@@ -121,13 +121,13 @@ function initPullToRefresh() {
   }
 
   container.addEventListener('touchstart', e => {
-    if (container.scrollTop === 0 && e.touches.length === 1) {
+    if (container.scrollTop <= 5 && window.scrollY === 0 && e.touches.length === 1) {
       startY = e.touches[0].clientY;
       pulling = true;
     } else {
       pulling = false;
     }
-  });
+  }, { passive: true });
 
   container.addEventListener('touchmove', e => {
     if (!pulling) return;
