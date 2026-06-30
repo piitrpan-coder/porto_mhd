@@ -1023,7 +1023,8 @@ function renderRouteCard(route, city) {
       <p class="text-sm text-slate-400 leading-relaxed">${route.description}</p>
       ${warning}
       ${btns}
-      <button onclick="copyToClipboard(${JSON.stringify(route.from + ' → ' + route.to + ' (' + route.badge + ', ' + route.duration + '): ' + route.description)})"
+      <button data-copy="${(route.from + ' → ' + route.to + ' (' + route.badge + ', ' + route.duration + '): ' + route.description).replace(/"/g, '&quot;')}"
+        onclick="copyToClipboard(this.dataset.copy)"
         class="w-full flex items-center justify-center gap-1.5 py-2 text-xs text-slate-600 hover:text-slate-400 transition cursor-pointer select-none">
         <span>📋</span><span>Kopírovat trasu</span>
       </button>
@@ -1936,7 +1937,7 @@ function renderPlacesModal() {
     ? '<p class="text-sm text-slate-500 text-center py-5">Zatím žádná místa.</p>'
     : pois.map((p, i) =>
       '<div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/40 border border-slate-800/50 gap-2">'
-      + '<div class="truncate flex-1 cursor-pointer" onclick="copyToClipboard(' + JSON.stringify(p.address) + ')">'
+      + '<div class="truncate flex-1 cursor-pointer" data-addr="' + p.address.replace(/"/g, '&quot;') + '" onclick="copyToClipboard(this.dataset.addr)">'
       + '<span class="text-sm font-bold text-slate-200 block truncate">' + p.emoji + ' ' + p.name + '</span>'
       + '<span class="text-xs text-slate-500 block truncate">' + p.address + ' <span class="text-slate-700">· klepni pro kopírování</span></span></div>'
       + '<button onclick="deletePoi(' + i + ')" class="shrink-0 text-slate-500 hover:text-red-400 text-base px-2 py-1 transition cursor-pointer select-none">✕</button>'
@@ -2065,7 +2066,7 @@ function selectNearbyLoc(val, label) {
   const arrow = document.getElementById('nearby-dd-arrow');
   if (arrow) arrow.style.transform = '';
   document.getElementById('nearby-results').innerHTML = '';
-  document.querySelectorAll('.nearby-cat-btn').forEach(b => b.classList.remove('ring-2','ring-yellow-400','text-yellow-400'));
+  document.querySelectorAll('.nearby-cat-btn').forEach(b => b.classList.remove('ring-1','ring-yellow-400','text-yellow-400'));
 }
 
 function populateNearbyDd(options) {
@@ -2073,7 +2074,8 @@ function populateNearbyDd(options) {
   if (!menu) return;
   menu.innerHTML = options.map(opt => {
     const active = opt.val === _nearbyDdVal;
-    return `<button onclick="selectNearbyLoc('${opt.val}', ${JSON.stringify(opt.label)})"
+    const safeLabel = opt.label.replace(/"/g, '&quot;');
+    return `<button data-val="${opt.val}" data-label="${safeLabel}" onclick="selectNearbyLoc(this.dataset.val, this.dataset.label)"
       class="nearby-dd-opt w-full text-left px-4 py-3.5 text-sm hover:bg-slate-700 flex items-center gap-2 transition ${active ? 'text-yellow-400 font-bold bg-slate-700/50' : 'text-slate-200'}">
       <span class="truncate">${opt.label}</span>
       ${active ? '<svg class="w-4 h-4 shrink-0 ml-auto" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>' : ''}
