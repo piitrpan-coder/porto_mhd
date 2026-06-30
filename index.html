@@ -1237,6 +1237,8 @@ function renderCity(cityId) {
   // Show first tab
   switchTab(city.tabs[0].id);
   initSwipe();
+  // Naplnit dropdown Okolí po vytvoření DOM
+  applyPlaces();
 }
 
 function switchTab(tabId) {
@@ -1486,44 +1488,38 @@ function renderOverview(city) {
   const portoExtra = city.extras === 'porto' ? `
     <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4 cursor-pointer active:opacity-80 transition-opacity" onclick="fetchWeather(true)" title="Klepnutím obnovit počasí">
       <div class="flex items-center gap-4">
-        <span id="weather-icon" class="text-6xl leading-none" style="transition:opacity 0.15s">🌡️</span>
+        <span id="porto-weather-icon" class="text-6xl leading-none" style="transition:opacity 0.15s">🌡️</span>
         <div class="flex-1">
           <div class="flex items-baseline gap-2">
-            <span id="weather-temp" class="text-5xl font-black text-slate-100">–°C</span>
-            <span id="weather-wind" class="text-sm text-slate-400 font-mono">– km/h</span>
+            <span id="porto-weather-temp" class="text-5xl font-black text-slate-100">–°C</span>
+            <span id="porto-weather-wind" class="text-sm text-slate-400 font-mono">– km/h</span>
           </div>
           <div class="flex items-center gap-2 mt-1">
             <span class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Porto počasí</span>
-            <span id="weather-desc" class="text-sm text-slate-300 font-semibold">načítám…</span>
+            <span id="porto-weather-desc" class="text-sm text-slate-300 font-semibold">načítám…</span>
           </div>
-          <div id="weather-stale" class="hidden text-[10px] text-amber-400/70 mt-0.5"></div>
+          <div id="porto-weather-stale" class="hidden text-[10px] text-amber-400/70 mt-0.5"></div>
         </div>
       </div>
       <div class="grid grid-cols-2 gap-3">
         <div class="bg-slate-800/60 rounded-xl p-4 flex items-center gap-3">
-          <span id="fc-icon-1" class="text-3xl">🌡️</span>
+          <span id="porto-fc-icon" class="text-3xl">🌡️</span>
           <div>
             <span class="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Zítra</span>
-            <span id="fc-temp-1" class="text-xl font-black text-slate-200">–°C</span>
+            <span id="porto-fc-temp" class="text-xl font-black text-slate-200">–°C</span>
           </div>
         </div>
         <div class="bg-slate-800/60 rounded-xl p-4 flex items-center gap-3">
-          <span id="fc-icon-2" class="text-3xl">🌡️</span>
+          <span id="porto-uv-badge" class="text-xl font-black text-orange-400">UV –</span>
           <div>
-            <span class="text-xs text-slate-500 uppercase tracking-wider block font-semibold">Pozítří</span>
-            <span id="fc-temp-2" class="text-xl font-black text-slate-200">–°C</span>
+            <span class="text-xs text-slate-500 uppercase tracking-wider block font-semibold">UV index</span>
+            <span id="porto-uv-max" class="text-xl font-black text-orange-400">–</span>
           </div>
         </div>
       </div>
-      <div id="weather-sun" class="hidden items-center justify-center gap-6 border-t border-slate-800 pt-3">
-        <div class="flex items-center gap-1.5 text-sm text-amber-300"><span>🌅</span><span id="weather-sunrise">–:–</span></div>
-        <div class="flex items-center gap-1.5 text-sm text-indigo-300"><span>🌇</span><span id="weather-sunset">–:–</span></div>
-      </div>
-    </div>
-    <div id="weather-hourly-wrap" class="hidden bg-slate-900/60 rounded-2xl border border-slate-800 p-4">
-      <div class="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-3">🕐 Dnes po hodinách</div>
-      <div class="overflow-x-auto -mx-1 px-1" style="scrollbar-width:none">
-        <div id="weather-hourly" class="flex gap-2 pb-1"></div>
+      <div id="porto-sun-row" class="hidden items-center justify-center gap-6 border-t border-slate-800 pt-3">
+        <div class="flex items-center gap-1.5 text-sm text-amber-300"><span>🌅</span><span id="porto-sunrise">–:–</span></div>
+        <div class="flex items-center gap-1.5 text-sm text-indigo-300"><span>🌇</span><span id="porto-sunset">–:–</span></div>
       </div>
     </div>
     <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4">
@@ -2883,6 +2879,11 @@ const WMO = {
   labels: {0:'Jasno',1:'Převážně jasno',2:'Polojasno',3:'Zataženo',45:'Mlha',48:'Jinovatka',51:'Mrholení',53:'Mrholení',55:'Mrholení',61:'Slabý déšť',63:'Déšť',65:'Silný déšť',71:'Sněžení',73:'Sněžení',75:'Sněhová bouře',80:'Přeháňky',81:'Přeháňky',82:'Silné přeháňky',95:'Bouřka',96:'Bouřka',99:'Silná bouřka'}
 };
 
+// Wrapper funkce volané z HTML onclick
+function fetchWeather(manual = false) { if (currentCity) WeatherModule.fetch(currentCity, manual); }
+function fetchLagosWeather(manual = false) { if (currentCity) WeatherModule.fetch(currentCity, manual); }
+function fetchLisbonWeather(manual = false) { if (currentCity) WeatherModule.fetch(currentCity, manual); }
+
 const WeatherModule = {
   async fetch(city, manual = false) {
     if (!city.weatherLat || !city.weatherLng) return; // Skip if not configured
@@ -2912,28 +2913,29 @@ const WeatherModule = {
     const { current: c, daily: d } = data;
     const sel = (id) => document.getElementById(id);
     const td = (id) => `${city.id}-${id}`;
+    const setText = (id, val) => { const el = sel(id); if (el) el.textContent = val; };
 
     // Current conditions
-    sel(td('weather-icon'))?.setAttribute('textContent', WMO.icons[c.weathercode] ?? '🌡️');
-    sel(td('weather-temp'))?.setAttribute('textContent', Math.round(c.temperature_2m) + '°C');
-    sel(td('weather-desc'))?.setAttribute('textContent', WMO.labels[c.weathercode] ?? 'Počasí');
-    sel(td('weather-wind'))?.setAttribute('textContent', Math.round(c.windspeed_10m) + ' km/h');
-    sel(td('uv-badge'))?.setAttribute('textContent', 'UV ' + (c.uv_index != null ? Math.round(c.uv_index) : '–'));
+    setText(td('weather-icon'), WMO.icons[c.weathercode] ?? '🌡️');
+    setText(td('weather-temp'), Math.round(c.temperature_2m) + '°C');
+    setText(td('weather-desc'), WMO.labels[c.weathercode] ?? 'Počasí');
+    setText(td('weather-wind'), Math.round(c.windspeed_10m) + ' km/h');
+    setText(td('uv-badge'), 'UV ' + (c.uv_index != null ? Math.round(c.uv_index) : '–'));
 
     // Tomorrow forecast
-    if (d.weathercode?.[1]) sel(td('fc-icon'))?.setAttribute('textContent', WMO.icons[d.weathercode[1]] ?? '🌡️');
+    if (d.weathercode?.[1]) setText(td('fc-icon'), WMO.icons[d.weathercode[1]] ?? '🌡️');
     if (d.temperature_2m_min?.[1] != null) {
       const min = Math.round(d.temperature_2m_min[1]);
       const max = Math.round(d.temperature_2m_max[1]);
-      sel(td('fc-temp'))?.setAttribute('textContent', min + '–' + max + '°C');
+      setText(td('fc-temp'), min + '–' + max + '°C');
     }
-    sel(td('uv-max'))?.setAttribute('textContent', d.uv_index_max?.[0] != null ? Math.round(d.uv_index_max[0]) : '–');
+    setText(td('uv-max'), d.uv_index_max?.[0] != null ? Math.round(d.uv_index_max[0]) : '–');
 
     // Sunrise / sunset
     const sunRow = sel(td('sun-row'));
     if (sunRow && d.sunrise?.[0] && d.sunset?.[0]) {
-      sel(td('sunrise'))?.setAttribute('textContent', d.sunrise[0].split('T')[1]);
-      sel(td('sunset'))?.setAttribute('textContent', d.sunset[0].split('T')[1]);
+      setText(td('sunrise'), d.sunrise[0].split('T')[1]);
+      setText(td('sunset'), d.sunset[0].split('T')[1]);
       sunRow.classList.remove('hidden');
       sunRow.classList.add('flex');
     }
@@ -2988,6 +2990,63 @@ const PlacesManager = {
   }
 };
 
+
+// Zkratky pro práci s místy aktuálního města
+function loadHome() { return PlacesManager.loadHome(currentCity?.id); }
+function loadPois() { return PlacesManager.loadPois(currentCity?.id); }
+function savePois(pois) { PlacesManager.savePois(currentCity?.id, pois); }
+function deletePoi(index) { PlacesManager.deletePoi(currentCity?.id, index); renderPlacesModal(); applyPlaces(); }
+
+function addPoi() {
+  const emoji   = (document.getElementById('modal-poi-emoji')?.value.trim()   || '📍');
+  const name    =  document.getElementById('modal-poi-name')?.value.trim()    || '';
+  const address =  document.getElementById('modal-poi-address')?.value.trim() || '';
+  const lat     = parseFloat(document.getElementById('modal-poi-lat')?.value)  || null;
+  const lng     = parseFloat(document.getElementById('modal-poi-lng')?.value)  || null;
+  if (!name) { showToast('Vyplň název místa.'); return; }
+  PlacesManager.addPoi(currentCity?.id, { emoji, name, address: address || name, lat, lng });
+  ['modal-poi-emoji','modal-poi-name','modal-poi-address','modal-poi-lat','modal-poi-lng'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  renderPlacesModal();
+  applyPlaces();
+  showToast('📍 ' + name + ' přidáno!');
+}
+
+function saveHomeSettings() {
+  const name    = document.getElementById('modal-home-name')?.value.trim()    || '';
+  const address = document.getElementById('modal-home-address')?.value.trim() || '';
+  const lat     = parseFloat(document.getElementById('modal-home-lat')?.value)  || null;
+  const lng     = parseFloat(document.getElementById('modal-home-lng')?.value)  || null;
+  if (!name || !address) { showToast('Vyplň název a adresu.'); return; }
+  PlacesManager.saveHome(currentCity?.id, { name, address, lat, lng });
+  applyPlaces();
+  showToast('Ubytování uloženo ✓');
+}
+
+function resetHomeSettings() {
+  const city = CITIES.find(c => c.id === currentCity?.id);
+  if (!city) return;
+  StorageSchema.save(`app_${currentCity.id}_home`, null);
+  StateManager.set(currentCity.id, 'places.home', city.defaultHome);
+  renderPlacesModal();
+  applyPlaces();
+  showToast('Ubytování resetováno.');
+}
+
+function applyPlaces() {
+  if (!currentCity) return;
+  const home = PlacesManager.loadHome(currentCity.id);
+  const pois = PlacesManager.loadPois(currentCity.id);
+  const opts = [
+    { val: 'gps',  label: '📍 Moje poloha (GPS)' },
+    { val: 'home', label: '🏠 ' + (home?.name || 'Ubytování') }
+  ];
+  pois.filter(p => p.lat && p.lng).forEach((p, i) => {
+    opts.push({ val: 'poi_' + i, label: (p.emoji || '📍') + ' ' + p.name });
+  });
+  populateNearbyDd(opts);
+}
 
 function renderPlacesModal() {
   if (!currentCity) return;
