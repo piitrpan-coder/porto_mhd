@@ -1,4 +1,4 @@
-const CACHE_NAME = "porto-mhd-v1.3";
+const CACHE_NAME = "porto-mhd-v1.4";
 const ASSETS = [
   "./",
   "./index.html",
@@ -7,6 +7,12 @@ const ASSETS = [
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png",
+  "./js/state.js",
+  "./js/weather.js",
+  "./js/nearby.js",
+  "./js/places.js",
+  "./js/porto.js",
+  "./js/ui.js",
   "https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"
 ];
 

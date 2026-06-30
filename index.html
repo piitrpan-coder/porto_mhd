@@ -22,12 +22,83 @@
     * { -webkit-tap-highlight-color: transparent; }
     .nearby-dd-opt:first-child { border-radius: 1rem 1rem 0 0; }
     .nearby-dd-opt:last-child  { border-radius: 0 0 1rem 1rem; }
+
+    /* Light Theme Overrides */
+    body.light-theme {
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+    body.light-theme #city-app, 
+    body.light-theme #city-picker {
+      background: #f8fafc !important;
+    }
+    body.light-theme .bg-slate-900\/60,
+    body.light-theme .bg-slate-900\/95,
+    body.light-theme .bg-slate-900,
+    body.light-theme header,
+    body.light-theme nav {
+      background-color: #ffffff !important;
+      border-color: #e2e8f0 !important;
+    }
+    body.light-theme .bg-slate-950\/40,
+    body.light-theme .bg-slate-950\/30,
+    body.light-theme .bg-slate-950 {
+      background-color: #f1f5f9 !important;
+      border-color: #cbd5e1 !important;
+    }
+    body.light-theme .bg-slate-800,
+    body.light-theme .bg-slate-800\/60 {
+      background-color: #e2e8f0 !important;
+      border-color: #cbd5e1 !important;
+    }
+    body.light-theme .bg-slate-850 {
+      background-color: #f8fafc !important;
+      border-color: #cbd5e1 !important;
+    }
+    body.light-theme .text-slate-100,
+    body.light-theme .text-slate-200 {
+      color: #0f172a !important;
+    }
+    body.light-theme .text-slate-300 {
+      color: #334155 !important;
+    }
+    body.light-theme .text-slate-400 {
+      color: #475569 !important;
+    }
+    body.light-theme .text-slate-500 {
+      color: #64748b !important;
+    }
+    body.light-theme .border-slate-800 {
+      border-color: #e2e8f0 !important;
+    }
+    body.light-theme .border-slate-700 {
+      border-color: #cbd5e1 !important;
+    }
+    body.light-theme input, 
+    body.light-theme textarea {
+      background-color: #ffffff !important;
+      color: #0f172a !important;
+      border-color: #cbd5e1 !important;
+    }
+    body.light-theme input::placeholder, 
+    body.light-theme textarea::placeholder {
+      color: #94a3b8 !important;
+    }
+    body.light-theme #city-picker button {
+      background: #ffffff !important;
+      border-color: #cbd5e1 !important;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+    }
+    body.light-theme #city-picker button h2.text-yellow-400 { color: #d97706 !important; }
+    body.light-theme #city-picker button h2.text-cyan-400 { color: #0891b2 !important; }
+    body.light-theme #city-picker button h2.text-orange-400 { color: #ea580c !important; }
   </style>
 </head>
 <body class="bg-[#080f1c] text-slate-100 font-sans antialiased">
 
 <!-- ===== CITY PICKER ===== -->
-<div id="city-picker" class="min-h-screen flex flex-col pt-safe">
+<div id="city-picker" class="min-h-screen flex flex-col pt-safe relative">
+  <button onclick="toggleTheme()" id="picker-theme-toggle" class="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-2xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 transition cursor-pointer select-none" title="Změnit režim">☀️</button>
   <div class="max-w-md mx-auto w-full px-4 py-10 flex-1 flex flex-col">
     <div class="mb-10 text-center">
       <div class="text-5xl mb-4">🧭</div>
@@ -94,9 +165,12 @@
         <span id="city-emoji" class="text-2xl"></span>
         <h1 id="city-name-header" class="text-lg font-black"></h1>
       </div>
-      <div class="flex items-center space-x-1.5">
-        <div id="connection-status" class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></div>
-        <span id="connection-status-text" class="text-sm text-green-400 font-semibold">Online</span>
+      <div class="flex items-center space-x-3">
+        <button onclick="toggleTheme()" id="theme-toggle" class="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer select-none" title="Změnit režim">☀️</button>
+        <div class="flex items-center space-x-1.5">
+          <div id="connection-status" class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></div>
+          <span id="connection-status-text" class="text-sm text-green-400 font-semibold">Online</span>
+        </div>
       </div>
     </div>
     <div class="flex items-center justify-between mt-1.5">
@@ -207,6 +281,13 @@
 </div>
 
 <script>
+// Initial theme load (executed immediately to prevent flashing)
+(function() {
+  const saved = localStorage.getItem('app_theme');
+  if (saved === 'light') {
+    document.body.classList.add('light-theme');
+  }
+})();
 // ===========================
 // CITY CONFIG DATA
 // ===========================
@@ -1108,171 +1189,6 @@ const _editMode   = {};  // 'itin_porto' / 'ps_porto' → bool
 const _photoPanel = {};  // 'itin_porto_<id>' / 'ps_porto_<id>' → bool
 
 // ===========================
-// CITY LIFECYCLE MANAGEMENT
-// ===========================
-
-const CityLifecycle = {
-  async enter(city) {
-    // 1. Clean up previous city
-    if (currentCity && currentCity.id !== city.id) {
-      this.exit(currentCity);
-    }
-
-    // 2. Set current city & init state
-    currentCity = city;
-    StateManager.init(city.id);
-
-    // 3. Restore persisted state from localStorage
-    StateManager.restore(city.id);
-
-    // 4. Schedule updates & features
-    this.scheduleUpdates(city);
-    this.setupOfflineSync(city);
-  },
-
-  exit(city) {
-    StateManager.clearCity(city.id);
-  },
-
-  scheduleUpdates(city) {
-    const state = StateManager.get(city.id);
-
-    // Clock
-    if (state.intervals.clock) clearInterval(state.intervals.clock);
-    updateClock(city);
-    state.intervals.clock = setInterval(() => updateClock(city), 1000);
-
-    // Weather
-    if (state.intervals.weather) clearInterval(state.intervals.weather);
-    WeatherModule.fetch(city);
-    state.intervals.weather = setInterval(() => WeatherModule.fetch(city), 1800000);
-
-    // Exchange Rate
-    ExchangeRateModule.fetch();
-
-    // Porto-specific features
-    if (city.id === 'porto') {
-      initPorto();
-    } else {
-      applyPlaces();
-    }
-  },
-
-  setupOfflineSync(city) {
-    const state = StateManager.get(city.id);
-
-    // Online handler
-    const onlineHandler = () => {
-      console.log(`[${city.id}] Back online – syncing...`);
-      updateOnlineStatus();
-      WeatherModule.fetch(city);
-      showToast('Připojeno – data aktualizována.');
-    };
-
-    window.addEventListener('online', onlineHandler);
-    state.listeners.push({ event: 'online', handler: onlineHandler });
-
-    // Offline handler
-    const offlineHandler = () => {
-      console.log(`[${city.id}] Offline – using cache`);
-      updateOnlineStatus();
-      showToast('Offline – zobrazuji poslední data.');
-    };
-
-    window.addEventListener('offline', offlineHandler);
-    state.listeners.push({ event: 'offline', handler: offlineHandler });
-  }
-};
-
-// ===========================
-// NAVIGATION
-// ===========================
-function showCityPicker() {
-  localStorage.removeItem('app_last_city');
-  document.getElementById('city-picker').classList.remove('hidden');
-  document.getElementById('city-app').classList.add('hidden');
-  document.getElementById('app-header').style.borderColor = '';
-  document.getElementById('app-nav').style.borderColor = '';
-
-  // Clean up previous city
-  if (currentCity) {
-    CityLifecycle.exit(currentCity);
-  }
-}
-
-function renderCity(cityId) {
-  const city = CITIES.find(c => c.id === cityId);
-  if (!city) return;
-
-  localStorage.setItem('app_last_city', cityId);
-
-  // Lifecycle enter
-  CityLifecycle.enter(city);
-
-  document.getElementById('city-picker').classList.add('hidden');
-  document.getElementById('city-app').classList.remove('hidden');
-  document.getElementById('app-header').style.borderColor = city.color + '66';
-  document.getElementById('app-nav').style.borderColor = city.color + '66';
-
-  // Header
-  document.getElementById('city-emoji').textContent = city.emoji;
-  const nameEl = document.getElementById('city-name-header');
-  nameEl.textContent = city.name;
-  nameEl.style.color = city.color;
-
-  // Tab buttons
-  document.getElementById('tab-buttons').innerHTML = city.tabs.map(tab => `
-    <button id="tab-btn-${tab.id}" onclick="switchTab('${tab.id}')"
-      class="flex-1 flex flex-col items-center justify-center py-1.5 px-0.5 rounded-lg transition-all duration-150 cursor-pointer select-none"
-      style="color:#475569">
-      <span class="text-xl leading-none">${tab.icon}</span>
-      <span class="text-[11px] font-bold mt-1 leading-none">${tab.label}</span>
-    </button>`).join('');
-
-  // Tab content
-  document.getElementById('app-main').innerHTML = city.tabs.map(tab => `
-    <section id="section-${tab.id}" class="animate-fade-in space-y-4 hidden">
-      ${renderTabContent(tab.id, city)}
-    </section>`).join('');
-
-  // UI init
-  initMap();
-  updateOnlineStatus();
-
-
-  // Show first tab
-  switchTab(city.tabs[0].id);
-  initSwipe();
-  // Naplnit dropdown Okolí po vytvoření DOM
-  applyPlaces();
-}
-
-function switchTab(tabId) {
-  const city = currentCity;
-  if (!city) return;
-  city.tabs.forEach(tab => {
-    const sec = document.getElementById('section-' + tab.id);
-    const btn = document.getElementById('tab-btn-' + tab.id);
-    if (!sec || !btn) return;
-    if (tab.id === tabId) {
-      sec.classList.remove('hidden');
-      btn.style.color = city.color;
-      btn.style.background = 'rgba(255,255,255,0.07)';
-    } else {
-      sec.classList.add('hidden');
-      btn.style.color = '#475569';
-      btn.style.background = '';
-    }
-  });
-  if (tabId === 'overview') {
-    setTimeout(() => {
-      _triggerPhotoFetch('itin', city.id);
-      _triggerPhotoFetch('ps',   city.id);
-    }, 200);
-  }
-}
-
-// ===========================
 // RENDER FUNCTIONS
 // ===========================
 function renderTabContent(tabId, city) {
@@ -1412,7 +1328,7 @@ function renderOverview(city) {
   const chevron = `<svg class="w-5 h-5 text-slate-500 shrink-0 details-arrow transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>`;
 
   const lagosExtra = city.id === 'lagos' ? `
-    <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4 cursor-pointer active:opacity-80 transition-opacity" onclick="fetchLagosWeather(true)" title="Klepnutím obnovit">
+    <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4 cursor-pointer active:opacity-80 transition-opacity" onclick="fetchWeather(true)" title="Klepnutím obnovit">
       <div class="flex items-center gap-4">
         <span id="lagos-weather-icon" class="text-5xl leading-none" style="transition:opacity 0.15s">🌡️</span>
         <div class="flex-1">
@@ -1501,7 +1417,7 @@ function renderOverview(city) {
     </details>` : '';
 
   const lisbonExtra = city.id === 'lisbon' ? `
-    <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4 cursor-pointer active:opacity-80 transition-opacity" onclick="fetchLisbonWeather(true)" title="Klepnutím obnovit">
+    <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4 cursor-pointer active:opacity-80 transition-opacity" onclick="fetchWeather(true)" title="Klepnutím obnovit">
       <div class="flex items-center gap-4">
         <span id="lisbon-weather-icon" class="text-5xl leading-none" style="transition:opacity 0.15s">🌡️</span>
         <div class="flex-1">
@@ -1770,6 +1686,10 @@ function renderRouteCard(route, city) {
        </a>` : '';
   const btns = (btn1 || btn2) ? `<div class="flex gap-2 flex-wrap">${btn1}${btn2}</div>` : '';
 
+  const shareTitle = `${route.from} → ${route.to}`;
+  const shareText = `${route.from} → ${route.to} (${route.badge}, ${route.duration}): ${route.description}`;
+  const shareUrl = route.mapsUrl || '';
+
   return `
     <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-3">
       <div class="flex items-start justify-between gap-3">
@@ -1786,12 +1706,20 @@ function renderRouteCard(route, city) {
       <p class="text-sm text-slate-400 leading-relaxed">${route.description}</p>
       ${warning}
       ${btns}
-      <button data-copy="${(route.from + ' → ' + route.to + ' (' + route.badge + ', ' + route.duration + '): ' + route.description).replace(/"/g, '&quot;')}"
-        onclick="copyToClipboard(this.dataset.copy)"
-        class="w-full flex items-center justify-center gap-1.5 py-2 text-xs text-slate-600 hover:text-slate-400 transition cursor-pointer select-none">
-        <span>📋</span><span>Kopírovat trasu</span>
-      </button>
+      <div class="flex border-t border-slate-800/60 pt-2 mt-2">
+        <button data-copy="${(route.from + ' → ' + route.to + ' (' + route.badge + ', ' + route.duration + '): ' + route.description).replace(/"/g, '&quot;')}"
+          onclick="copyToClipboard(this.dataset.copy)"
+          class="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-slate-600 hover:text-slate-400 transition cursor-pointer select-none">
+          <span>📋</span><span>Kopírovat</span>
+        </button>
+        <div class="w-px bg-slate-800/60 my-1"></div>
+        <button onclick="shareLink('${shareTitle.replace(/'/g, "\\'")}', '${shareText.replace(/'/g, "\\'")}', '${shareUrl.replace(/'/g, "\\'")}')"
+          class="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-slate-600 hover:text-slate-400 transition cursor-pointer select-none">
+          <span>📤</span><span>Sdílet</span>
+        </button>
+      </div>
     </div>`;
+}
 }
 
 function renderInfo(city) {
@@ -1819,10 +1747,21 @@ function renderBeaches(city) {
           <div class="text-xs text-slate-500 mb-1">${s.label}</div>
           <div class="text-sm font-bold text-slate-200">${s.value}</div>
         </div>`).join('');
-      const mapsBtn = sec.mapsUrl
-        ? `<a href="${sec.mapsUrl}" target="_blank" class="w-full flex items-center justify-center gap-2 py-3 px-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-sm font-bold text-cyan-400 transition cursor-pointer">
-            <span>📍</span><span>Otevřít v Mapách</span>
-           </a>` : '';
+      const shareTitle = sec.name;
+      const shareText = `${sec.name} (${sec.access}): ${sec.description}`;
+      const shareUrl = sec.mapsUrl || '';
+
+      const mapsBtn = `
+        <div class="flex gap-2">
+          ${sec.mapsUrl ? `<a href="${sec.mapsUrl}" target="_blank" class="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-sm font-bold text-cyan-400 transition cursor-pointer">
+            <span>📍</span><span>Mapa</span>
+           </a>` : ''}
+          <button onclick="shareLink('${shareTitle.replace(/'/g, "\\'")}', '${shareText.replace(/'/g, "\\'")}', '${shareUrl.replace(/'/g, "\\'")}')"
+            class="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-sm font-bold text-slate-300 transition cursor-pointer select-none">
+            <span>📤</span><span>Sdílet</span>
+          </button>
+        </div>
+      `;
       return `
         <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-4">
           <div class="flex items-start justify-between gap-3">
@@ -2233,1727 +2172,25 @@ function renderTransport(city) {
   return `<h2 class="text-xl font-black text-slate-100">🚌 Doprava & Tipy</h2>${sections}`;
 }
 
-// ===========================
-// STORAGE SCHEMA & STATE MANAGEMENT
-// ===========================
-
-/**
- * StorageSchema: Jednotné rozhraní pro localStorage
- * Klíče: app_[city]_[category]
- * Automatický cleanup, kompresi a fallback na defaults
- */
-const StorageSchema = {
-  load(key, defaultValue = null) {
-    try {
-      const raw = localStorage.getItem(key);
-      if (!raw) return defaultValue;
-      return JSON.parse(raw);
-    } catch (e) {
-      console.warn(`[Storage] Failed to load ${key}:`, e);
-      return defaultValue;
-    }
-  },
-
-  save(key, value) {
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-    } catch (e) {
-      if (e.name === 'QuotaExceededError') {
-        console.warn('[Storage] Quota exceeded – cleanup old cache');
-        this.cleanup();
-        try {
-          localStorage.setItem(key, JSON.stringify(value));
-        } catch (e2) {
-          console.error('[Storage] Still cannot save after cleanup:', e2);
-        }
-      } else {
-        console.error('[Storage] Save failed:', e);
-      }
-    }
-  },
-
-  remove(key) {
-    try {
-      localStorage.removeItem(key);
-    } catch (e) {
-      console.error('[Storage] Remove failed:', e);
-    }
-  },
-
-  cleanup() {
-    // Smažeme nejstarší API cache (starší než týden)
-    const oneWeekAgo = Date.now() - 7 * 24 * 3600000;
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('app_cache_')) {
-        try {
-          const { t } = JSON.parse(localStorage.getItem(key) || '{}');
-          if (t && t < oneWeekAgo) {
-            localStorage.removeItem(key);
-          }
-        } catch {}
-      }
-    }
-  }
-};
-
-/**
- * StateManager: Centrální správa lokálního stavu per city
- * Inicializace per-city stavu s automatickým cachováním
- */
-const StateManager = {
-  cities: {},
-
-  init(cityId) {
-    if (!this.cities[cityId]) {
-      this.cities[cityId] = {
-        // Core features
-        wallet: { z2: 0, z4: 0 },
-        countdown: { start: 0, zone: null },
-        places: { home: null, pois: [] },
-        weather: null,
-        nearby: { category: null, location: 'gps', results: [] },
-
-        // Metadata
-        intervals: {},
-        listeners: []
-      };
-
-      // Obnovit uložený stav
-      this.restore(cityId);
-    }
-    return this.cities[cityId];
-  },
-
-  restore(cityId) {
-    const state = this.cities[cityId];
-    const city = CITIES.find(c => c.id === cityId);
-    if (!city) return;
-
-    // Restore places
-    state.places.home = StorageSchema.load(`app_${cityId}_home`, city.defaultHome);
-    state.places.pois = StorageSchema.load(`app_${cityId}_pois`, []);
-
-    // Restore wallet (Porto only)
-    if (city.hasWallet) {
-      state.wallet.z2 = StorageSchema.load(`app_${cityId}_wallet_z2`, 0);
-      state.wallet.z4 = StorageSchema.load(`app_${cityId}_wallet_z4`, 0);
-    }
-
-    // Restore countdown
-    if (city.hasCountdown) {
-      state.countdown = StorageSchema.load(`app_${cityId}_countdown`, { start: 0, zone: null });
-    }
-  },
-
-  get(cityId) {
-    return this.init(cityId);
-  },
-
-  set(cityId, path, value) {
-    const state = this.init(cityId);
-    const keys = path.split('.');
-    let obj = state;
-
-    for (let i = 0; i < keys.length - 1; i++) {
-      if (!obj[keys[i]]) obj[keys[i]] = {};
-      obj = obj[keys[i]];
-    }
-    obj[keys[keys.length - 1]] = value;
-
-    // Persist critical state
-    this.persistIfNeeded(cityId, keys[0], obj);
-  },
-
-  persistIfNeeded(cityId, category, value) {
-    const persistKeys = ['places', 'wallet', 'countdown'];
-    if (persistKeys.includes(category)) {
-      StorageSchema.save(`app_${cityId}_${category}`, value);
-    }
-  },
-
-  clearCity(cityId) {
-    const state = this.get(cityId);
-
-    // Kill all timers
-    Object.values(state.intervals).forEach(id => {
-      if (typeof id === 'number') clearInterval(id);
-      if (typeof id === 'number') clearTimeout(id);
-    });
-    state.intervals = {};
-
-    // Remove listeners
-    state.listeners.forEach(({ event, handler }) => {
-      window.removeEventListener(event, handler);
-    });
-    state.listeners = [];
-
-    delete this.cities[cityId];
-  }
-};
-
-// ===========================
-// SHARED UTILITIES
-// ===========================
-function updateClock(city) {
-  try {
-    const now = new Date();
-    const t = now.toLocaleTimeString('cs-CZ', { timeZone:city.timezone, hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false });
-    const d = now.toLocaleDateString('cs-CZ', { timeZone:city.timezone, weekday:'long', day:'numeric', month:'long' });
-    const te = document.getElementById('city-time');
-    const de = document.getElementById('city-date');
-    if (te) te.textContent = city.timeLabel + ': ' + t;
-    if (de) de.textContent = d;
-  } catch(e) {}
-}
-
-function updateOnlineStatus() {
-  const dot = document.getElementById('connection-status');
-  const txt = document.getElementById('connection-status-text');
-  if (!dot || !txt) return;
-  if (navigator.onLine) {
-    dot.className = 'w-2 h-2 rounded-full bg-green-500 animate-pulse';
-    txt.textContent = 'Online'; txt.className = 'text-[11px] text-green-400 font-medium';
-  } else {
-    dot.className = 'w-2 h-2 rounded-full bg-red-500 animate-pulse';
-    txt.textContent = 'Offline'; txt.className = 'text-[11px] text-red-400 font-medium';
-  }
-}
-window.addEventListener('online', updateOnlineStatus);
-window.addEventListener('offline', updateOnlineStatus);
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.remove('opacity-0'); t.classList.add('opacity-100');
-  setTimeout(() => { t.classList.remove('opacity-100'); t.classList.add('opacity-0'); }, 2000);
-}
-
-function copyToClipboard(text) {
-  if (!text) return;
-  navigator.clipboard?.writeText(text).then(() => showToast('📋 Zkopírováno!')).catch(() => {
-    const el = Object.assign(document.createElement('textarea'), { value: text, style: 'position:fixed;opacity:0' });
-    document.body.appendChild(el); el.select(); document.execCommand('copy'); el.remove();
-    showToast('📋 Zkopírováno!');
-  });
-}
-
-function initSwipe() {
-  const el = document.getElementById('app-main');
-  if (!el || el._swipeOk) return;
-  el._swipeOk = true;
-  let sx, sy, st;
-  el.addEventListener('touchstart', e => {
-    sx = e.touches[0].clientX; sy = e.touches[0].clientY; st = Date.now();
-  }, { passive: true });
-  el.addEventListener('touchend', e => {
-    if (sx == null) return;
-    const dx = e.changedTouches[0].clientX - sx;
-    const dy = e.changedTouches[0].clientY - sy;
-    const dt = Date.now() - st;
-    sx = null;
-    if (Math.abs(dx) < 55 || Math.abs(dy) > 90 || dt > 420) return;
-    const city = currentCity; if (!city) return;
-    const tabs = city.tabs;
-    const idx = tabs.findIndex(t => !document.getElementById('section-' + t.id)?.classList.contains('hidden'));
-    if (idx === -1) return;
-    if (dx < 0 && idx < tabs.length - 1) switchTab(tabs[idx + 1].id);
-    if (dx > 0 && idx > 0) switchTab(tabs[idx - 1].id);
-  }, { passive: true });
-}
-
-// ===========================
-// MAP ZOOM (shared)
-// ===========================
-let currentMapZoom = 1, mapTransX = 0, mapTransY = 0;
-
-function applyMapTransform() {
-  const w = document.getElementById('map-svg-wrapper');
-  if (w) w.style.transform = `scale(${currentMapZoom}) translate(${mapTransX}px,${mapTransY}px)`;
-}
-function zoomMap(factor) {
-  currentMapZoom = Math.min(Math.max(currentMapZoom * factor, 0.4), 3.5);
-  applyMapTransform();
-}
-function resetZoom() {
-  currentMapZoom = 1; mapTransX = 0; mapTransY = 0; applyMapTransform();
-}
-function initMap() {
-  currentMapZoom = 1; mapTransX = 0; mapTransY = 0;
-  setTimeout(() => {
-    const container = document.getElementById('map-container');
-    if (!container) return;
-    let lastDist = 0, pinching = false;
-    let dsx = 0, dsy = 0, dstx = 0, dsty = 0;
-    const dist = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
-    container.addEventListener('touchstart', e => {
-      if (e.touches.length === 2) { lastDist = dist(e.touches); pinching = true; e.preventDefault(); }
-      else if (e.touches.length === 1) {
-        dsx = e.touches[0].clientX; dsy = e.touches[0].clientY;
-        dstx = mapTransX; dsty = mapTransY; pinching = false;
-      }
-    }, { passive: false });
-    container.addEventListener('touchmove', e => {
-      if (e.touches.length === 2 && pinching) {
-        const d = dist(e.touches);
-        currentMapZoom = Math.min(Math.max(currentMapZoom * (d / lastDist), 0.4), 3.5);
-        lastDist = d; applyMapTransform(); e.preventDefault();
-      } else if (e.touches.length === 1 && !pinching) {
-        mapTransX = dstx + (e.touches[0].clientX - dsx) / currentMapZoom;
-        mapTransY = dsty + (e.touches[0].clientY - dsy) / currentMapZoom;
-        applyMapTransform(); e.preventDefault();
-      }
-    }, { passive: false });
-    container.addEventListener('touchend', () => { pinching = false; });
-  }, 100);
-}
-
-// ===========================
-// SHARED API LAYER
-// ===========================
-const INTL_TO_OSM = { Sun:6, Mon:0, Tue:1, Wed:2, Thu:3, Fri:4, Sat:5 };
-const OSM_DAYS    = { Mo:0, Tu:1, We:2, Th:3, Fr:4, Sa:5, Su:6 };
-
-async function apiFetch(url, fetchOpts = {}, cacheKey = null) {
-  const timeout = fetchOpts._timeout || 10000;
-  const opts = { ...fetchOpts };
-  delete opts._timeout;
-
-  const attempt = () => {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), timeout);
-    return fetch(url, { ...opts, signal: ctrl.signal })
-      .then(r => { clearTimeout(timer); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .catch(e => { clearTimeout(timer); throw e; });
-  };
-
-  try {
-    const data = await attempt().catch(() => attempt());
-    if (cacheKey) {
-      StorageSchema.save(`app_cache_${cacheKey}`, { data, t: Date.now() });
-    }
-    return { data, fromCache: false };
-  } catch {
-    if (cacheKey) {
-      const cached = StorageSchema.load(`app_cache_${cacheKey}`);
-      if (cached) {
-        const { data, t } = cached;
-        return { data, fromCache: true, cachedAt: t };
-      }
-    }
-    throw new Error('offline');
-  }
-}
-
-function localHHMM(timestamp, timezone) {
-  return new Intl.DateTimeFormat('cs-CZ', {
-    timeZone: timezone || 'Europe/Lisbon', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
-  }).format(new Date(timestamp));
-}
-
-function staleDataHtml(cachedAt, timezone) {
-  return '<div class="flex items-center gap-2 text-xs text-amber-400/80 bg-amber-900/20 border border-amber-800/30 rounded-xl px-3 py-2 mb-2">'
-    + '<svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>'
-    + 'Offline · naposledy aktualizováno ' + localHHMM(cachedAt, timezone)
-    + '</div>';
-}
-
-function isOpenNow(ohStr, timezone) {
-  if (!ohStr) return null;
-  ohStr = ohStr.trim();
-  if (ohStr === '24/7') return true;
-  try {
-    const now = new Date();
-    const parts = Intl.DateTimeFormat('en-US', {
-      timeZone: timezone, weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
-    }).formatToParts(now);
-    const curDay = INTL_TO_OSM[parts.find(p => p.type === 'weekday')?.value || ''] ?? -1;
-    if (curDay < 0) return null;
-    const curMins = parseInt(parts.find(p => p.type === 'hour')?.value || '0') * 60
-                  + parseInt(parts.find(p => p.type === 'minute')?.value || '0');
-    let anyDayMatched = false;
-    for (const rule of ohStr.split(';').map(s => s.trim()).filter(Boolean)) {
-      const m = rule.match(/^([\w,\-]+)\s+(\d{1,2}:\d{2})-(\d{1,2}:\d{2})/);
-      if (!m) continue;
-      const [, daysPart, openT, closeT] = m;
-      let dayMatch = false;
-      for (const seg of daysPart.split(',')) {
-        const d = seg.split('-');
-        if (d.length === 2) {
-          const si = OSM_DAYS[d[0]], ei = OSM_DAYS[d[1]];
-          if (si !== undefined && ei !== undefined)
-            dayMatch = si <= ei ? (curDay >= si && curDay <= ei) : (curDay >= si || curDay <= ei);
-        } else { dayMatch = OSM_DAYS[seg] === curDay; }
-        if (dayMatch) break;
-      }
-      if (!dayMatch) continue;
-      anyDayMatched = true;
-      if (/\soff\s*$/i.test(rule)) return false;
-      const [oh, om] = openT.split(':').map(Number);
-      const [ch, cm] = closeT.split(':').map(Number);
-      const openMins = oh * 60 + om, closeMins = ch * 60 + cm;
-      const open = closeMins > openMins
-        ? curMins >= openMins && curMins < closeMins
-        : curMins >= openMins || curMins < closeMins;
-      if (open) return true;
-    }
-    return anyDayMatched ? false : null;
-  } catch { return null; }
-}
-
-// ===========================
-// PORTO – WALLET
-// ===========================
-const RIDE_PRICE = { z2: 1.85, z4: 3.00 };
-
-function updateWalletUI() {
-  const state = StateManager.get('porto');
-  ['z2', 'z4'].forEach(zone => {
-    const count = state.wallet[zone];
-    const eur = (count * RIDE_PRICE[zone]).toFixed(2).replace('.', ',');
-    const countEl = document.getElementById('wallet-' + zone + '-count');
-    const eurEl   = document.getElementById('wallet-' + zone + '-eur');
-    const card    = document.getElementById('wallet-' + zone + '-card');
-    const warn    = document.getElementById('wallet-' + zone + '-warn');
-    if (!countEl || !card) return;
-    countEl.textContent = count;
-    eurEl.textContent = '≈ ' + eur + ' €';
-    card.classList.remove('border-red-500/60','bg-red-950/20','border-yellow-500/50','border-slate-800/60');
-    if (count === 0) {
-      card.classList.add('border-red-500/60', 'bg-red-950/20');
-      if (warn) warn.textContent = '⚠ Prázdná!';
-      if (warn) warn.classList.remove('hidden');
-    } else if (count <= 2) {
-      card.classList.add('border-yellow-500/50');
-      if (warn) warn.textContent = '⚠ Doplnit!';
-      if (warn) warn.classList.remove('hidden');
-    } else {
-      card.classList.add('border-slate-800/60');
-      if (warn) warn.classList.add('hidden');
-    }
-  });
-}
-
-function changeRides(zone, amount) {
-  const state = StateManager.get('porto');
-  state.wallet[zone] = Math.max(0, state.wallet[zone] + amount);
-  StorageSchema.save(`app_porto_wallet_${zone}`, state.wallet[zone]);
-  updateWalletUI();
-}
-
-// ===========================
-// PORTO – COUNTDOWN
-// ===========================
-const COUNTDOWN_MS = { z2: 60 * 60 * 1000, z4: 75 * 60 * 1000 };
-
-async function scheduleTicketNotifs(zone, startMs) {
-  if (!('Notification' in window)) return;
-  if (Notification.permission === 'default') {
-    const perm = await Notification.requestPermission();
-    if (perm !== 'granted') return;
-  }
-  if (Notification.permission !== 'granted') return;
-
-  const state = StateManager.get('porto');
-  const existing = state.intervals.countdownNotifs || [];
-  existing.forEach(id => clearTimeout(id));
-  state.intervals.countdownNotifs = [];
-
-  const duration = COUNTDOWN_MS[zone];
-  const schedule = [
-    [duration - 5*60000, '⏱ Jízdenka vyprší za 5 minut!', [200,100,200]],
-    [duration - 60000, '🚨 Jízdenka vyprší za 1 minutu! Přestupuj!', [500,200,500,200,500]],
-    [duration, '❌ Jízdenka vypršela – pípni znovu.', [1000]]
-  ];
-
-  schedule.forEach(([offset, body, vibrate]) => {
-    const delay = startMs + offset - Date.now();
-    if (delay > 0) {
-      const timer = setTimeout(() => {
-        new Notification('Porto MHD', { body, icon: './icon-192.png' });
-        if (navigator.vibrate) navigator.vibrate(vibrate);
-      }, delay);
-      state.intervals.countdownNotifs.push(timer);
-    }
-  });
-}
-
-function startCountdown(zone) {
-  const startMs = Date.now();
-  const state = StateManager.get('porto');
-  state.countdown = { start: startMs, zone };
-  StorageSchema.save('app_porto_countdown', state.countdown);
-  scheduleTicketNotifs(zone, startMs);
-  renderCountdown();
-}
-
-function cancelCountdown() {
-  const state = StateManager.get('porto');
-  const existing = state.intervals.countdownNotifs || [];
-  existing.forEach(id => clearTimeout(id));
-  state.intervals.countdownNotifs = [];
-  state.countdown = { start: 0, zone: null };
-  StorageSchema.save('app_porto_countdown', state.countdown);
-  renderCountdown();
-}
-
-function renderCountdown() {
-  const state = StateManager.get('porto');
-  const { start, zone } = state.countdown;
-  const display  = document.getElementById('countdown-display');
-  const buttons  = document.getElementById('countdown-buttons');
-  const stickyEl = document.getElementById('sticky-cd');
-  if (!display || !buttons) return;
-
-  if (!start) {
-    display.classList.add('hidden');
-    buttons.classList.remove('hidden');
-    stickyEl?.classList.add('hidden');
-    return;
-  }
-  display.classList.remove('hidden');
-  buttons.classList.add('hidden');
-  stickyEl?.classList.remove('hidden');
-
-  const duration  = COUNTDOWN_MS[zone];
-  const elapsed   = Date.now() - start;
-  const remaining = Math.max(0, duration - elapsed);
-
-  const timeEl  = document.getElementById('countdown-time');
-  const barEl   = document.getElementById('countdown-bar');
-  const labelEl = document.getElementById('countdown-zone-label');
-  const untilEl = document.getElementById('countdown-valid-until');
-  const stickyTime  = document.getElementById('sticky-time');
-  const stickyZone  = document.getElementById('sticky-zone');
-  const stickyBar   = document.getElementById('sticky-bar');
-  const stickyValid = document.getElementById('sticky-valid');
-  if (!timeEl) return;
-
-  const zoneLabel = zone === 'z2' ? 'Z2 · 60 min' : 'Z4 · 75 min';
-  if (labelEl) labelEl.textContent = zoneLabel;
-  if (stickyZone) stickyZone.textContent = zoneLabel;
-  const pct = ((remaining / duration) * 100) + '%';
-  if (barEl) barEl.style.width = pct;
-  if (stickyBar) stickyBar.style.width = pct;
-
-  if (remaining === 0) {
-    timeEl.textContent = 'VYPRŠELA!';
-    timeEl.className = 'text-3xl font-black text-center tracking-tight text-red-400 font-mono animate-pulse';
-    if (barEl) barEl.className = 'h-full rounded-full bg-red-600';
-    if (untilEl) untilEl.textContent = 'Jízdenka neplatí — pípni znovu.';
-    if (stickyTime) { stickyTime.textContent = 'VYPRŠELA!'; stickyTime.style.color = '#f87171'; }
-    if (stickyBar) stickyBar.style.background = '#ef4444';
-    if (stickyValid) stickyValid.textContent = 'Pípni znovu!';
-    if (elapsed > duration + 60000) cancelCountdown();
-    return;
-  }
-
-  const mins = Math.floor(remaining / 60000);
-  const secs = Math.floor((remaining % 60000) / 1000);
-  const timeStr = String(mins).padStart(2,'0') + ':' + String(secs).padStart(2,'0');
-  timeEl.textContent = timeStr;
-  if (stickyTime) stickyTime.textContent = timeStr;
-
-  let color;
-  if (remaining > 15 * 60000) {
-    color = '#34d399';
-    timeEl.className = 'text-4xl font-black text-center tracking-tight text-emerald-400 font-mono tabular-nums';
-    if (barEl) barEl.className = 'h-full rounded-full transition-all duration-1000 bg-emerald-500';
-  } else if (remaining > 5 * 60000) {
-    color = '#fbbf24';
-    timeEl.className = 'text-4xl font-black text-center tracking-tight text-yellow-400 font-mono tabular-nums';
-    if (barEl) barEl.className = 'h-full rounded-full transition-all duration-1000 bg-yellow-500';
-  } else {
-    color = '#f87171';
-    timeEl.className = 'text-4xl font-black text-center tracking-tight text-red-400 font-mono tabular-nums animate-pulse';
-    if (barEl) barEl.className = 'h-full rounded-full transition-all duration-1000 bg-red-500';
-  }
-  if (stickyTime) stickyTime.style.color = color;
-  if (stickyBar) stickyBar.style.background = color;
-
-  try {
-    const validUntil = new Date(start + duration);
-    const t = new Intl.DateTimeFormat('cs-CZ', { timeZone:'Europe/Lisbon', hour:'2-digit', minute:'2-digit', hour12:false }).format(validUntil);
-    if (untilEl) untilEl.textContent = 'Platí do: ' + t + ' (portug. čas)';
-    if (stickyValid) stickyValid.textContent = 'Platí do ' + t;
-  } catch(e) { if (untilEl) untilEl.textContent = ''; }
-}
-
-function initPorto() {
-  const state = StateManager.get('porto');
-
-  // Wallet
-  state.wallet = {
-    z2: StorageSchema.load('app_porto_wallet_z2', 0),
-    z4: StorageSchema.load('app_porto_wallet_z4', 0)
-  };
-  updateWalletUI();
-
-  // Countdown
-  state.countdown = StorageSchema.load('app_porto_countdown', { start: 0, zone: null });
-  renderCountdown();
-  if (state.intervals.countdownRender) clearInterval(state.intervals.countdownRender);
-  state.intervals.countdownRender = setInterval(renderCountdown, 1000);
-
-  // Re-schedule notifications if countdown was active
-  if (state.countdown.start) {
-    scheduleTicketNotifs(state.countdown.zone, state.countdown.start);
-  }
-
-  // Weather
-  WeatherModule.fetch(currentCity);
-  if (state.intervals.weather) clearInterval(state.intervals.weather);
-  state.intervals.weather = setInterval(() => WeatherModule.fetch(currentCity), 1800000);
-
-  applyPlaces();
-}
-
-// ===========================
-// PORTO – STCP LIVE DEPARTURES
-// ===========================
-const STCP_STOPS = {
-  lordelo:    { stops: [{ id:'LRD1',  label:'→ FLUP/Centrum', color:'#10b981' }, { id:'LRD2',  label:'→ Foz/Pláž', color:'#60a5fa' }] },
-  planetario: { stops: [{ id:'PLNT1', label:'→ FLUP/Centrum', color:'#10b981' }, { id:'PLNT2', label:'→ Foz/Pláž', color:'#60a5fa' }] }
-};
-window.depRefreshTimers = {};
-
-async function loadArrivals(key) {
-  const config = STCP_STOPS[key];
-  const container = document.getElementById('dep-' + key);
-  const btn = document.getElementById('dep-btn-' + key);
-  if (!container || !btn) return;
-
-  btn.innerHTML = '<span class="spin">⟳</span> Načítám…'; btn.disabled = true;
-  container.classList.remove('hidden');
-  container.innerHTML = '<div class="space-y-2">'
-    + [1,2].map(() => '<div class="h-12 rounded-xl bg-slate-800/60 animate-pulse"></div>').join('')
-    + '</div>';
-  clearTimeout(window.depRefreshTimers[key]);
-
-  const timezone = currentCity?.timezone || 'Europe/Lisbon';
-  const results = await Promise.all(
-    config.stops.map(stop =>
-      apiFetch(
-        'https://proxy.cors.sh/https://stcp.pt/api/stops/' + stop.id + '/realtime',
-        { cache: 'no-store', _timeout: 8000 },
-        'stcp_' + stop.id
-      )
-        .then(r => ({ ...stop, arrivals: r.data.arrivals || [], ok: true, fromCache: r.fromCache, cachedAt: r.cachedAt }))
-        .catch(() => ({ ...stop, arrivals: [], ok: false }))
-    )
-  );
-
-  const allFailed = results.every(r => !r.ok);
-  if (allFailed) {
-    container.innerHTML = '<div style="padding:10px 4px;text-align:center"><p style="font-size:14px;color:#f87171;font-weight:600">Nepodařilo se načíst</p><p style="font-size:12px;color:#475569;margin-top:4px">Zkontroluj připojení.</p></div>';
-    btn.innerHTML = '↺ Zkusit znovu'; btn.disabled = false; return;
-  }
-
-  const anyFromCache = results.some(r => r.fromCache);
-  const minCachedAt = results.reduce((m, r) => (r.cachedAt && r.cachedAt < m) ? r.cachedAt : m, Infinity);
-
-  const all = [];
-  results.forEach(r => r.arrivals.forEach(a => all.push({ ...a, dirLabel: r.label, dirColor: r.color })));
-  all.sort((a, b) => a.arrival_minutes - b.arrival_minutes);
-
-  let html = (anyFromCache && minCachedAt !== Infinity) ? staleDataHtml(minCachedAt, timezone) : '';
-
-  if (all.length === 0) {
-    html += '<p style="font-size:14px;color:#64748b;text-align:center;padding:12px 0">Žádné spoje v příštích 60 min.</p>';
-  } else {
-    const rows = all.slice(0, 6).map(a => {
-      const mins = a.arrival_minutes;
-      const minsStr = mins <= 0 ? 'Přijíždí!' : mins + ' min';
-      const minsColor = mins <= 0 ? '#34d399' : mins <= 3 ? '#34d399' : mins <= 6 ? '#fbbf24' : '#94a3b8';
-      const delayHtml = (a.status === 'DELAYED' && a.delay_minutes > 0.5)
-        ? ' <span style="color:#f87171;font-size:11px">+' + Math.round(a.delay_minutes) + '\'</span>' : '';
-      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 8px;border-bottom:1px solid rgba(51,65,85,0.5)">'
-        + '<div style="display:flex;align-items:center;gap:10px">'
-        + '<span style="background:#1e293b;color:#fbbf24;font-weight:900;font-size:15px;padding:4px 8px;border-radius:8px;min-width:38px;text-align:center;font-family:monospace">' + (a.route_short_name || a.route_long_name) + '</span>'
-        + '<div><div style="font-size:14px;color:#e2e8f0;font-weight:600">' + a.trip_headsign + '</div>'
-        + '<div style="font-size:11px;color:' + a.dirColor + ';margin-top:2px">' + a.dirLabel + '</div></div></div>'
-        + '<span style="font-weight:900;font-size:17px;color:' + minsColor + ';font-family:monospace;white-space:nowrap">' + minsStr + delayHtml + '</span>'
-        + '</div>';
-    }).join('');
-    const footer = !anyFromCache
-      ? '<div style="font-size:11px;color:#334155;text-align:right;padding:4px 12px">Aktualizováno '
-          + new Date().toLocaleTimeString('cs-CZ', { hour:'2-digit', minute:'2-digit' }) + ' · auto-refresh 30 s</div>'
-      : '';
-    html += '<div style="background:rgba(2,6,23,0.4);border:1px solid rgba(51,65,85,0.4);border-radius:12px;overflow:hidden;margin-bottom:4px">'
-      + '<div style="padding:0 4px">' + rows + '</div>' + footer + '</div>';
-  }
-  container.innerHTML = html;
-  btn.innerHTML = '↺ Obnovit'; btn.disabled = false;
-  window.depRefreshTimers[key] = setTimeout(() => loadArrivals(key), 30000);
-}
-
-// ===========================
-// PORTO – GEOLOCATION
-// ===========================
-const STOPS_GEO = [
-  { id:'LRD1',  name:'Prédios de Lordelo', dir:'→ FLUP/Centrum', lat:41.15441, lng:-8.64908, lines:'204, 207, 209' },
-  { id:'LRD2',  name:'Prédios de Lordelo', dir:'→ Foz/Pláž',     lat:41.15441, lng:-8.64908, lines:'204' },
-  { id:'PLNT1', name:'Planetário',          dir:'→ FLUP/Centrum', lat:41.15355, lng:-8.65148, lines:'200, 207, 209, 1M' },
-  { id:'PLNT2', name:'Planetário',          dir:'→ Foz/Pláž',     lat:41.15355, lng:-8.65148, lines:'200, 207, 1M' },
-  { id:'home',  name:'🏠 Ubytování',        dir:'Rua Paulo Gama 551', lat:41.15468, lng:-8.65016, lines:null }
-];
-
-function haversineM(la1, ln1, la2, ln2) {
-  const R = 6371000, r = d => d * Math.PI / 180;
-  const a = Math.sin(r(la2-la1)/2)**2 + Math.cos(r(la1))*Math.cos(r(la2))*Math.sin(r(ln2-ln1)/2)**2;
-  return 2*R*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-}
-
-function locateMeNow() {
-  const btn = document.getElementById('locate-btn');
-  const result = document.getElementById('locate-result');
-  if (!navigator.geolocation) {
-    result.classList.remove('hidden');
-    result.innerHTML = '<p style="font-size:11px;color:#f87171;padding:6px">Geolokace není dostupná v tomto prohlížeči.</p>';
-    return;
-  }
-  btn.textContent = '⟳ Hledám polohu…'; btn.disabled = true;
-  navigator.geolocation.getCurrentPosition(
-    pos => {
-      const { latitude:lat, longitude:lng, accuracy } = pos.coords;
-      const sorted = STOPS_GEO
-        .map(s => ({ ...s, dist: Math.round(haversineM(lat, lng, s.lat, s.lng)) }))
-        .sort((a, b) => a.dist - b.dist);
-      const rows = sorted.map(s => {
-        const wmin = Math.ceil(s.dist / 75);
-        const col = s.dist < 200 ? '#34d399' : s.dist < 500 ? '#fbbf24' : '#94a3b8';
-        const badge = s.id !== 'home'
-          ? '<span style="background:#1e293b;color:#64748b;font-size:9px;padding:1px 5px;border-radius:3px;font-family:monospace;margin-right:5px">' + s.id + '</span>' : '';
-        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 2px;border-bottom:1px solid rgba(51,65,85,0.3)">'
-          + '<div>' + badge
-          + '<span style="font-size:11px;color:#e2e8f0;font-weight:600">' + s.name + '</span>'
-          + '<span style="font-size:9px;color:#64748b;display:block;margin-top:1px">' + s.dir + (s.lines ? ' · ' + s.lines : '') + '</span></div>'
-          + '<div style="text-align:right">'
-          + '<span style="font-size:13px;font-weight:900;color:' + col + ';font-family:monospace">' + s.dist + ' m</span>'
-          + '<span style="font-size:9px;color:#64748b;display:block">~' + wmin + ' min pěšky</span></div></div>';
-      }).join('');
-      result.classList.remove('hidden');
-      result.innerHTML = '<div style="font-size:10px;color:#334155;padding:2px 0 6px">GPS přesnost ±' + Math.round(accuracy) + ' m</div>' + rows;
-      btn.textContent = '📍 Obnovit polohu'; btn.disabled = false;
-    },
-    err => {
-      const msgs = { 1:'Přístup zamítnut – povol polohu v nastavení.', 2:'Poloha není dostupná.', 3:'Časový limit vypršel.' };
-      result.classList.remove('hidden');
-      result.innerHTML = '<p style="font-size:11px;color:#f87171;padding:6px">' + (msgs[err.code] || 'Chyba geolokace.') + '</p>';
-      btn.textContent = '📍 Zjistit polohu'; btn.disabled = false;
-    },
-    { timeout:10000, enableHighAccuracy:true }
-  );
-}
-
-// ===========================
-// LAGOS – GEOLOCATION
-// ===========================
-function locateMeLagos() {
-  const btn = document.getElementById('locate-btn-lagos');
-  const result = document.getElementById('locate-result-lagos');
-  if (!btn || !result) return;
-  btn.textContent = '⏳ Zjišťuji polohu…'; btn.disabled = true;
-  if (!navigator.geolocation) {
-    result.textContent = 'Geolokace není k dispozici v tomto prohlížeči.';
-    result.classList.remove('hidden');
-    btn.innerHTML = '<span>📍</span><span>Zobrazit moji polohu v Google Maps</span>';
-    btn.disabled = false; return;
-  }
-  navigator.geolocation.getCurrentPosition(
-    pos => {
-      const lat = pos.coords.latitude.toFixed(6);
-      const lng = pos.coords.longitude.toFixed(6);
-      const mapsUrl = 'https://www.google.com/maps?q=' + lat + ',' + lng;
-      result.innerHTML = '<p class="text-xs text-slate-300 mb-2">📍 Tvoje poloha: <span class="font-mono text-cyan-400">' + lat + ', ' + lng + '</span></p>'
-        + '<a href="' + mapsUrl + '" target="_blank" class="text-xs text-cyan-400 underline font-bold">Otevřít v Google Maps ↗</a>';
-      result.classList.remove('hidden');
-      btn.innerHTML = '<span>📍</span><span>Zobrazit moji polohu v Google Maps</span>';
-      btn.disabled = false;
-    },
-    () => {
-      result.textContent = 'Nepodařilo se zjistit polohu. Povol přístup k poloze v nastavení prohlížeče.';
-      result.classList.remove('hidden');
-      btn.innerHTML = '<span>📍</span><span>Zobrazit moji polohu v Google Maps</span>';
-      btn.disabled = false;
-    },
-    { timeout:10000, maximumAge:60000 }
-  );
-}
-
-function navigateHome() {
-  const home = loadHome();
-  if (!home || !home.lat || !home.lng) {
-    showToast('Nebylo nalezeno ubytování.');
-    return;
-  }
-  const url = `https://www.google.com/maps/dir/?api=1&destination=${home.lat},${home.lng}&travelmode=transit`;
-  window.open(url, '_blank', 'noopener');
-}
-
-const ExchangeRateModule = {
-  rate: 25.0, // Výchozí kurz pro případ výpadku
-  async fetch() {
-    try {
-      const cacheKey = 'exchange_rate_eur_czk';
-      const url = 'https://open.er-api.com/v6/latest/EUR';
-      const { data, fromCache, cachedAt } = await apiFetch(url, { _timeout: 8000 }, cacheKey);
-      if (data && data.rates && data.rates.CZK) {
-        this.rate = data.rates.CZK;
-        this.updateUI(data.rates.CZK, cachedAt || Date.now());
-      }
-    } catch (e) {
-      console.warn('Nepodařilo se načíst kurz:', e);
-      const cached = StorageSchema.load('app_cache_exchange_rate_eur_czk');
-      if (cached && cached.data && cached.data.rates && cached.data.rates.CZK) {
-        this.rate = cached.data.rates.CZK;
-        this.updateUI(cached.data.rates.CZK, cached.t);
-      }
-    }
-  },
-  updateUI(rate, timestamp) {
-    const el = document.getElementById('rate-update-time');
-    if (el) {
-      const dateStr = new Date(timestamp).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric' });
-      el.textContent = `1 € = ${rate.toFixed(2)} Kč (${dateStr})`;
-    }
-  }
-};
-
-function convertCurrency(source) {
-  const rate = ExchangeRateModule.rate;
-  const eurInput = document.getElementById('conv-eur');
-  const czkInput = document.getElementById('conv-czk');
-  if (!eurInput || !czkInput) return;
-
-  if (source === 'eur') {
-    const val = parseFloat(eurInput.value);
-    if (isNaN(val)) { czkInput.value = ''; return; }
-    czkInput.value = (val * rate).toFixed(2);
-  } else {
-    const val = parseFloat(czkInput.value);
-    if (isNaN(val)) { eurInput.value = ''; return; }
-    eurInput.value = (val / rate).toFixed(2);
-  }
-}
-
-function getOpenStatusHtml(ohStr, timezone) {
-  if (!ohStr) return '';
-  ohStr = ohStr.trim();
-  if (ohStr === '24/7') {
-    return '<span class="text-[10px] font-bold text-emerald-400 bg-emerald-900/30 px-1.5 py-0.5 rounded-md ml-1">Otevřeno</span>';
-  }
-  try {
-    const now = new Date();
-    const parts = Intl.DateTimeFormat('en-US', {
-      timeZone: timezone, weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
-    }).formatToParts(now);
-    const curDay = INTL_TO_OSM[parts.find(p => p.type === 'weekday')?.value || ''] ?? -1;
-    if (curDay < 0) return '';
-    const curMins = parseInt(parts.find(p => p.type === 'hour')?.value || '0') * 60
-                  + parseInt(parts.find(p => p.type === 'minute')?.value || '0');
-    
-    let anyDayMatched = false;
-    let opensLaterToday = null;
-
-    for (const rule of ohStr.split(';').map(s => s.trim()).filter(Boolean)) {
-      const m = rule.match(/^([\w,\-]+)\s+(\d{1,2}:\d{2})-(\d{1,2}:\d{2})/);
-      if (!m) continue;
-      const [, daysPart, openT, closeT] = m;
-      let dayMatch = false;
-      for (const seg of daysPart.split(',')) {
-        const d = seg.split('-');
-        if (d.length === 2) {
-          const si = OSM_DAYS[d[0]], ei = OSM_DAYS[d[1]];
-          if (si !== undefined && ei !== undefined)
-            dayMatch = si <= ei ? (curDay >= si && curDay <= ei) : (curDay >= si || curDay <= ei);
-        } else { dayMatch = OSM_DAYS[seg] === curDay; }
-        if (dayMatch) break;
-      }
-      if (!dayMatch) continue;
-      anyDayMatched = true;
-      if (/\soff\s*$/i.test(rule)) continue;
-      
-      const [oh, om] = openT.split(':').map(Number);
-      const [ch, cm] = closeT.split(':').map(Number);
-      const openMins = oh * 60 + om;
-      const closeMins = ch * 60 + cm;
-      
-      const open = closeMins > openMins
-        ? curMins >= openMins && curMins < closeMins
-        : curMins >= openMins || curMins < closeMins;
-      
-      if (open) {
-        return '<span class="text-[10px] font-bold text-emerald-400 bg-emerald-900/30 px-1.5 py-0.5 rounded-md ml-1">Otevřeno</span>';
-      }
-      
-      if (curMins < openMins) {
-        if (opensLaterToday === null || openMins < opensLaterToday.mins) {
-          opensLaterToday = { label: openT, mins: openMins };
-        }
-      }
-    }
-    
-    if (opensLaterToday) {
-      return `<span class="text-[10px] font-bold text-amber-400 bg-amber-900/30 px-1.5 py-0.5 rounded-md ml-1">Otevírá v ${opensLaterToday.label}</span>`;
-    }
-    
-    return anyDayMatched 
-      ? '<span class="text-[10px] font-bold text-red-400 bg-red-900/30 px-1.5 py-0.5 rounded-md ml-1">Zavřeno</span>'
-      : '';
-  } catch {
-    return '';
-  }
-}
-
-// ===========================
-// WEATHER MODULE (generic for all cities)
-// ===========================
-const WMO = {
-  icons:  {0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',71:'🌨️',73:'🌨️',75:'❄️',80:'🌦️',81:'🌦️',82:'⛈️',95:'⛈️',96:'⛈️',99:'⛈️'},
-  labels: {0:'Jasno',1:'Převážně jasno',2:'Polojasno',3:'Zataženo',45:'Mlha',48:'Jinovatka',51:'Mrholení',53:'Mrholení',55:'Mrholení',61:'Slabý déšť',63:'Déšť',65:'Silný déšť',71:'Sněžení',73:'Sněžení',75:'Sněhová bouře',80:'Přeháňky',81:'Přeháňky',82:'Silné přeháňky',95:'Bouřka',96:'Bouřka',99:'Silná bouřka'}
-};
-
-// Wrapper funkce volané z HTML onclick
-function fetchWeather(manual = false) { if (currentCity) WeatherModule.fetch(currentCity, manual); }
-function fetchLagosWeather(manual = false) { if (currentCity) WeatherModule.fetch(currentCity, manual); }
-function fetchLisbonWeather(manual = false) { if (currentCity) WeatherModule.fetch(currentCity, manual); }
-
-const WeatherModule = {
-  async fetch(city, manual = false) {
-    if (!city.weatherLat || !city.weatherLng) return; // Skip if not configured
-
-    const iEl = document.getElementById(`${city.id}-weather-icon`);
-    if (manual && iEl) iEl.style.opacity = '0.3';
-
-    try {
-      const cacheKey = `weather_${city.id}`;
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.weatherLat}&longitude=${city.weatherLng}&current=temperature_2m,weathercode,windspeed_10m,uv_index&daily=temperature_2m_max,temperature_2m_min,weathercode,uv_index_max,sunrise,sunset&forecast_days=2&timezone=${encodeURIComponent(city.timezone)}`;
-
-      const { data, fromCache, cachedAt } = await apiFetch(url, { _timeout: 8000 }, cacheKey);
-      if (!document.getElementById(`${city.id}-weather-icon`)) return;
-
-      this.render(city, data, fromCache, cachedAt);
-
-      if (manual && !fromCache) showToast('Počasí aktualizováno ✓');
-      if (manual && fromCache) showToast('Offline – zobrazena stará data.');
-    } catch {
-      if (manual) showToast('Nepodařilo se načíst počasí.');
-    } finally {
-      if (iEl) setTimeout(() => { iEl.style.opacity = '1'; }, 200);
-    }
-  },
-
-  render(city, data, fromCache, cachedAt) {
-    const { current: c, daily: d } = data;
-    const sel = (id) => document.getElementById(id);
-    const td = (id) => `${city.id}-${id}`;
-    const setText = (id, val) => { const el = sel(id); if (el) el.textContent = val; };
-
-    // Current conditions
-    setText(td('weather-icon'), WMO.icons[c.weathercode] ?? '🌡️');
-    setText(td('weather-temp'), Math.round(c.temperature_2m) + '°C');
-    setText(td('weather-desc'), WMO.labels[c.weathercode] ?? 'Počasí');
-    setText(td('weather-wind'), Math.round(c.windspeed_10m) + ' km/h');
-    setText(td('uv-badge'), 'UV ' + (c.uv_index != null ? Math.round(c.uv_index) : '–'));
-
-    // Tomorrow forecast
-    if (d.weathercode?.[1]) setText(td('fc-icon'), WMO.icons[d.weathercode[1]] ?? '🌡️');
-    if (d.temperature_2m_min?.[1] != null) {
-      const min = Math.round(d.temperature_2m_min[1]);
-      const max = Math.round(d.temperature_2m_max[1]);
-      setText(td('fc-temp'), min + '–' + max + '°C');
-    }
-    setText(td('uv-max'), d.uv_index_max?.[0] != null ? Math.round(d.uv_index_max[0]) : '–');
-
-    // Sunrise / sunset
-    const sunRow = sel(td('sun-row'));
-    if (sunRow && d.sunrise?.[0] && d.sunset?.[0]) {
-      setText(td('sunrise'), d.sunrise[0].split('T')[1]);
-      setText(td('sunset'), d.sunset[0].split('T')[1]);
-      sunRow.classList.remove('hidden');
-      sunRow.classList.add('flex');
-    }
-
-    // Stale data indicator
-    const staleEl = sel(td('weather-stale'));
-    if (staleEl) {
-      if (fromCache && cachedAt) {
-        staleEl.textContent = 'Offline · naposledy ' + localHHMM(cachedAt, city.timezone);
-        staleEl.className = 'text-[10px] text-amber-400/70 mt-0.5';
-      } else {
-        staleEl.className = 'hidden';
-      }
-    }
-  }
-};
-
-// ===========================
-// PLACES MANAGER (generic for all cities)
-// ===========================
-const PlacesManager = {
-  loadHome(cityId) {
-    const city = CITIES.find(c => c.id === cityId);
-    const stored = StorageSchema.load(`app_${cityId}_home`);
-    return { ...city?.defaultHome, ...stored };
-  },
-
-  saveHome(cityId, home) {
-    StorageSchema.save(`app_${cityId}_home`, home);
-    StateManager.set(cityId, 'places.home', home);
-  },
-
-  loadPois(cityId) {
-    return StorageSchema.load(`app_${cityId}_pois`, []);
-  },
-
-  savePois(cityId, pois) {
-    StorageSchema.save(`app_${cityId}_pois`, pois);
-    StateManager.set(cityId, 'places.pois', pois);
-  },
-
-  addPoi(cityId, poi) {
-    const pois = this.loadPois(cityId);
-    pois.push(poi);
-    this.savePois(cityId, pois);
-  },
-
-  deletePoi(cityId, index) {
-    const pois = this.loadPois(cityId);
-    pois.splice(index, 1);
-    this.savePois(cityId, pois);
-  }
-};
-
-
-// Zkratky pro práci s místy aktuálního města
-function loadHome() { return PlacesManager.loadHome(currentCity?.id); }
-function loadPois() { return PlacesManager.loadPois(currentCity?.id); }
-function savePois(pois) { PlacesManager.savePois(currentCity?.id, pois); }
-function deletePoi(index) { PlacesManager.deletePoi(currentCity?.id, index); renderPlacesModal(); applyPlaces(); }
-
-function addPoi() {
-  const emoji   = (document.getElementById('modal-poi-emoji')?.value.trim()   || '📍');
-  const name    =  document.getElementById('modal-poi-name')?.value.trim()    || '';
-  const address =  document.getElementById('modal-poi-address')?.value.trim() || '';
-  const lat     = parseFloat(document.getElementById('modal-poi-lat')?.value)  || null;
-  const lng     = parseFloat(document.getElementById('modal-poi-lng')?.value)  || null;
-  if (!name) { showToast('Vyplň název místa.'); return; }
-  PlacesManager.addPoi(currentCity?.id, { emoji, name, address: address || name, lat, lng });
-  ['modal-poi-emoji','modal-poi-name','modal-poi-address','modal-poi-lat','modal-poi-lng'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.value = '';
-  });
-  renderPlacesModal();
-  applyPlaces();
-  showToast('📍 ' + name + ' přidáno!');
-}
-
-function saveHomeSettings() {
-  const name    = document.getElementById('modal-home-name')?.value.trim()    || '';
-  const address = document.getElementById('modal-home-address')?.value.trim() || '';
-  const lat     = parseFloat(document.getElementById('modal-home-lat')?.value)  || null;
-  const lng     = parseFloat(document.getElementById('modal-home-lng')?.value)  || null;
-  if (!name || !address) { showToast('Vyplň název a adresu.'); return; }
-  PlacesManager.saveHome(currentCity?.id, { name, address, lat, lng });
-  applyPlaces();
-  showToast('Ubytování uloženo ✓');
-}
-
-function resetHomeSettings() {
-  const city = CITIES.find(c => c.id === currentCity?.id);
-  if (!city) return;
-  StorageSchema.save(`app_${currentCity.id}_home`, null);
-  StateManager.set(currentCity.id, 'places.home', city.defaultHome);
-  renderPlacesModal();
-  applyPlaces();
-  showToast('Ubytování resetováno.');
-}
-
-function applyPlaces() {
-  if (!currentCity) return;
-  const home = PlacesManager.loadHome(currentCity.id);
-  const pois = PlacesManager.loadPois(currentCity.id);
-  const opts = [
-    { val: 'gps',  label: '📍 Moje poloha (GPS)' },
-    { val: 'home', label: '🏠 ' + (home?.name || 'Ubytování') }
-  ];
-  pois.filter(p => p.lat && p.lng).forEach((p, i) => {
-    opts.push({ val: 'poi_' + i, label: (p.emoji || '📍') + ' ' + p.name });
-  });
-  populateNearbyDd(opts);
-
-  const overviewHomeLabel = document.getElementById('overview-home-address');
-  if (overviewHomeLabel) {
-    overviewHomeLabel.textContent = home?.name || home?.address || 'Ubytování';
-  }
-}
-
-function renderPlacesModal() {
-  if (!currentCity) return;
-  const h = PlacesManager.loadHome(currentCity.id);
-  const ni  = document.getElementById('modal-home-name');    if (ni)  ni.value  = h.name;
-  const ai  = document.getElementById('modal-home-address'); if (ai)  ai.value  = h.address;
-  const lti = document.getElementById('modal-home-lat');     if (lti) lti.value = h.lat;
-  const lni = document.getElementById('modal-home-lng');     if (lni) lni.value = h.lng;
-
-  const pois = PlacesManager.loadPois(currentCity.id);
-  const list = document.getElementById('modal-poi-list');
-  if (!list) return;
-  list.innerHTML = pois.length === 0
-    ? '<p class="text-sm text-slate-500 text-center py-5">Zatím žádná místa.</p>'
-    : pois.map((p, i) =>
-      '<div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/40 border border-slate-800/50 gap-2">'
-      + '<div class="truncate flex-1 cursor-pointer" data-addr="' + p.address.replace(/"/g, '&quot;') + '" onclick="copyToClipboard(this.dataset.addr)">'
-      + '<span class="text-sm font-bold text-slate-200 block truncate">' + p.emoji + ' ' + p.name + '</span>'
-      + '<span class="text-xs text-slate-500 block truncate">' + p.address + ' <span class="text-slate-700">· klepni pro kopírování</span></span></div>'
-      + '<button onclick="deletePoi(' + i + ')" class="shrink-0 text-slate-500 hover:text-red-400 text-base px-2 py-1 transition cursor-pointer select-none">✕</button>'
-      + '</div>'
-    ).join('');
-}
-
-function openPlacesModal() {
-  renderPlacesModal();
-  document.getElementById('places-modal').classList.remove('hidden');
-  document.body.style.overflow = 'hidden';
-}
-
-function closePlacesModal() {
-  document.getElementById('places-modal').classList.add('hidden');
-  document.body.style.overflow = '';
-}
-
-// ===========================
-// PORTO – NOMINATIM GEOCODING
-// ===========================
-let _nominatimTimer = null;
-
-function nominatimSearch(inputId, resultsId) {
-  const query = (document.getElementById(inputId) || {}).value || '';
-  const list = document.getElementById(resultsId);
-  if (!list) return;
-  clearTimeout(_nominatimTimer);
-  if (query.trim().length < 3) { list.classList.add('hidden'); list.innerHTML = ''; return; }
-  _nominatimTimer = setTimeout(() => {
-    list.innerHTML = '<div class="px-3 py-2 text-slate-500 text-xs">Hledám…</div>';
-    list.classList.remove('hidden');
-    fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(query) + '&format=json&limit=5&addressdetails=1', {
-      headers: { 'Accept-Language': 'cs,en' }
-    })
-      .then(r => r.json())
-      .then(data => {
-        if (!data.length) { list.innerHTML = '<div class="px-3 py-2 text-slate-500 text-xs">Nic nenalezeno.</div>'; return; }
-        list.innerHTML = data.map((item, i) =>
-          '<div data-idx="' + i + '" class="px-3 py-2.5 border-b border-slate-700/50 last:border-0 cursor-pointer hover:bg-slate-700 active:bg-slate-600 transition">'
-          + '<div class="font-semibold text-slate-100 text-xs">' + (item.name || item.display_name.split(',')[0]) + '</div>'
-          + '<div class="text-[10px] text-slate-400 truncate">' + item.display_name + '</div></div>'
-        ).join('');
-        list.querySelectorAll('[data-idx]').forEach(el => {
-          el.addEventListener('click', () => nominatimFill(resultsId, data[parseInt(el.dataset.idx)]));
-        });
-      })
-      .catch(() => { list.innerHTML = '<div class="px-3 py-2 text-red-400 text-xs">Chyba připojení.</div>'; });
-  }, 400);
-}
-
-function nominatimFill(resultsId, item) {
-  const shortName = item.name || item.display_name.split(',')[0];
-  const lat = parseFloat(item.lat), lng = parseFloat(item.lon);
-  if (resultsId === 'modal-home-results') {
-    document.getElementById('modal-home-name').value    = shortName;
-    document.getElementById('modal-home-address').value = item.display_name;
-    document.getElementById('modal-home-lat').value     = lat;
-    document.getElementById('modal-home-lng').value     = lng;
-    document.getElementById('modal-home-search').value  = '';
-  } else {
-    document.getElementById('modal-poi-name').value    = shortName;
-    document.getElementById('modal-poi-address').value = item.display_name;
-    document.getElementById('modal-poi-lat').value     = lat;
-    document.getElementById('modal-poi-lng').value     = lng;
-    document.getElementById('modal-poi-search').value  = '';
-  }
-  const list = document.getElementById(resultsId);
-  list.classList.add('hidden'); list.innerHTML = '';
-}
-
-document.addEventListener('click', e => {
-  ['modal-home-results', 'modal-poi-results'].forEach(id => {
-    const list = document.getElementById(id);
-    if (list && !list.classList.contains('hidden') && !list.contains(e.target)) {
-      const inputId = id.replace('-results', '-search');
-      if (e.target.id !== inputId) { list.classList.add('hidden'); list.innerHTML = ''; }
-    }
-  });
-});
-
-// ===========================
-// PORTO – NEARBY PLACES (OVERPASS / OSM)
-// ===========================
-let _gpsPos = null;
-let _gpsPosTime = 0;
-
-const NEARBY_CFG = {
-  supermarket: { tag: '"shop"="supermarket"', label: 'Supermarket', radius: 1000 },
-  cafe:        { tag: '"amenity"="cafe"',      label: 'Kavárna',     radius: 600  },
-  restaurant:  { tag: '"amenity"="restaurant"',label: 'Restaurace',   radius: 800  },
-  fast_food:   { tag: '"amenity"="fast_food"', label: 'Fast food',   radius: 600  },
-  bar:         { tag: '"amenity"="bar"',        label: 'Bar',         radius: 600  },
-  pharmacy:    { tag: '"amenity"="pharmacy"',  label: 'Lékárna',      radius: 1000 }
-};
-
-// ===========================
-// NEARBY CUSTOM DROPDOWN
-// ===========================
-let _nearbyDdVal = 'gps';
-
-function toggleNearbyDd(e) {
-  e && e.stopPropagation();
-  const menu  = document.getElementById('nearby-dd-menu');
-  const arrow = document.getElementById('nearby-dd-arrow');
-  if (!menu) return;
-  const opening = menu.classList.contains('hidden');
-  menu.classList.toggle('hidden');
-  if (arrow) arrow.style.transform = opening ? 'rotate(180deg)' : '';
-  if (opening) {
-    setTimeout(() => {
-      document.addEventListener('click', function close(ev) {
-        if (!document.getElementById('nearby-dd-wrap')?.contains(ev.target)) {
-          menu.classList.add('hidden');
-          if (arrow) arrow.style.transform = '';
-        }
-        document.removeEventListener('click', close);
-      });
-    }, 0);
-  }
-}
-
-function selectNearbyLoc(val, label) {
-  _nearbyDdVal = val;
-  const lbl = document.getElementById('nearby-dd-label');
-  if (lbl) lbl.textContent = label;
-  document.getElementById('nearby-dd-menu')?.classList.add('hidden');
-  const arrow = document.getElementById('nearby-dd-arrow');
-  if (arrow) arrow.style.transform = '';
-  document.getElementById('nearby-results').innerHTML = '';
-  document.querySelectorAll('.nearby-cat-btn').forEach(b => b.classList.remove('ring-1','ring-yellow-400','text-yellow-400'));
-}
-
-function populateNearbyDd(options) {
-  const menu = document.getElementById('nearby-dd-menu');
-  if (!menu) return;
-  menu.innerHTML = options.map(opt => {
-    const active = opt.val === _nearbyDdVal;
-    const safeLabel = opt.label.replace(/"/g, '&quot;');
-    return `<button data-val="${opt.val}" data-label="${safeLabel}" onclick="selectNearbyLoc(this.dataset.val, this.dataset.label)"
-      class="nearby-dd-opt w-full text-left px-4 py-3.5 text-sm hover:bg-slate-700 flex items-center gap-2 transition ${active ? 'text-yellow-400 font-bold bg-slate-700/50' : 'text-slate-200'}">
-      <span class="truncate">${opt.label}</span>
-      ${active ? '<svg class="w-4 h-4 shrink-0 ml-auto" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>' : ''}
-    </button>`;
-  }).join('');
-}
-
-function saveNearbyPoi(name, lat, lng) {
-  const pois = loadPois();
-  if (pois.some(p => p.lat && Math.abs(p.lat - lat) < 0.0001 && Math.abs(p.lng - lng) < 0.0001)) {
-    showToast('Místo je již uloženo.'); return;
-  }
-  pois.push({ emoji: '📍', name, address: lat.toFixed(5) + ', ' + lng.toFixed(5), lat, lng });
-  savePois(pois);
-  applyPlaces();
-  showToast('📍 ' + name + ' uloženo!');
-}
-
-async function fetchNearby(btn, category) {
-  const val = _nearbyDdVal;
-  const timezone = currentCity?.timezone || 'Europe/Lisbon';
-  let lat, lng;
-
-  const results = document.getElementById('nearby-results');
-  document.querySelectorAll('.nearby-cat-btn').forEach(b => b.classList.remove('ring-1','ring-yellow-400','text-yellow-400'));
-  btn.classList.add('ring-1','ring-yellow-400','text-yellow-400');
-
-  // Resolve location — GPS first, fallback to saved home
-  if (val === 'gps') {
-    if (!_gpsPos || Date.now() - _gpsPosTime > 60000) {
-      results.innerHTML = '<p class="text-slate-500 text-center py-3 text-xs">Zjišťuji polohu…</p>';
-      try {
-        const pos = await new Promise((res, rej) => {
-          if (!navigator.geolocation) return rej(new Error('no-geo'));
-          navigator.geolocation.getCurrentPosition(res, rej, { timeout: 8000, enableHighAccuracy: true });
-        });
-        _gpsPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        _gpsPosTime = Date.now();
-      } catch {
-        _gpsPos = null;
-        const h = loadHome();
-        lat = h.lat; lng = h.lng;
-        showToast('GPS nedostupné – hledám od ubytování.');
-      }
-    }
-    if (_gpsPos) { lat = _gpsPos.lat; lng = _gpsPos.lng; }
-  } else if (val === 'home') {
-    const h = loadHome(); lat = h.lat; lng = h.lng;
-  } else {
-    const idx = parseInt(val.replace('poi_', ''));
-    const poi = loadPois()[idx];
-    if (!poi || !poi.lat) { showToast('Toto místo nemá souřadnice.'); return; }
-    lat = poi.lat; lng = poi.lng;
-  }
-
-  // Skeleton
-  results.innerHTML = '<div class="space-y-2">'
-    + [1,2,3].map(() => '<div class="h-14 rounded-xl bg-slate-800/60 animate-pulse"></div>').join('')
-    + '</div>';
-
-  const cfg = NEARBY_CFG[category];
-  const q = `[out:json][timeout:12];(node[${cfg.tag}](around:${cfg.radius},${lat},${lng});way[${cfg.tag}](around:${cfg.radius},${lat},${lng}););out center 15;`;
-  const cacheKey = `nearby_${category}_${Math.round(lat * 100)}_${Math.round(lng * 100)}`;
-
-  let result;
-  try {
-    result = await apiFetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: q, _timeout: 12000 }, cacheKey);
-  } catch {
-    results.innerHTML = '<p class="text-red-400 text-center py-3 text-[11px]">Chyba – zkontroluj připojení a zkus znovu.</p>';
-    return;
-  }
-
-  const { data, fromCache, cachedAt } = result;
-  const places = (data.elements || [])
-    .map(el => {
-      const elat = el.lat ?? el.center?.lat, elng = el.lon ?? el.center?.lon;
-      if (!elat) return null;
-      const tags = el.tags || {};
-      return {
-        name: tags.name || tags['name:en'] || cfg.label,
-        dist: Math.round(haversineM(lat, lng, elat, elng)),
-        oh: tags.opening_hours || null,
-        stars: tags.stars || null,
-        elat, elng
-      };
-    })
-    .filter(Boolean).sort((a, b) => a.dist - b.dist).slice(0, 10);
-
-  const stale = fromCache ? staleDataHtml(cachedAt, timezone) : '';
-
-  if (!places.length) {
-    results.innerHTML = stale + '<p class="text-slate-500 text-center py-3 text-xs">Nic v okolí ' + cfg.radius + ' m nenalezeno.</p>';
-    return;
-  }
-
-  const cards = places.map(p => {
-    const openBadge = getOpenStatusHtml(p.oh, timezone);
-    const starsHtml = p.stars ? ' <span class="text-xs text-yellow-400 ml-1">★ ' + p.stars + '</span>' : '';
-    const safeName = p.name.replace(/"/g, '&quot;');
-    return '<div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/40 gap-3">'
-      + '<div class="flex-1 min-w-0">'
-      + '<div class="flex items-center flex-wrap mb-0.5">'
-      + '<span class="text-slate-100 font-bold text-sm truncate">' + p.name + '</span>'
-      + openBadge + starsHtml
-      + '</div>'
-      + '<span class="text-slate-500 text-xs font-mono">' + p.dist + ' m · ~' + Math.ceil(p.dist / 75) + ' min chůze</span>'
-      + '</div>'
-      + '<div class="flex items-center gap-1.5 shrink-0">'
-      + '<button data-name="' + safeName + '" data-lat="' + p.elat + '" data-lng="' + p.elng + '" onclick="saveNearbyPoi(this.dataset.name,+this.dataset.lat,+this.dataset.lng)"'
-      + ' class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-400 text-xs px-2 py-2 rounded-xl font-bold transition cursor-pointer">+ Uložit</button>'
-      + '<a href="https://www.google.com/maps/search/?api=1&query=' + p.elat + ',' + p.elng + '" target="_blank" rel="noopener" '
-      + 'class="bg-slate-700 hover:bg-slate-600 active:scale-95 text-yellow-400 text-sm px-3 py-2 rounded-xl font-bold transition">Mapa</a>'
-      + '</div>'
-      + '</div>';
-  }).join('');
-
-  results.innerHTML = stale + cards;
-}
-
-// ===========================
-// AUTO-FETCH PHOTOS FROM WIKIPEDIA
-// ===========================
-
-const _fetchingPhotos = new Set(); // guard against duplicate concurrent fetches
-
-function _triggerPhotoFetch(type, cityId) {
-  const items = type === 'itin' ? getCustomItineraries(cityId) : getCustomPhotoSpots(cityId);
-  const pending = items.filter(it => it.photoQuery && !loadPhoto(it._id));
-  if (!pending.length) return;
-  if (!navigator.onLine) return;
-  const wifi = isOnWifi();
-  if (wifi === false) return; // confirmed mobile data – skip
-  scheduleFetchPhotos(type, cityId, pending);
-}
-
-function scheduleFetchPhotos(type, cityId, items) {
-  items.forEach(item => {
-    const key = `${type}_${cityId}_${item._id}`;
-    if (_fetchingPhotos.has(key)) return;
-    if (loadPhoto(item._id)) return;
-    _fetchingPhotos.add(key);
-    fetchAndStorePhoto(type, cityId, item)
-      .finally(() => _fetchingPhotos.delete(key));
-  });
-}
-
-async function fetchAndStorePhoto(type, cityId, item) {
-  try {
-    const imgUrl = await fetchWikipediaThumb(item.photoQuery);
-    if (!imgUrl) return;
-
-    const resp = await fetch(imgUrl);
-    if (!resp.ok) return;
-    const blob = await resp.blob();
-    const dataUrl = await blobToDataUrl(blob);
-    const compressed = await compressImage(dataUrl);
-    if (!savePhoto(item._id, compressed)) return;
-
-    // Update placeholder in-place without full re-render
-    const safeId = item._id.replace(/[^a-z0-9]/gi, '_');
-    const ph = document.getElementById(`ph-${safeId}`);
-    if (!ph) return;
-
-    const isEdit = !!_editMode[`${type}_${cityId}`];
-    const h = type === 'itin' ? 160 : 130;
-    const deleteBtn = isEdit
-      ? `<button onclick="deleteItemPhoto('${type}','${cityId}','${item._id}')" class="absolute top-2 right-2 bg-slate-900/90 text-red-400 rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold cursor-pointer transition active:scale-90">×</button>`
-      : '';
-    ph.outerHTML = `
-      <div class="relative ${type === 'itin' ? 'mb-3' : 'mb-2'} rounded-xl overflow-hidden animate-fade-in" style="height:${h}px">
-        <img src="${compressed}" class="w-full h-full object-cover" alt="" loading="lazy">
-        ${deleteBtn}
-      </div>`;
-  } catch {
-    // Network or CORS error – silently remove placeholder spinner
-    const safeId = item._id.replace(/[^a-z0-9]/gi, '_');
-    const ph = document.getElementById(`ph-${safeId}`);
-    if (ph) ph.remove();
-  }
-}
-
-async function fetchWikipediaThumb(query) {
-  const url = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(query)}&prop=pageimages&piprop=thumbnail&pithumbsize=900&format=json&origin=*`;
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 10000);
-  try {
-    const resp = await fetch(url, { signal: ctrl.signal });
-    if (!resp.ok) return null;
-    const data = await resp.json();
-    const pages = data?.query?.pages;
-    if (!pages) return null;
-    return Object.values(pages)[0]?.thumbnail?.source ?? null;
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-function blobToDataUrl(blob) {
-  return new Promise((res, rej) => {
-    const reader = new FileReader();
-    reader.onload  = e => res(e.target.result);
-    reader.onerror = rej;
-    reader.readAsDataURL(blob);
-  });
-}
-
-// ===========================
-// CUSTOM DATA – ITINERARIES & PHOTO SPOTS
-// ===========================
-
-function getCustomItineraries(cityId) {
-  try {
-    const s = localStorage.getItem(`custom_itin_${cityId}`);
-    if (s) return JSON.parse(s);
-  } catch {}
-  // Seed defaults with stable IDs
-  const city = CITIES.find(c => c.id === cityId);
-  return (city?.itineraries || []).map((it, i) => ({ ...it, _id: `${cityId}_itin_d${i}` }));
-}
-
-function saveCustomItineraries(cityId, items) {
-  localStorage.setItem(`custom_itin_${cityId}`, JSON.stringify(items));
-}
-
-function getCustomPhotoSpots(cityId) {
-  try {
-    const s = localStorage.getItem(`custom_ps_${cityId}`);
-    if (s) return JSON.parse(s);
-  } catch {}
-  const city = CITIES.find(c => c.id === cityId);
-  return (city?.photoSpots || []).map((ps, i) => ({ ...ps, _id: `${cityId}_ps_d${i}` }));
-}
-
-function saveCustomPhotoSpots(cityId, items) {
-  localStorage.setItem(`custom_ps_${cityId}`, JSON.stringify(items));
-}
-
-// ===========================
-// PHOTO STORAGE (localStorage base64)
-// ===========================
-
-function loadPhoto(photoId) {
-  return localStorage.getItem(`photo_${photoId}`);
-}
-
-function savePhoto(photoId, dataUrl) {
-  try {
-    localStorage.setItem(`photo_${photoId}`, dataUrl);
-    return true;
-  } catch {
-    showToast('Nedostatek místa. Smaž starší fotografie a zkus znovu.');
-    return false;
-  }
-}
-
-function deletePhoto(photoId) {
-  localStorage.removeItem(`photo_${photoId}`);
-}
-
-function compressImage(src) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const maxW = 800, maxH = 600;
-      const scale = Math.min(maxW / img.width, maxH / img.height, 1);
-      const canvas = document.createElement('canvas');
-      canvas.width  = Math.round(img.width  * scale);
-      canvas.height = Math.round(img.height * scale);
-      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL('image/jpeg', 0.72));
-    };
-    img.onerror = reject;
-    img.src = src;
-  });
-}
-
-// ===========================
-// WIFI DETECTION
-// ===========================
-
-function isOnWifi() {
-  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  if (!conn) return null;           // Safari iOS – can't detect
-  if (conn.type === 'wifi') return true;
-  if (conn.type && conn.type !== 'wifi') return false;
-  return null;
-}
-
-// ===========================
-// EDIT MODE TOGGLES & REFRESH
-// ===========================
-
-function toggleItinEdit(cityId) {
-  _editMode[`itin_${cityId}`] = !_editMode[`itin_${cityId}`];
-  refreshItinerariesSection(cityId);
-}
-
-function togglePsEdit(cityId) {
-  _editMode[`ps_${cityId}`] = !_editMode[`ps_${cityId}`];
-  refreshPhotoSpotsSection(cityId);
-}
-
-function refreshItinerariesSection(cityId) {
-  const wrap = document.getElementById(`itin-wrap-${cityId}`);
-  if (!wrap) return;
-  const city = CITIES.find(c => c.id === cityId);
-  if (!city) return;
-  wrap.innerHTML = _renderItinerariesInner(city);
-  _triggerPhotoFetch('itin', cityId);
-}
-
-function refreshPhotoSpotsSection(cityId) {
-  const wrap = document.getElementById(`ps-wrap-${cityId}`);
-  if (!wrap) return;
-  const city = CITIES.find(c => c.id === cityId);
-  if (!city) return;
-  wrap.innerHTML = _renderPhotoSpotsInner(city);
-  _triggerPhotoFetch('ps', cityId);
-}
-
-// ===========================
-// EDIT ACTIONS
-// ===========================
-
-function deleteItineraryItem(cityId, itemId) {
-  let items = getCustomItineraries(cityId);
-  deletePhoto(itemId);
-  items = items.filter(it => it._id !== itemId);
-  saveCustomItineraries(cityId, items);
-  refreshItinerariesSection(cityId);
-  showToast('Den odstraněn.');
-}
-
-function deletePhotoSpotItem(cityId, itemId) {
-  let items = getCustomPhotoSpots(cityId);
-  deletePhoto(itemId);
-  items = items.filter(ps => ps._id !== itemId);
-  saveCustomPhotoSpots(cityId, items);
-  refreshPhotoSpotsSection(cityId);
-  showToast('Místo odstraněno.');
-}
-
-function submitAddItinerary(cityId) {
-  const dayEl   = document.getElementById(`itin-add-day-${cityId}`);
-  const titleEl = document.getElementById(`itin-add-title-${cityId}`);
-  const stepsEl = document.getElementById(`itin-add-steps-${cityId}`);
-  if (!dayEl || !titleEl || !stepsEl) return;
-
-  const day   = dayEl.value.trim();
-  const title = titleEl.value.trim();
-  const steps = stepsEl.value.split('\n').map(s => s.trim()).filter(Boolean);
-
-  if (!day || !title)   { showToast('Vyplň název dne a podtitulek.'); return; }
-  if (!steps.length)    { showToast('Přidej alespoň jeden krok.'); return; }
-
-  const items  = getCustomItineraries(cityId);
-  const colors = ['#fbbf24','#a78bfa','#34d399','#60a5fa','#f87171','#fb923c'];
-  const color  = colors[items.length % colors.length];
-  items.push({ day, title, color, steps, _id: `${cityId}_itin_${Date.now()}` });
-  saveCustomItineraries(cityId, items);
-  refreshItinerariesSection(cityId);
-  showToast('Den přidán.');
-}
-
-function submitAddPhotoSpot(cityId) {
-  const nameEl = document.getElementById(`ps-add-name-${cityId}`);
-  const timeEl = document.getElementById(`ps-add-time-${cityId}`);
-  const mapsEl = document.getElementById(`ps-add-maps-${cityId}`);
-  if (!nameEl || !timeEl) return;
-
-  const name     = nameEl.value.trim();
-  const bestTime = timeEl.value.trim();
-  const mapsUrl  = mapsEl?.value.trim() || '';
-
-  if (!name || !bestTime) { showToast('Vyplň název a nejlepší čas.'); return; }
-
-  const items = getCustomPhotoSpots(cityId);
-  items.push({ name, bestTime, mapsUrl, _id: `${cityId}_ps_${Date.now()}` });
-  saveCustomPhotoSpots(cityId, items);
-  refreshPhotoSpotsSection(cityId);
-  showToast('Místo přidáno.');
-}
-
-function resetItinerariesToDefault(cityId) {
-  if (!confirm('Obnovit výchozí itineráře? Vlastní úpravy i fotografie budou ztraceny.')) return;
-  getCustomItineraries(cityId).forEach(it => deletePhoto(it._id));
-  localStorage.removeItem(`custom_itin_${cityId}`);
-  _editMode[`itin_${cityId}`] = false;
-  refreshItinerariesSection(cityId);
-  showToast('Výchozí itineráře obnoveny.');
-}
-
-function resetPhotoSpotsToDefault(cityId) {
-  if (!confirm('Obnovit výchozí foto tipy? Vlastní úpravy i fotografie budou ztraceny.')) return;
-  getCustomPhotoSpots(cityId).forEach(ps => deletePhoto(ps._id));
-  localStorage.removeItem(`custom_ps_${cityId}`);
-  _editMode[`ps_${cityId}`] = false;
-  refreshPhotoSpotsSection(cityId);
-  showToast('Výchozí foto tipy obnoveny.');
-}
-
-// ===========================
-// PHOTO PANEL & FILE HANDLING
-// ===========================
-
-function openPhotoPanel(type, cityId, itemId) {
-  const key = `${type}_${cityId}_${itemId}`;
-  _photoPanel[key] = !_photoPanel[key];
-  if (type === 'itin') refreshItinerariesSection(cityId);
-  else                 refreshPhotoSpotsSection(cityId);
-}
-
-function handlePhotoFileChange(input, type, cityId, itemId) {
-  const file = input.files[0];
-  if (!file) return;
-
-  const wifi = isOnWifi();
-  if (wifi === false) {
-    if (!confirm('Nejsi připojen(a) k Wi-Fi. Uložit fotografii přes mobilní data?')) {
-      input.value = '';
-      return;
-    }
-  }
-
-  const reader = new FileReader();
-  reader.onload = async e => {
-    try {
-      showToast('Zpracovávám…');
-      const compressed = await compressImage(e.target.result);
-      const ok = savePhoto(itemId, compressed);
-      if (ok) {
-        _photoPanel[`${type}_${cityId}_${itemId}`] = false;
-        showToast('Fotografie uložena offline.');
-      }
-      if (type === 'itin') refreshItinerariesSection(cityId);
-      else                 refreshPhotoSpotsSection(cityId);
-    } catch {
-      showToast('Chyba při zpracování fotografie.');
-    }
-  };
-  reader.readAsDataURL(file);
-}
-
-function saveUrlPhoto(inputId, type, cityId, itemId) {
-  const url = document.getElementById(inputId)?.value.trim();
-  if (!url || !url.startsWith('http')) {
-    showToast('Zadej platnou URL adresu fotografie (https://…).');
-    return;
-  }
-  const ok = savePhoto(itemId, url);
-  if (ok) {
-    _photoPanel[`${type}_${cityId}_${itemId}`] = false;
-    showToast('URL fotografie uložena. Pro offline přístup použij ↓ Offline (WiFi).');
-  }
-  if (type === 'itin') refreshItinerariesSection(cityId);
-  else                 refreshPhotoSpotsSection(cityId);
-}
-
-async function downloadUrlPhotoOffline(type, cityId, itemId) {
-  const url = loadPhoto(itemId);
-  if (!url || url.startsWith('data:')) return;
-
-  const wifi = isOnWifi();
-  if (wifi === false) {
-    showToast('Stahování pro offline funguje jen na Wi-Fi. Připoj se k Wi-Fi a zkus znovu.');
-    return;
-  }
-  if (wifi === null) {
-    if (!confirm('Nelze zjistit typ připojení. Stáhnout fotografii offline?')) return;
-  }
-
-  showToast('Stahuji…');
-  try {
-    const resp = await fetch(url, { mode: 'cors' });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const blob = await resp.blob();
-    await new Promise((res, rej) => {
-      const reader = new FileReader();
-      reader.onload = async e => {
-        try {
-          const compressed = await compressImage(e.target.result);
-          const ok = savePhoto(itemId, compressed);
-          if (ok) showToast('Fotografie uložena pro offline.');
-          if (type === 'itin') refreshItinerariesSection(cityId);
-          else                 refreshPhotoSpotsSection(cityId);
-          res();
-        } catch { rej(e); }
-      };
-      reader.onerror = rej;
-      reader.readAsDataURL(blob);
-    });
-  } catch {
-    showToast('Nepodařilo se stáhnout (CORS nebo chyba sítě). Zkus uložit foto ze galerie přímo.');
-  }
-}
-
-function deleteItemPhoto(type, cityId, itemId) {
-  deletePhoto(itemId);
-  _photoPanel[`${type}_${cityId}_${itemId}`] = false;
-  if (type === 'itin') refreshItinerariesSection(cityId);
-  else                 refreshPhotoSpotsSection(cityId);
-  showToast('Fotografie smazána.');
-}
-
-// Auto-load last active city if set
+</script>
+
+<!-- Modular Javascript files -->
+<script src="js/state.js"></script>
+<script src="js/weather.js"></script>
+<script src="js/nearby.js"></script>
+<script src="js/places.js"></script>
+<script src="js/porto.js"></script>
+<script src="js/ui.js"></script>
+
+<script>
 const lastCity = localStorage.getItem('app_last_city');
 if (lastCity) {
   setTimeout(() => {
     renderCity(lastCity);
   }, 50);
+} else {
+  // Update picker theme button on startup
+  setTimeout(updateThemeButtons, 50);
 }
 
 // ===========================
