@@ -1147,6 +1147,9 @@ const CityLifecycle = {
     WeatherModule.fetch(city);
     state.intervals.weather = setInterval(() => WeatherModule.fetch(city), 1800000);
 
+    // Exchange Rate
+    ExchangeRateModule.fetch();
+
     // Porto-specific features
     if (city.id === 'porto') {
       initPorto();
@@ -1291,6 +1294,84 @@ function renderOverview(city) {
       <span class="w-2.5 h-2.5 rounded-full shrink-0 mt-1.5" style="background:${city.color}"></span>
       <span class="text-base text-slate-300 leading-relaxed">${b}</span>
     </li>`).join('');
+
+  const tips = city.tipBullets.map(t => `
+    <li class="flex items-start gap-3">
+      <span class="text-lg shrink-0 mt-0.5">💡</span>
+      <span class="text-base text-slate-300 leading-relaxed">${t}</span>
+    </li>`).join('');
+
+  const chevron = `<svg class="w-5 h-5 text-slate-500 shrink-0 details-arrow transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>`;
+
+  const sosCollapsibles = `
+    <details class="bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden">
+      <summary class="flex items-center justify-between px-5 py-4 cursor-pointer select-none">
+        <span class="text-base font-extrabold uppercase tracking-wider text-slate-400">🚨 Nouzové kontakty</span>
+        \${chevron}
+      </summary>
+      <div class="px-5 pb-5 border-t border-slate-800 pt-4 space-y-3">
+        <div class="flex items-center justify-between bg-slate-950/40 p-3 rounded-xl">
+          <div>
+            <div class="text-sm font-bold text-slate-100">Evropská tísňová linka</div>
+            <div class="text-xs text-slate-500">Hasiči, záchranka, policie</div>
+          </div>
+          <a href="tel:112" class="bg-red-500/20 text-red-400 hover:bg-red-500/30 text-sm font-extrabold px-4 py-2.5 rounded-xl transition cursor-pointer">📞 112</a>
+        </div>
+        <div class="flex items-center justify-between bg-slate-950/40 p-3 rounded-xl">
+          <div>
+            <div class="text-sm font-bold text-slate-100">Turistická policie</div>
+            <div class="text-xs text-slate-500">Pomoc pro turisty v Portugalsku</div>
+          </div>
+          <a href="tel:808200200" class="bg-slate-800 text-slate-200 hover:bg-slate-700 text-sm font-extrabold px-4 py-2.5 rounded-xl transition cursor-pointer">📞 808 200 200</a>
+        </div>
+        <div class="flex items-center justify-between bg-slate-950/40 p-3 rounded-xl">
+          <div>
+            <div class="text-sm font-bold text-slate-100">Ambasáda ČR v Lisabonu</div>
+            <div class="text-xs text-slate-500">Rua Pero de Alenquer 14</div>
+          </div>
+          <a href="tel:+351213010487" class="bg-slate-800 text-slate-200 hover:bg-slate-700 text-[11px] font-extrabold px-3 py-2.5 rounded-xl transition cursor-pointer text-center">📞 +351 213 010 487</a>
+        </div>
+      </div>
+    </details>
+
+    <details class="bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden">
+      <summary class="flex items-center justify-between px-5 py-4 cursor-pointer select-none">
+        <span class="text-base font-extrabold uppercase tracking-wider text-slate-400">💵 Spropitné & Ceny</span>
+        \${chevron}
+      </summary>
+      <div class="px-5 pb-5 border-t border-slate-800 pt-4 text-sm text-slate-300 space-y-3 leading-relaxed">
+        <p><strong>Restaurace:</strong> Spropitné není povinné a není započítané v ceně. Běžně se dává 5–10 % za dobré služby, nebo stačí zaokrouhlit částku nahoru.</p>
+        <p><strong>Kavárny a bary:</strong> Nechává se drobný zbytek (např. do 1–2 €) na stole nebo u pokladny.</p>
+        <p><strong>Taxi (Uber/Bolt):</strong> Zaokrouhlit na celé euro, u delších tras 1–2 € spropitné v aplikaci.</p>
+        <div class="bg-slate-950/40 p-3.5 rounded-xl border border-slate-800">
+          <div class="text-xs font-bold text-yellow-400 mb-1">⚠️ Pozor na předkrmy (Couvert):</div>
+          V portugalských restauracích vám číšník často přinese chléb, olivy, sýr nebo šunku před jídlem automaticky. <strong>Nejsou zdarma!</strong> Pokud je ochutnáte, naúčtují vám je (obvykle 1–5 € na osobu). Pokud je nechcete, zdvořile odmítněte nebo je nechte netknuté.
+        </div>
+      </div>
+    </details>
+  `;
+
+  const exchangeWidget = `
+    <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 space-y-3">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-extrabold text-slate-300">💶 Převodník měn (EUR / CZK)</h3>
+        <span id="rate-update-time" class="text-[10px] text-slate-500 font-mono">kurz: načítám…</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="flex-1 relative">
+          <input id="conv-eur" type="number" step="any" placeholder="EUR" oninput="convertCurrency('eur')"
+            class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-4 pr-12 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-yellow-500 transition font-mono">
+          <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">EUR</span>
+        </div>
+        <span class="text-slate-500 font-bold text-xl">⇄</span>
+        <div class="flex-1 relative">
+          <input id="conv-czk" type="number" step="any" placeholder="CZK" oninput="convertCurrency('czk')"
+            class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-4 pr-12 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-yellow-500 transition font-mono">
+          <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">CZK</span>
+        </div>
+      </div>
+    </div>
+  `;
 
   const home = PlacesManager.loadHome(city.id);
   const homeLabel = home?.name || home?.address || 'Ubytování';
@@ -1596,6 +1677,7 @@ function renderOverview(city) {
       </summary>
       <ul class="px-5 pb-5 space-y-4 border-t border-slate-800 pt-4">${arrivals}</ul>
     </details>
+    ${exchangeWidget}
     ${quickHomeCard}
     <div class="space-y-3">${cards}</div>
     <details class="bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden">
@@ -1605,6 +1687,7 @@ function renderOverview(city) {
       </summary>
       <ul class="px-5 pb-5 space-y-4 border-t border-slate-800 pt-4">${tips}</ul>
     </details>
+    ${sosCollapsibles}
     ${renderItinerariesSection(city)}
     ${renderPhotoSpotsSection(city)}
     ${renderAppsSection(city)}`;
@@ -2908,6 +2991,121 @@ function navigateHome() {
   window.open(url, '_blank', 'noopener');
 }
 
+const ExchangeRateModule = {
+  rate: 25.0, // Výchozí kurz pro případ výpadku
+  async fetch() {
+    try {
+      const cacheKey = 'exchange_rate_eur_czk';
+      const url = 'https://open.er-api.com/v6/latest/EUR';
+      const { data, fromCache, cachedAt } = await apiFetch(url, { _timeout: 8000 }, cacheKey);
+      if (data && data.rates && data.rates.CZK) {
+        this.rate = data.rates.CZK;
+        this.updateUI(data.rates.CZK, cachedAt || Date.now());
+      }
+    } catch (e) {
+      console.warn('Nepodařilo se načíst kurz:', e);
+      const cached = StorageSchema.load('app_cache_exchange_rate_eur_czk');
+      if (cached && cached.data && cached.data.rates && cached.data.rates.CZK) {
+        this.rate = cached.data.rates.CZK;
+        this.updateUI(cached.data.rates.CZK, cached.t);
+      }
+    }
+  },
+  updateUI(rate, timestamp) {
+    const el = document.getElementById('rate-update-time');
+    if (el) {
+      const dateStr = new Date(timestamp).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric' });
+      el.textContent = `1 € = ${rate.toFixed(2)} Kč (${dateStr})`;
+    }
+  }
+};
+
+function convertCurrency(source) {
+  const rate = ExchangeRateModule.rate;
+  const eurInput = document.getElementById('conv-eur');
+  const czkInput = document.getElementById('conv-czk');
+  if (!eurInput || !czkInput) return;
+
+  if (source === 'eur') {
+    const val = parseFloat(eurInput.value);
+    if (isNaN(val)) { czkInput.value = ''; return; }
+    czkInput.value = (val * rate).toFixed(2);
+  } else {
+    const val = parseFloat(czkInput.value);
+    if (isNaN(val)) { eurInput.value = ''; return; }
+    eurInput.value = (val / rate).toFixed(2);
+  }
+}
+
+function getOpenStatusHtml(ohStr, timezone) {
+  if (!ohStr) return '';
+  ohStr = ohStr.trim();
+  if (ohStr === '24/7') {
+    return '<span class="text-[10px] font-bold text-emerald-400 bg-emerald-900/30 px-1.5 py-0.5 rounded-md ml-1">Otevřeno</span>';
+  }
+  try {
+    const now = new Date();
+    const parts = Intl.DateTimeFormat('en-US', {
+      timeZone: timezone, weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+    }).formatToParts(now);
+    const curDay = INTL_TO_OSM[parts.find(p => p.type === 'weekday')?.value || ''] ?? -1;
+    if (curDay < 0) return '';
+    const curMins = parseInt(parts.find(p => p.type === 'hour')?.value || '0') * 60
+                  + parseInt(parts.find(p => p.type === 'minute')?.value || '0');
+    
+    let anyDayMatched = false;
+    let opensLaterToday = null;
+
+    for (const rule of ohStr.split(';').map(s => s.trim()).filter(Boolean)) {
+      const m = rule.match(/^([\w,\-]+)\s+(\d{1,2}:\d{2})-(\d{1,2}:\d{2})/);
+      if (!m) continue;
+      const [, daysPart, openT, closeT] = m;
+      let dayMatch = false;
+      for (const seg of daysPart.split(',')) {
+        const d = seg.split('-');
+        if (d.length === 2) {
+          const si = OSM_DAYS[d[0]], ei = OSM_DAYS[d[1]];
+          if (si !== undefined && ei !== undefined)
+            dayMatch = si <= ei ? (curDay >= si && curDay <= ei) : (curDay >= si || curDay <= ei);
+        } else { dayMatch = OSM_DAYS[seg] === curDay; }
+        if (dayMatch) break;
+      }
+      if (!dayMatch) continue;
+      anyDayMatched = true;
+      if (/\soff\s*$/i.test(rule)) continue;
+      
+      const [oh, om] = openT.split(':').map(Number);
+      const [ch, cm] = closeT.split(':').map(Number);
+      const openMins = oh * 60 + om;
+      const closeMins = ch * 60 + cm;
+      
+      const open = closeMins > openMins
+        ? curMins >= openMins && curMins < closeMins
+        : curMins >= openMins || curMins < closeMins;
+      
+      if (open) {
+        return '<span class="text-[10px] font-bold text-emerald-400 bg-emerald-900/30 px-1.5 py-0.5 rounded-md ml-1">Otevřeno</span>';
+      }
+      
+      if (curMins < openMins) {
+        if (opensLaterToday === null || openMins < opensLaterToday.mins) {
+          opensLaterToday = { label: openT, mins: openMins };
+        }
+      }
+    }
+    
+    if (opensLaterToday) {
+      return `<span class="text-[10px] font-bold text-amber-400 bg-amber-900/30 px-1.5 py-0.5 rounded-md ml-1">Otevírá v ${opensLaterToday.label}</span>`;
+    }
+    
+    return anyDayMatched 
+      ? '<span class="text-[10px] font-bold text-red-400 bg-red-900/30 px-1.5 py-0.5 rounded-md ml-1">Zavřeno</span>'
+      : '';
+  } catch {
+    return '';
+  }
+}
+
 // ===========================
 // WEATHER MODULE (generic for all cities)
 // ===========================
@@ -3342,12 +3540,7 @@ async function fetchNearby(btn, category) {
   }
 
   const cards = places.map(p => {
-    const openStatus = isOpenNow(p.oh, timezone);
-    const openBadge = openStatus === true
-      ? '<span class="text-[10px] font-bold text-emerald-400 bg-emerald-900/30 px-1.5 py-0.5 rounded-md ml-1">Otevřeno</span>'
-      : openStatus === false
-        ? '<span class="text-[10px] font-bold text-red-400 bg-red-900/30 px-1.5 py-0.5 rounded-md ml-1">Zavřeno</span>'
-        : '';
+    const openBadge = getOpenStatusHtml(p.oh, timezone);
     const starsHtml = p.stars ? ' <span class="text-xs text-yellow-400 ml-1">★ ' + p.stars + '</span>' : '';
     const safeName = p.name.replace(/"/g, '&quot;');
     return '<div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/40 gap-3">'
