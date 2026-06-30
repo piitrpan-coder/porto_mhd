@@ -1,7 +1,7 @@
 {
-  "name": "Porto MHD Dopravní Asistent",
-  "short_name": "Porto MHD",
-  "description": "Osobní offline dopravní asistent pro 5denní pobyt v Portu",
+  "name": "Průvodce cestou – Porto & Lagos",
+  "short_name": "Průvodce",
+  "description": "PWA průvodce pobytem v cizím městě – Porto a Lagos / Algarve",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0f172a",

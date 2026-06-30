@@ -854,6 +854,7 @@ function renderOverview(city) {
             <span class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Porto počasí</span>
             <span id="weather-desc" class="text-sm text-slate-300 font-semibold">načítám…</span>
           </div>
+          <div id="weather-stale" class="hidden text-[10px] text-amber-400/70 mt-0.5"></div>
         </div>
       </div>
       <div class="grid grid-cols-2 gap-3">
@@ -881,7 +882,7 @@ function renderOverview(city) {
           <div class="relative min-w-0" id="nearby-dd-wrap">
             <button onclick="toggleNearbyDd(event)" id="nearby-dd-btn"
               class="flex items-center gap-1.5 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 cursor-pointer w-full">
-              <span id="nearby-dd-label" class="truncate max-w-[120px]">🏠 Ubytování</span>
+              <span id="nearby-dd-label" class="truncate max-w-[120px]">📍 Moje poloha (GPS)</span>
               <svg id="nearby-dd-arrow" class="w-4 h-4 shrink-0 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
             </button>
             <div id="nearby-dd-menu" class="hidden absolute right-0 top-full mt-1 bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl z-40 w-64 max-h-60 overflow-y-auto">
@@ -1317,6 +1318,98 @@ function initMap() {
 }
 
 // ===========================
+// SHARED API LAYER
+// ===========================
+const INTL_TO_OSM = { Sun:6, Mon:0, Tue:1, Wed:2, Thu:3, Fri:4, Sat:5 };
+const OSM_DAYS    = { Mo:0, Tu:1, We:2, Th:3, Fr:4, Sa:5, Su:6 };
+
+async function apiFetch(url, fetchOpts = {}, cacheKey = null) {
+  const timeout = fetchOpts._timeout || 10000;
+  const opts = { ...fetchOpts };
+  delete opts._timeout;
+
+  const attempt = () => {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeout);
+    return fetch(url, { ...opts, signal: ctrl.signal })
+      .then(r => { clearTimeout(timer); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .catch(e => { clearTimeout(timer); throw e; });
+  };
+
+  try {
+    const data = await attempt().catch(() => attempt());
+    if (cacheKey) {
+      try { localStorage.setItem('apicache_' + cacheKey, JSON.stringify({ data, t: Date.now() })); } catch {}
+    }
+    return { data, fromCache: false };
+  } catch {
+    if (cacheKey) {
+      try {
+        const raw = localStorage.getItem('apicache_' + cacheKey);
+        if (raw) { const { data, t } = JSON.parse(raw); return { data, fromCache: true, cachedAt: t }; }
+      } catch {}
+    }
+    throw new Error('offline');
+  }
+}
+
+function localHHMM(timestamp, timezone) {
+  return new Intl.DateTimeFormat('cs-CZ', {
+    timeZone: timezone || 'Europe/Lisbon', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+  }).format(new Date(timestamp));
+}
+
+function staleDataHtml(cachedAt, timezone) {
+  return '<div class="flex items-center gap-2 text-xs text-amber-400/80 bg-amber-900/20 border border-amber-800/30 rounded-xl px-3 py-2 mb-2">'
+    + '<svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>'
+    + 'Offline · naposledy aktualizováno ' + localHHMM(cachedAt, timezone)
+    + '</div>';
+}
+
+function isOpenNow(ohStr, timezone) {
+  if (!ohStr) return null;
+  ohStr = ohStr.trim();
+  if (ohStr === '24/7') return true;
+  try {
+    const now = new Date();
+    const parts = Intl.DateTimeFormat('en-US', {
+      timeZone: timezone, weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+    }).formatToParts(now);
+    const curDay = INTL_TO_OSM[parts.find(p => p.type === 'weekday')?.value || ''] ?? -1;
+    if (curDay < 0) return null;
+    const curMins = parseInt(parts.find(p => p.type === 'hour')?.value || '0') * 60
+                  + parseInt(parts.find(p => p.type === 'minute')?.value || '0');
+    let anyDayMatched = false;
+    for (const rule of ohStr.split(';').map(s => s.trim()).filter(Boolean)) {
+      const m = rule.match(/^([\w,\-]+)\s+(\d{1,2}:\d{2})-(\d{1,2}:\d{2})/);
+      if (!m) continue;
+      const [, daysPart, openT, closeT] = m;
+      let dayMatch = false;
+      for (const seg of daysPart.split(',')) {
+        const d = seg.split('-');
+        if (d.length === 2) {
+          const si = OSM_DAYS[d[0]], ei = OSM_DAYS[d[1]];
+          if (si !== undefined && ei !== undefined)
+            dayMatch = si <= ei ? (curDay >= si && curDay <= ei) : (curDay >= si || curDay <= ei);
+        } else { dayMatch = OSM_DAYS[seg] === curDay; }
+        if (dayMatch) break;
+      }
+      if (!dayMatch) continue;
+      anyDayMatched = true;
+      if (/\soff\s*$/i.test(rule)) return false;
+      const [oh, om] = openT.split(':').map(Number);
+      const [ch, cm] = closeT.split(':').map(Number);
+      const openMins = oh * 60 + om, closeMins = ch * 60 + cm;
+      const open = closeMins > openMins
+        ? curMins >= openMins && curMins < closeMins
+        : curMins >= openMins || curMins < closeMins;
+      if (open) return true;
+    }
+    return anyDayMatched ? false : null;
+  } catch { return null; }
+}
+
+// ===========================
 // PORTO – WALLET
 // ===========================
 const RIDE_PRICE = { z2: 1.85, z4: 3.00 };
@@ -1523,30 +1616,41 @@ async function loadArrivals(key) {
 
   btn.innerHTML = '<span class="spin">⟳</span> Načítám…'; btn.disabled = true;
   container.classList.remove('hidden');
-  container.innerHTML = '<p style="font-size:14px;color:#64748b;text-align:center;padding:12px 0">Načítám odjezdy…</p>';
+  container.innerHTML = '<div class="space-y-2">'
+    + [1,2].map(() => '<div class="h-12 rounded-xl bg-slate-800/60 animate-pulse"></div>').join('')
+    + '</div>';
   clearTimeout(window.depRefreshTimers[key]);
 
+  const timezone = currentCity?.timezone || 'Europe/Lisbon';
   const results = await Promise.all(
     config.stops.map(stop =>
-      fetch('https://proxy.cors.sh/https://stcp.pt/api/stops/' + stop.id + '/realtime', { cache:'no-store' })
-        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-        .then(data => ({ ...stop, arrivals: data.arrivals || [], ok: true }))
-        .catch(err => ({ ...stop, arrivals: [], ok: false, err: err.message }))
+      apiFetch(
+        'https://proxy.cors.sh/https://stcp.pt/api/stops/' + stop.id + '/realtime',
+        { cache: 'no-store', _timeout: 8000 },
+        'stcp_' + stop.id
+      )
+        .then(r => ({ ...stop, arrivals: r.data.arrivals || [], ok: true, fromCache: r.fromCache, cachedAt: r.cachedAt }))
+        .catch(() => ({ ...stop, arrivals: [], ok: false }))
     )
   );
 
   const allFailed = results.every(r => !r.ok);
   if (allFailed) {
-    container.innerHTML = '<div style="padding:10px 4px;text-align:center"><p style="font-size:14px;color:#f87171;font-weight:600">Nepodařilo se načíst</p><p style="font-size:12px;color:#475569;margin-top:4px">(' + (results[0]?.err || 'CORS/síť') + ')</p></div>';
+    container.innerHTML = '<div style="padding:10px 4px;text-align:center"><p style="font-size:14px;color:#f87171;font-weight:600">Nepodařilo se načíst</p><p style="font-size:12px;color:#475569;margin-top:4px">Zkontroluj připojení.</p></div>';
     btn.innerHTML = '↺ Zkusit znovu'; btn.disabled = false; return;
   }
+
+  const anyFromCache = results.some(r => r.fromCache);
+  const minCachedAt = results.reduce((m, r) => (r.cachedAt && r.cachedAt < m) ? r.cachedAt : m, Infinity);
 
   const all = [];
   results.forEach(r => r.arrivals.forEach(a => all.push({ ...a, dirLabel: r.label, dirColor: r.color })));
   all.sort((a, b) => a.arrival_minutes - b.arrival_minutes);
 
+  let html = (anyFromCache && minCachedAt !== Infinity) ? staleDataHtml(minCachedAt, timezone) : '';
+
   if (all.length === 0) {
-    container.innerHTML = '<p style="font-size:14px;color:#64748b;text-align:center;padding:12px 0">Žádné spoje v příštích 60 min.</p>';
+    html += '<p style="font-size:14px;color:#64748b;text-align:center;padding:12px 0">Žádné spoje v příštích 60 min.</p>';
   } else {
     const rows = all.slice(0, 6).map(a => {
       const mins = a.arrival_minutes;
@@ -1562,11 +1666,14 @@ async function loadArrivals(key) {
         + '<span style="font-weight:900;font-size:17px;color:' + minsColor + ';font-family:monospace;white-space:nowrap">' + minsStr + delayHtml + '</span>'
         + '</div>';
     }).join('');
-    const t = new Date().toLocaleTimeString('cs-CZ', { hour:'2-digit', minute:'2-digit' });
-    container.innerHTML = '<div style="background:rgba(2,6,23,0.4);border:1px solid rgba(51,65,85,0.4);border-radius:12px;overflow:hidden;margin-bottom:4px">'
-      + '<div style="padding:0 4px">' + rows + '</div>'
-      + '<div style="font-size:11px;color:#334155;text-align:right;padding:4px 12px">Aktualizováno ' + t + ' · auto-refresh 30 s</div></div>';
+    const footer = !anyFromCache
+      ? '<div style="font-size:11px;color:#334155;text-align:right;padding:4px 12px">Aktualizováno '
+          + new Date().toLocaleTimeString('cs-CZ', { hour:'2-digit', minute:'2-digit' }) + ' · auto-refresh 30 s</div>'
+      : '';
+    html += '<div style="background:rgba(2,6,23,0.4);border:1px solid rgba(51,65,85,0.4);border-radius:12px;overflow:hidden;margin-bottom:4px">'
+      + '<div style="padding:0 4px">' + rows + '</div>' + footer + '</div>';
   }
+  container.innerHTML = html;
   btn.innerHTML = '↺ Obnovit'; btn.disabled = false;
   window.depRefreshTimers[key] = setTimeout(() => loadArrivals(key), 30000);
 }
@@ -1675,16 +1782,17 @@ const WMO = {
 
 async function fetchWeather(manual = false) {
   const iEl = document.getElementById('weather-icon');
+  const timezone = currentCity?.timezone || 'Europe/Lisbon';
   if (manual && iEl) { iEl.style.transition = 'opacity 0.15s'; iEl.style.opacity = '0.3'; }
   try {
-    const res = await fetch(
+    const { data, fromCache, cachedAt } = await apiFetch(
       'https://api.open-meteo.com/v1/forecast?latitude=41.15&longitude=-8.61&current=temperature_2m,weathercode,windspeed_10m&daily=temperature_2m_max,temperature_2m_min,weathercode&forecast_days=3&timezone=Europe%2FLisbon',
-      { cache: 'no-store' }
+      { _timeout: 8000 },
+      'weather_porto'
     );
-    if (!res.ok) throw new Error();
-    const { current: c, daily: d } = await res.json();
-    if (!iEl) return;
-    iEl.textContent = WMO.icons[c.weathercode] ?? '🌡️';
+    if (!document.getElementById('weather-icon')) return;
+    const { current: c, daily: d } = data;
+    document.getElementById('weather-icon').textContent = WMO.icons[c.weathercode] ?? '🌡️';
     document.getElementById('weather-temp').textContent = Math.round(c.temperature_2m) + '°C';
     document.getElementById('weather-desc').textContent = WMO.labels[c.weathercode] ?? 'Počasí';
     document.getElementById('weather-wind').textContent = Math.round(c.windspeed_10m) + ' km/h';
@@ -1693,7 +1801,17 @@ async function fetchWeather(manual = false) {
       document.getElementById('fc-temp-' + i).textContent =
         Math.round(d.temperature_2m_min[i]) + '–' + Math.round(d.temperature_2m_max[i]) + '°C';
     });
-    if (manual) showToast('Počasí aktualizováno ✓');
+    const staleEl = document.getElementById('weather-stale');
+    if (staleEl) {
+      if (fromCache && cachedAt) {
+        staleEl.textContent = 'Offline · naposledy ' + localHHMM(cachedAt, timezone);
+        staleEl.className = 'text-[10px] text-amber-400/70 mt-0.5';
+      } else {
+        staleEl.className = 'hidden';
+      }
+    }
+    if (manual && !fromCache) showToast('Počasí aktualizováno ✓');
+    if (manual && fromCache) showToast('Offline – zobrazena stará data.');
   } catch {
     if (manual) showToast('Nepodařilo se načíst počasí – zkontroluj připojení.');
   } finally {
@@ -1786,13 +1904,15 @@ function applyPlaces() {
   });
 
   // Update nearby custom dropdown
-  const ddOpts = [{ val: 'home', label: '🏠 ' + h.name }]
-    .concat(pois.filter(p => p.lat && p.lng).map((p, i) => ({ val: 'poi_' + i, label: p.emoji + ' ' + p.name })));
+  const ddOpts = [
+    { val: 'gps',  label: '📍 Moje poloha (GPS)' },
+    { val: 'home', label: '🏠 ' + h.name }
+  ].concat(pois.filter(p => p.lat && p.lng).map((p, i) => ({ val: 'poi_' + i, label: p.emoji + ' ' + p.name })));
   populateNearbyDd(ddOpts);
   if (!ddOpts.some(o => o.val === _nearbyDdVal)) {
-    _nearbyDdVal = 'home';
+    _nearbyDdVal = 'gps';
     const lbl = document.getElementById('nearby-dd-label');
-    if (lbl) lbl.textContent = '🏠 ' + h.name;
+    if (lbl) lbl.textContent = '📍 Moje poloha (GPS)';
   } else {
     const cur = ddOpts.find(o => o.val === _nearbyDdVal);
     if (cur) { const lbl = document.getElementById('nearby-dd-label'); if (lbl) lbl.textContent = cur.label; }
@@ -1901,6 +2021,9 @@ document.addEventListener('click', e => {
 // ===========================
 // PORTO – NEARBY PLACES (OVERPASS / OSM)
 // ===========================
+let _gpsPos = null;
+let _gpsPosTime = 0;
+
 const NEARBY_CFG = {
   supermarket: { tag: '"shop"="supermarket"', label: 'Supermarket', radius: 1000 },
   cafe:        { tag: '"amenity"="cafe"',      label: 'Kavárna',     radius: 600  },
@@ -1911,7 +2034,7 @@ const NEARBY_CFG = {
 // ===========================
 // NEARBY CUSTOM DROPDOWN
 // ===========================
-let _nearbyDdVal = 'home';
+let _nearbyDdVal = 'gps';
 
 function toggleNearbyDd(e) {
   e && e.stopPropagation();
@@ -1960,8 +2083,33 @@ function populateNearbyDd(options) {
 
 async function fetchNearby(btn, category) {
   const val = _nearbyDdVal;
+  const timezone = currentCity?.timezone || 'Europe/Lisbon';
   let lat, lng;
-  if (val === 'home') {
+
+  const results = document.getElementById('nearby-results');
+  document.querySelectorAll('.nearby-cat-btn').forEach(b => b.classList.remove('ring-1','ring-yellow-400','text-yellow-400'));
+  btn.classList.add('ring-1','ring-yellow-400','text-yellow-400');
+
+  // Resolve location — GPS first, fallback to saved home
+  if (val === 'gps') {
+    if (!_gpsPos || Date.now() - _gpsPosTime > 60000) {
+      results.innerHTML = '<p class="text-slate-500 text-center py-3 text-xs">Zjišťuji polohu…</p>';
+      try {
+        const pos = await new Promise((res, rej) => {
+          if (!navigator.geolocation) return rej(new Error('no-geo'));
+          navigator.geolocation.getCurrentPosition(res, rej, { timeout: 8000, enableHighAccuracy: true });
+        });
+        _gpsPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        _gpsPosTime = Date.now();
+      } catch {
+        _gpsPos = null;
+        const h = loadHome();
+        lat = h.lat; lng = h.lng;
+        showToast('GPS nedostupné – hledám od ubytování.');
+      }
+    }
+    if (_gpsPos) { lat = _gpsPos.lat; lng = _gpsPos.lng; }
+  } else if (val === 'home') {
     const h = loadHome(); lat = h.lat; lng = h.lng;
   } else {
     const idx = parseInt(val.replace('poi_', ''));
@@ -1970,43 +2118,68 @@ async function fetchNearby(btn, category) {
     lat = poi.lat; lng = poi.lng;
   }
 
-  document.querySelectorAll('.nearby-cat-btn').forEach(b => b.classList.remove('ring-1', 'ring-yellow-400', 'text-yellow-400'));
-  btn.classList.add('ring-1', 'ring-yellow-400', 'text-yellow-400');
-
-  const results = document.getElementById('nearby-results');
-  results.innerHTML = '<p class="text-slate-500 text-center py-3 text-xs">Hledám v okolí…</p>';
+  // Skeleton
+  results.innerHTML = '<div class="space-y-2">'
+    + [1,2,3].map(() => '<div class="h-14 rounded-xl bg-slate-800/60 animate-pulse"></div>').join('')
+    + '</div>';
 
   const cfg = NEARBY_CFG[category];
   const q = `[out:json][timeout:12];(node[${cfg.tag}](around:${cfg.radius},${lat},${lng});way[${cfg.tag}](around:${cfg.radius},${lat},${lng}););out center 15;`;
-  try {
-    const res = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: q });
-    if (!res.ok) throw new Error();
-    const data = await res.json();
-    const places = data.elements
-      .map(el => {
-        const elat = el.lat ?? el.center?.lat, elng = el.lon ?? el.center?.lon;
-        if (!elat) return null;
-        return { name: el.tags?.name || el.tags?.['name:en'] || cfg.label, dist: Math.round(haversineM(lat, lng, elat, elng)), elat, elng };
-      })
-      .filter(Boolean).sort((a, b) => a.dist - b.dist).slice(0, 10);
+  const cacheKey = `nearby_${category}_${Math.round(lat * 100)}_${Math.round(lng * 100)}`;
 
-    if (!places.length) {
-      results.innerHTML = '<p class="text-slate-500 text-center py-3 text-xs">Nic v okolí ' + cfg.radius + ' m nenalezeno.</p>';
-      return;
-    }
-    results.innerHTML = places.map(p =>
-      '<div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/40 gap-3">'
-      + '<div class="truncate flex-1">'
-      + '<span class="text-slate-100 font-bold text-sm block truncate">' + p.name + '</span>'
+  let result;
+  try {
+    result = await apiFetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: q, _timeout: 12000 }, cacheKey);
+  } catch {
+    results.innerHTML = '<p class="text-red-400 text-center py-3 text-[11px]">Chyba – zkontroluj připojení a zkus znovu.</p>';
+    return;
+  }
+
+  const { data, fromCache, cachedAt } = result;
+  const places = (data.elements || [])
+    .map(el => {
+      const elat = el.lat ?? el.center?.lat, elng = el.lon ?? el.center?.lon;
+      if (!elat) return null;
+      const tags = el.tags || {};
+      return {
+        name: tags.name || tags['name:en'] || cfg.label,
+        dist: Math.round(haversineM(lat, lng, elat, elng)),
+        oh: tags.opening_hours || null,
+        stars: tags.stars || null,
+        elat, elng
+      };
+    })
+    .filter(Boolean).sort((a, b) => a.dist - b.dist).slice(0, 10);
+
+  const stale = fromCache ? staleDataHtml(cachedAt, timezone) : '';
+
+  if (!places.length) {
+    results.innerHTML = stale + '<p class="text-slate-500 text-center py-3 text-xs">Nic v okolí ' + cfg.radius + ' m nenalezeno.</p>';
+    return;
+  }
+
+  const cards = places.map(p => {
+    const openStatus = isOpenNow(p.oh, timezone);
+    const openBadge = openStatus === true
+      ? '<span class="text-[10px] font-bold text-emerald-400 bg-emerald-900/30 px-1.5 py-0.5 rounded-md ml-1">Otevřeno</span>'
+      : openStatus === false
+        ? '<span class="text-[10px] font-bold text-red-400 bg-red-900/30 px-1.5 py-0.5 rounded-md ml-1">Zavřeno</span>'
+        : '';
+    const starsHtml = p.stars ? ' <span class="text-xs text-yellow-400 ml-1">★ ' + p.stars + '</span>' : '';
+    return '<div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/40 gap-3">'
+      + '<div class="flex-1 min-w-0">'
+      + '<div class="flex items-center flex-wrap mb-0.5">'
+      + '<span class="text-slate-100 font-bold text-sm truncate">' + p.name + '</span>'
+      + openBadge + starsHtml
+      + '</div>'
       + '<span class="text-slate-500 text-xs font-mono">' + p.dist + ' m · ~' + Math.ceil(p.dist / 75) + ' min chůze</span>'
       + '</div>'
       + '<a href="https://www.google.com/maps/search/?api=1&query=' + p.elat + ',' + p.elng + '" target="_blank" rel="noopener" '
       + 'class="shrink-0 bg-slate-700 hover:bg-slate-600 active:scale-95 text-yellow-400 text-sm px-3 py-2 rounded-xl font-bold transition">Mapa</a>'
-      + '</div>'
-    ).join('');
-  } catch {
-    results.innerHTML = '<p class="text-red-400 text-center py-3 text-[11px]">Chyba – zkontroluj připojení.</p>';
-  }
+      + '</div>';
+  }).join('');
+
+  results.innerHTML = stale + cards;
 }
 
 // ===========================
