@@ -220,6 +220,16 @@ const CITIES = [
     accentCls: 'text-yellow-400',
     timezone: 'Europe/Lisbon',
     timeLabel: 'Čas v Portu',
+    // Weather API coordinates
+    weatherLat: 41.15,
+    weatherLng: -8.61,
+    // Default home location
+    defaultHome: { name: 'Rua Paulo Gama, 551', address: 'Rua Paulo Gama 551, Lordelo do Ouro, Porto', lat: 41.15468, lng: -8.65016 },
+    // Features
+    hasWallet: true,
+    hasCountdown: true,
+    hasNearby: true,
+    hasTransport: true,
     bodyBg: 'radial-gradient(ellipse at 25% 0%, rgba(251,191,36,0.13) 0%, #060c18 55%)',
     tabs: [
       { id:'overview', label:'Přehled',    icon:'📋' },
@@ -342,6 +352,13 @@ const CITIES = [
     accentCls: 'text-cyan-400',
     timezone: 'Europe/Lisbon',
     timeLabel: 'Čas v Lagosu',
+    weatherLat: 37.10,
+    weatherLng: -8.67,
+    defaultHome: { name: 'Rua Cândido Guerreiro', address: 'Rua Cândido Guerreiro, Lagos, Portugal', lat: 37.09, lng: -8.67 },
+    hasWallet: false,
+    hasCountdown: false,
+    hasNearby: true,
+    hasTransport: false,
     bodyBg: 'radial-gradient(ellipse at 75% 0%, rgba(34,211,238,0.12) 0%, #030e0e 55%)',
     tabs: [
       { id:'overview',  label:'Přehled',  icon:'📋' },
@@ -554,6 +571,13 @@ const CITIES = [
     accentCls: 'text-orange-400',
     timezone: 'Europe/Lisbon',
     timeLabel: 'Čas v Lisabonu',
+    weatherLat: 38.72,
+    weatherLng: -9.14,
+    defaultHome: { name: 'Baixa-Chiado', address: 'Baixa-Chiado, Lisboa, Portugal', lat: 38.71, lng: -9.14 },
+    hasWallet: false,
+    hasCountdown: false,
+    hasNearby: true,
+    hasTransport: false,
     bodyBg: 'radial-gradient(ellipse at 50% 0%, rgba(249,115,22,0.13) 0%, #0d0800 55%)',
     tabs: [
       { id:'overview',   label:'Přehled',  icon:'📋' },
@@ -1080,9 +1104,82 @@ const LISBON_MAP_SVG = `<svg width="540" height="380" viewBox="0 0 540 380" clas
 // STATE
 // ===========================
 let currentCity = null;
-let clockInterval = null;
 const _editMode   = {};  // 'itin_porto' / 'ps_porto' → bool
 const _photoPanel = {};  // 'itin_porto_<id>' / 'ps_porto_<id>' → bool
+
+// ===========================
+// CITY LIFECYCLE MANAGEMENT
+// ===========================
+
+const CityLifecycle = {
+  async enter(city) {
+    // 1. Clean up previous city
+    if (currentCity && currentCity.id !== city.id) {
+      this.exit(currentCity);
+    }
+
+    // 2. Set current city & init state
+    currentCity = city;
+    StateManager.init(city.id);
+
+    // 3. Restore persisted state from localStorage
+    StateManager.restore(city.id);
+
+    // 4. Schedule updates & features
+    this.scheduleUpdates(city);
+    this.setupOfflineSync(city);
+  },
+
+  exit(city) {
+    StateManager.clearCity(city.id);
+  },
+
+  scheduleUpdates(city) {
+    const state = StateManager.get(city.id);
+
+    // Clock
+    if (state.intervals.clock) clearInterval(state.intervals.clock);
+    updateClock(city);
+    state.intervals.clock = setInterval(() => updateClock(city), 1000);
+
+    // Weather
+    if (state.intervals.weather) clearInterval(state.intervals.weather);
+    WeatherModule.fetch(city);
+    state.intervals.weather = setInterval(() => WeatherModule.fetch(city), 1800000);
+
+    // Porto-specific features
+    if (city.id === 'porto') {
+      initPorto();
+    } else {
+      applyPlaces();
+    }
+  },
+
+  setupOfflineSync(city) {
+    const state = StateManager.get(city.id);
+
+    // Online handler
+    const onlineHandler = () => {
+      console.log(`[${city.id}] Back online – syncing...`);
+      updateOnlineStatus();
+      WeatherModule.fetch(city);
+      showToast('Připojeno – data aktualizována.');
+    };
+
+    window.addEventListener('online', onlineHandler);
+    state.listeners.push({ event: 'online', handler: onlineHandler });
+
+    // Offline handler
+    const offlineHandler = () => {
+      console.log(`[${city.id}] Offline – using cache`);
+      updateOnlineStatus();
+      showToast('Offline – zobrazuji poslední data.');
+    };
+
+    window.addEventListener('offline', offlineHandler);
+    state.listeners.push({ event: 'offline', handler: offlineHandler });
+  }
+};
 
 // ===========================
 // NAVIGATION
@@ -1092,21 +1189,19 @@ function showCityPicker() {
   document.getElementById('city-app').classList.add('hidden');
   document.getElementById('app-header').style.borderColor = '';
   document.getElementById('app-nav').style.borderColor = '';
-  if (clockInterval) { clearInterval(clockInterval); clockInterval = null; }
-  if (window._cdInterval) { clearInterval(window._cdInterval); window._cdInterval = null; }
-  if (window._weatherInterval) { clearInterval(window._weatherInterval); window._weatherInterval = null; }
-  if (window._lagosWeatherInterval) { clearInterval(window._lagosWeatherInterval); window._lagosWeatherInterval = null; }
-  if (window._lisbonWeatherInterval) { clearInterval(window._lisbonWeatherInterval); window._lisbonWeatherInterval = null; }
-  if (window.depRefreshTimers) {
-    Object.values(window.depRefreshTimers).forEach(t => clearTimeout(t));
-    window.depRefreshTimers = {};
+
+  // Clean up previous city
+  if (currentCity) {
+    CityLifecycle.exit(currentCity);
   }
 }
 
 function renderCity(cityId) {
   const city = CITIES.find(c => c.id === cityId);
   if (!city) return;
-  currentCity = city;
+
+  // Lifecycle enter
+  CityLifecycle.enter(city);
 
   document.getElementById('city-picker').classList.add('hidden');
   document.getElementById('city-app').classList.remove('hidden');
@@ -1134,27 +1229,10 @@ function renderCity(cityId) {
       ${renderTabContent(tab.id, city)}
     </section>`).join('');
 
-  // Init features
-  if (city.extras === 'porto') initPorto();
-  if (city.id === 'lagos') {
-    fetchLagosWeather();
-    if (window._lagosWeatherInterval) clearInterval(window._lagosWeatherInterval);
-    window._lagosWeatherInterval = setInterval(fetchLagosWeather, 1800000);
-    applyPlaces();
-  }
-  if (city.id === 'lisbon') {
-    fetchLisbonWeather();
-    if (window._lisbonWeatherInterval) clearInterval(window._lisbonWeatherInterval);
-    window._lisbonWeatherInterval = setInterval(fetchLisbonWeather, 1800000);
-    applyPlaces();
-  }
+  // UI init
   initMap();
   updateOnlineStatus();
 
-  // Clock
-  if (clockInterval) clearInterval(clockInterval);
-  updateClock(city);
-  clockInterval = setInterval(() => updateClock(city), 1000);
 
   // Show first tab
   switchTab(city.tabs[0].id);
@@ -2050,6 +2128,165 @@ function renderTransport(city) {
 }
 
 // ===========================
+// STORAGE SCHEMA & STATE MANAGEMENT
+// ===========================
+
+/**
+ * StorageSchema: Jednotné rozhraní pro localStorage
+ * Klíče: app_[city]_[category]
+ * Automatický cleanup, kompresi a fallback na defaults
+ */
+const StorageSchema = {
+  load(key, defaultValue = null) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return defaultValue;
+      return JSON.parse(raw);
+    } catch (e) {
+      console.warn(`[Storage] Failed to load ${key}:`, e);
+      return defaultValue;
+    }
+  },
+
+  save(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {
+      if (e.name === 'QuotaExceededError') {
+        console.warn('[Storage] Quota exceeded – cleanup old cache');
+        this.cleanup();
+        try {
+          localStorage.setItem(key, JSON.stringify(value));
+        } catch (e2) {
+          console.error('[Storage] Still cannot save after cleanup:', e2);
+        }
+      } else {
+        console.error('[Storage] Save failed:', e);
+      }
+    }
+  },
+
+  remove(key) {
+    try {
+      localStorage.removeItem(key);
+    } catch (e) {
+      console.error('[Storage] Remove failed:', e);
+    }
+  },
+
+  cleanup() {
+    // Smažeme nejstarší API cache (starší než týden)
+    const oneWeekAgo = Date.now() - 7 * 24 * 3600000;
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('app_cache_')) {
+        try {
+          const { t } = JSON.parse(localStorage.getItem(key) || '{}');
+          if (t && t < oneWeekAgo) {
+            localStorage.removeItem(key);
+          }
+        } catch {}
+      }
+    }
+  }
+};
+
+/**
+ * StateManager: Centrální správa lokálního stavu per city
+ * Inicializace per-city stavu s automatickým cachováním
+ */
+const StateManager = {
+  cities: {},
+
+  init(cityId) {
+    if (!this.cities[cityId]) {
+      this.cities[cityId] = {
+        // Core features
+        wallet: { z2: 0, z4: 0 },
+        countdown: { start: 0, zone: null },
+        places: { home: null, pois: [] },
+        weather: null,
+        nearby: { category: null, location: 'gps', results: [] },
+
+        // Metadata
+        intervals: {},
+        listeners: []
+      };
+
+      // Obnovit uložený stav
+      this.restore(cityId);
+    }
+    return this.cities[cityId];
+  },
+
+  restore(cityId) {
+    const state = this.cities[cityId];
+    const city = CITIES.find(c => c.id === cityId);
+    if (!city) return;
+
+    // Restore places
+    state.places.home = StorageSchema.load(`app_${cityId}_home`, city.defaultHome);
+    state.places.pois = StorageSchema.load(`app_${cityId}_pois`, []);
+
+    // Restore wallet (Porto only)
+    if (city.hasWallet) {
+      state.wallet.z2 = StorageSchema.load(`app_${cityId}_wallet_z2`, 0);
+      state.wallet.z4 = StorageSchema.load(`app_${cityId}_wallet_z4`, 0);
+    }
+
+    // Restore countdown
+    if (city.hasCountdown) {
+      state.countdown = StorageSchema.load(`app_${cityId}_countdown`, { start: 0, zone: null });
+    }
+  },
+
+  get(cityId) {
+    return this.init(cityId);
+  },
+
+  set(cityId, path, value) {
+    const state = this.init(cityId);
+    const keys = path.split('.');
+    let obj = state;
+
+    for (let i = 0; i < keys.length - 1; i++) {
+      if (!obj[keys[i]]) obj[keys[i]] = {};
+      obj = obj[keys[i]];
+    }
+    obj[keys[keys.length - 1]] = value;
+
+    // Persist critical state
+    this.persistIfNeeded(cityId, keys[0], obj);
+  },
+
+  persistIfNeeded(cityId, category, value) {
+    const persistKeys = ['places', 'wallet', 'countdown'];
+    if (persistKeys.includes(category)) {
+      StorageSchema.save(`app_${cityId}_${category}`, value);
+    }
+  },
+
+  clearCity(cityId) {
+    const state = this.get(cityId);
+
+    // Kill all timers
+    Object.values(state.intervals).forEach(id => {
+      if (typeof id === 'number') clearInterval(id);
+      if (typeof id === 'number') clearTimeout(id);
+    });
+    state.intervals = {};
+
+    // Remove listeners
+    state.listeners.forEach(({ event, handler }) => {
+      window.removeEventListener(event, handler);
+    });
+    state.listeners = [];
+
+    delete this.cities[cityId];
+  }
+};
+
+// ===========================
 // SHARED UTILITIES
 // ===========================
 function updateClock(city) {
@@ -2187,15 +2424,16 @@ async function apiFetch(url, fetchOpts = {}, cacheKey = null) {
   try {
     const data = await attempt().catch(() => attempt());
     if (cacheKey) {
-      try { localStorage.setItem('apicache_' + cacheKey, JSON.stringify({ data, t: Date.now() })); } catch {}
+      StorageSchema.save(`app_cache_${cacheKey}`, { data, t: Date.now() });
     }
     return { data, fromCache: false };
   } catch {
     if (cacheKey) {
-      try {
-        const raw = localStorage.getItem('apicache_' + cacheKey);
-        if (raw) { const { data, t } = JSON.parse(raw); return { data, fromCache: true, cachedAt: t }; }
-      } catch {}
+      const cached = StorageSchema.load(`app_cache_${cacheKey}`);
+      if (cached) {
+        const { data, t } = cached;
+        return { data, fromCache: true, cachedAt: t };
+      }
     }
     throw new Error('offline');
   }
@@ -2261,14 +2499,11 @@ function isOpenNow(ohStr, timezone) {
 // PORTO – WALLET
 // ===========================
 const RIDE_PRICE = { z2: 1.85, z4: 3.00 };
-let rides = {
-  z2: parseInt(localStorage.getItem('porto_mhd_z2_rides') || '0', 10),
-  z4: parseInt(localStorage.getItem('porto_mhd_z4_rides') || '0', 10)
-};
 
 function updateWalletUI() {
+  const state = StateManager.get('porto');
   ['z2', 'z4'].forEach(zone => {
-    const count = rides[zone];
+    const count = state.wallet[zone];
     const eur = (count * RIDE_PRICE[zone]).toFixed(2).replace('.', ',');
     const countEl = document.getElementById('wallet-' + zone + '-count');
     const eurEl   = document.getElementById('wallet-' + zone + '-eur');
@@ -2280,22 +2515,23 @@ function updateWalletUI() {
     card.classList.remove('border-red-500/60','bg-red-950/20','border-yellow-500/50','border-slate-800/60');
     if (count === 0) {
       card.classList.add('border-red-500/60', 'bg-red-950/20');
-      const neverUsed = localStorage.getItem('porto_mhd_' + zone + '_rides') === null;
-      if (!neverUsed) { warn.textContent = '⚠ Prázdná!'; warn.classList.remove('hidden'); }
-      else warn.classList.add('hidden');
+      if (warn) warn.textContent = '⚠ Prázdná!';
+      if (warn) warn.classList.remove('hidden');
     } else if (count <= 2) {
       card.classList.add('border-yellow-500/50');
-      warn.textContent = '⚠ Doplnit!'; warn.classList.remove('hidden');
+      if (warn) warn.textContent = '⚠ Doplnit!';
+      if (warn) warn.classList.remove('hidden');
     } else {
       card.classList.add('border-slate-800/60');
-      warn.classList.add('hidden');
+      if (warn) warn.classList.add('hidden');
     }
   });
 }
 
 function changeRides(zone, amount) {
-  rides[zone] = Math.max(0, rides[zone] + amount);
-  localStorage.setItem('porto_mhd_' + zone + '_rides', rides[zone]);
+  const state = StateManager.get('porto');
+  state.wallet[zone] = Math.max(0, state.wallet[zone] + amount);
+  StorageSchema.save(`app_porto_wallet_${zone}`, state.wallet[zone]);
   updateWalletUI();
 }
 
@@ -2303,12 +2539,6 @@ function changeRides(zone, amount) {
 // PORTO – COUNTDOWN
 // ===========================
 const COUNTDOWN_MS = { z2: 60 * 60 * 1000, z4: 75 * 60 * 1000 };
-let notifTimeouts = [];
-
-function clearNotifTimeouts() {
-  notifTimeouts.forEach(clearTimeout);
-  notifTimeouts = [];
-}
 
 async function scheduleTicketNotifs(zone, startMs) {
   if (!('Notification' in window)) return;
@@ -2317,43 +2547,53 @@ async function scheduleTicketNotifs(zone, startMs) {
     if (perm !== 'granted') return;
   }
   if (Notification.permission !== 'granted') return;
-  clearNotifTimeouts();
+
+  const state = StateManager.get('porto');
+  const existing = state.intervals.countdownNotifs || [];
+  existing.forEach(id => clearTimeout(id));
+  state.intervals.countdownNotifs = [];
+
   const duration = COUNTDOWN_MS[zone];
-  const now = Date.now();
   const schedule = [
-    [duration - 5*60000, '⏱ Jízdenka vyprší za 5 minut!',             [200,100,200],           'ticket-5'],
-    [duration -   60000, '🚨 Jízdenka vyprší za 1 minutu! Přestupuj!', [500,200,500,200,500],   'ticket-1'],
-    [duration,           '❌ Jízdenka vypršela – pípni znovu.',         [1000],                  'ticket-exp']
+    [duration - 5*60000, '⏱ Jízdenka vyprší za 5 minut!', [200,100,200]],
+    [duration - 60000, '🚨 Jízdenka vyprší za 1 minutu! Přestupuj!', [500,200,500,200,500]],
+    [duration, '❌ Jízdenka vypršela – pípni znovu.', [1000]]
   ];
-  schedule.forEach(([offset, body, vibrate, tag]) => {
-    const delay = startMs + offset - now;
+
+  schedule.forEach(([offset, body, vibrate]) => {
+    const delay = startMs + offset - Date.now();
     if (delay > 0) {
-      notifTimeouts.push(setTimeout(() => {
-        new Notification('Porto MHD', { body, icon:'./icon-192.png', tag });
+      const timer = setTimeout(() => {
+        new Notification('Porto MHD', { body, icon: './icon-192.png' });
         if (navigator.vibrate) navigator.vibrate(vibrate);
-      }, delay));
+      }, delay);
+      state.intervals.countdownNotifs.push(timer);
     }
   });
 }
 
 function startCountdown(zone) {
   const startMs = Date.now();
-  localStorage.setItem('porto_mhd_cd_start', startMs);
-  localStorage.setItem('porto_mhd_cd_zone', zone);
+  const state = StateManager.get('porto');
+  state.countdown = { start: startMs, zone };
+  StorageSchema.save('app_porto_countdown', state.countdown);
   scheduleTicketNotifs(zone, startMs);
   renderCountdown();
 }
 
 function cancelCountdown() {
-  clearNotifTimeouts();
-  localStorage.removeItem('porto_mhd_cd_start');
-  localStorage.removeItem('porto_mhd_cd_zone');
+  const state = StateManager.get('porto');
+  const existing = state.intervals.countdownNotifs || [];
+  existing.forEach(id => clearTimeout(id));
+  state.intervals.countdownNotifs = [];
+  state.countdown = { start: 0, zone: null };
+  StorageSchema.save('app_porto_countdown', state.countdown);
   renderCountdown();
 }
 
 function renderCountdown() {
-  const start    = parseInt(localStorage.getItem('porto_mhd_cd_start') || '0');
-  const zone     = localStorage.getItem('porto_mhd_cd_zone') || 'z2';
+  const state = StateManager.get('porto');
+  const { start, zone } = state.countdown;
   const display  = document.getElementById('countdown-display');
   const buttons  = document.getElementById('countdown-buttons');
   const stickyEl = document.getElementById('sticky-cd');
@@ -2384,17 +2624,17 @@ function renderCountdown() {
   if (!timeEl) return;
 
   const zoneLabel = zone === 'z2' ? 'Z2 · 60 min' : 'Z4 · 75 min';
-  labelEl.textContent = zoneLabel;
+  if (labelEl) labelEl.textContent = zoneLabel;
   if (stickyZone) stickyZone.textContent = zoneLabel;
   const pct = ((remaining / duration) * 100) + '%';
-  barEl.style.width = pct;
+  if (barEl) barEl.style.width = pct;
   if (stickyBar) stickyBar.style.width = pct;
 
   if (remaining === 0) {
     timeEl.textContent = 'VYPRŠELA!';
     timeEl.className = 'text-3xl font-black text-center tracking-tight text-red-400 font-mono animate-pulse';
-    barEl.className = 'h-full rounded-full bg-red-600';
-    untilEl.textContent = 'Jízdenka neplatí — pípni znovu.';
+    if (barEl) barEl.className = 'h-full rounded-full bg-red-600';
+    if (untilEl) untilEl.textContent = 'Jízdenka neplatí — pípni znovu.';
     if (stickyTime) { stickyTime.textContent = 'VYPRŠELA!'; stickyTime.style.color = '#f87171'; }
     if (stickyBar) stickyBar.style.background = '#ef4444';
     if (stickyValid) stickyValid.textContent = 'Pípni znovu!';
@@ -2412,15 +2652,15 @@ function renderCountdown() {
   if (remaining > 15 * 60000) {
     color = '#34d399';
     timeEl.className = 'text-4xl font-black text-center tracking-tight text-emerald-400 font-mono tabular-nums';
-    barEl.className = 'h-full rounded-full transition-all duration-1000 bg-emerald-500';
+    if (barEl) barEl.className = 'h-full rounded-full transition-all duration-1000 bg-emerald-500';
   } else if (remaining > 5 * 60000) {
     color = '#fbbf24';
     timeEl.className = 'text-4xl font-black text-center tracking-tight text-yellow-400 font-mono tabular-nums';
-    barEl.className = 'h-full rounded-full transition-all duration-1000 bg-yellow-500';
+    if (barEl) barEl.className = 'h-full rounded-full transition-all duration-1000 bg-yellow-500';
   } else {
     color = '#f87171';
     timeEl.className = 'text-4xl font-black text-center tracking-tight text-red-400 font-mono tabular-nums animate-pulse';
-    barEl.className = 'h-full rounded-full transition-all duration-1000 bg-red-500';
+    if (barEl) barEl.className = 'h-full rounded-full transition-all duration-1000 bg-red-500';
   }
   if (stickyTime) stickyTime.style.color = color;
   if (stickyBar) stickyBar.style.background = color;
@@ -2428,22 +2668,37 @@ function renderCountdown() {
   try {
     const validUntil = new Date(start + duration);
     const t = new Intl.DateTimeFormat('cs-CZ', { timeZone:'Europe/Lisbon', hour:'2-digit', minute:'2-digit', hour12:false }).format(validUntil);
-    untilEl.textContent = 'Platí do: ' + t + ' (portug. čas)';
+    if (untilEl) untilEl.textContent = 'Platí do: ' + t + ' (portug. čas)';
     if (stickyValid) stickyValid.textContent = 'Platí do ' + t;
-  } catch(e) { untilEl.textContent = ''; }
+  } catch(e) { if (untilEl) untilEl.textContent = ''; }
 }
 
 function initPorto() {
+  const state = StateManager.get('porto');
+
+  // Wallet
+  state.wallet = {
+    z2: StorageSchema.load('app_porto_wallet_z2', 0),
+    z4: StorageSchema.load('app_porto_wallet_z4', 0)
+  };
   updateWalletUI();
+
+  // Countdown
+  state.countdown = StorageSchema.load('app_porto_countdown', { start: 0, zone: null });
   renderCountdown();
-  if (window._cdInterval) clearInterval(window._cdInterval);
-  window._cdInterval = setInterval(renderCountdown, 1000);
-  const start = parseInt(localStorage.getItem('porto_mhd_cd_start') || '0');
-  const zone  = localStorage.getItem('porto_mhd_cd_zone') || 'z2';
-  if (start) scheduleTicketNotifs(zone, start);
-  fetchWeather();
-  if (window._weatherInterval) clearInterval(window._weatherInterval);
-  window._weatherInterval = setInterval(fetchWeather, 1800000);
+  if (state.intervals.countdownRender) clearInterval(state.intervals.countdownRender);
+  state.intervals.countdownRender = setInterval(renderCountdown, 1000);
+
+  // Re-schedule notifications if countdown was active
+  if (state.countdown.start) {
+    scheduleTicketNotifs(state.countdown.zone, state.countdown.start);
+  }
+
+  // Weather
+  WeatherModule.fetch(currentCity);
+  if (state.intervals.weather) clearInterval(state.intervals.weather);
+  state.intervals.weather = setInterval(() => WeatherModule.fetch(currentCity), 1800000);
+
   applyPlaces();
 }
 
@@ -2621,295 +2876,128 @@ function locateMeLagos() {
 }
 
 // ===========================
-// PORTO – WEATHER
+// WEATHER MODULE (generic for all cities)
 // ===========================
 const WMO = {
   icons:  {0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',71:'🌨️',73:'🌨️',75:'❄️',80:'🌦️',81:'🌦️',82:'⛈️',95:'⛈️',96:'⛈️',99:'⛈️'},
   labels: {0:'Jasno',1:'Převážně jasno',2:'Polojasno',3:'Zataženo',45:'Mlha',48:'Jinovatka',51:'Mrholení',53:'Mrholení',55:'Mrholení',61:'Slabý déšť',63:'Déšť',65:'Silný déšť',71:'Sněžení',73:'Sněžení',75:'Sněhová bouře',80:'Přeháňky',81:'Přeháňky',82:'Silné přeháňky',95:'Bouřka',96:'Bouřka',99:'Silná bouřka'}
 };
 
-async function fetchWeather(manual = false) {
-  const iEl = document.getElementById('weather-icon');
-  const timezone = currentCity?.timezone || 'Europe/Lisbon';
-  if (manual && iEl) { iEl.style.transition = 'opacity 0.15s'; iEl.style.opacity = '0.3'; }
-  try {
-    const { data, fromCache, cachedAt } = await apiFetch(
-      'https://api.open-meteo.com/v1/forecast?latitude=41.15&longitude=-8.61&current=temperature_2m,weathercode,windspeed_10m&daily=temperature_2m_max,temperature_2m_min,weathercode,sunrise,sunset&hourly=temperature_2m,precipitation_probability&forecast_days=3&timezone=Europe%2FLisbon',
-      { _timeout: 8000 },
-      'weather_porto'
-    );
-    if (!document.getElementById('weather-icon')) return;
-    const { current: c, daily: d, hourly: h } = data;
-    document.getElementById('weather-icon').textContent = WMO.icons[c.weathercode] ?? '🌡️';
-    document.getElementById('weather-temp').textContent = Math.round(c.temperature_2m) + '°C';
-    document.getElementById('weather-desc').textContent = WMO.labels[c.weathercode] ?? 'Počasí';
-    document.getElementById('weather-wind').textContent = Math.round(c.windspeed_10m) + ' km/h';
-    [1, 2].forEach(i => {
-      document.getElementById('fc-icon-' + i).textContent = WMO.icons[d.weathercode[i]] ?? '🌡️';
-      document.getElementById('fc-temp-' + i).textContent =
-        Math.round(d.temperature_2m_min[i]) + '–' + Math.round(d.temperature_2m_max[i]) + '°C';
-    });
+const WeatherModule = {
+  async fetch(city, manual = false) {
+    if (!city.weatherLat || !city.weatherLng) return; // Skip if not configured
+
+    const iEl = document.getElementById(`${city.id}-weather-icon`);
+    if (manual && iEl) iEl.style.opacity = '0.3';
+
+    try {
+      const cacheKey = `weather_${city.id}`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.weatherLat}&longitude=${city.weatherLng}&current=temperature_2m,weathercode,windspeed_10m,uv_index&daily=temperature_2m_max,temperature_2m_min,weathercode,uv_index_max,sunrise,sunset&forecast_days=2&timezone=${encodeURIComponent(city.timezone)}`;
+
+      const { data, fromCache, cachedAt } = await apiFetch(url, { _timeout: 8000 }, cacheKey);
+      if (!document.getElementById(`${city.id}-weather-icon`)) return;
+
+      this.render(city, data, fromCache, cachedAt);
+
+      if (manual && !fromCache) showToast('Počasí aktualizováno ✓');
+      if (manual && fromCache) showToast('Offline – zobrazena stará data.');
+    } catch {
+      if (manual) showToast('Nepodařilo se načíst počasí.');
+    } finally {
+      if (iEl) setTimeout(() => { iEl.style.opacity = '1'; }, 200);
+    }
+  },
+
+  render(city, data, fromCache, cachedAt) {
+    const { current: c, daily: d } = data;
+    const sel = (id) => document.getElementById(id);
+    const td = (id) => `${city.id}-${id}`;
+
+    // Current conditions
+    sel(td('weather-icon'))?.setAttribute('textContent', WMO.icons[c.weathercode] ?? '🌡️');
+    sel(td('weather-temp'))?.setAttribute('textContent', Math.round(c.temperature_2m) + '°C');
+    sel(td('weather-desc'))?.setAttribute('textContent', WMO.labels[c.weathercode] ?? 'Počasí');
+    sel(td('weather-wind'))?.setAttribute('textContent', Math.round(c.windspeed_10m) + ' km/h');
+    sel(td('uv-badge'))?.setAttribute('textContent', 'UV ' + (c.uv_index != null ? Math.round(c.uv_index) : '–'));
+
+    // Tomorrow forecast
+    if (d.weathercode?.[1]) sel(td('fc-icon'))?.setAttribute('textContent', WMO.icons[d.weathercode[1]] ?? '🌡️');
+    if (d.temperature_2m_min?.[1] != null) {
+      const min = Math.round(d.temperature_2m_min[1]);
+      const max = Math.round(d.temperature_2m_max[1]);
+      sel(td('fc-temp'))?.setAttribute('textContent', min + '–' + max + '°C');
+    }
+    sel(td('uv-max'))?.setAttribute('textContent', d.uv_index_max?.[0] != null ? Math.round(d.uv_index_max[0]) : '–');
+
     // Sunrise / sunset
-    const sunEl = document.getElementById('weather-sun');
-    if (sunEl && d.sunrise?.[0] && d.sunset?.[0]) {
-      document.getElementById('weather-sunrise').textContent = d.sunrise[0].split('T')[1];
-      document.getElementById('weather-sunset').textContent = d.sunset[0].split('T')[1];
-      sunEl.classList.remove('hidden');
-      sunEl.classList.add('flex');
+    const sunRow = sel(td('sun-row'));
+    if (sunRow && d.sunrise?.[0] && d.sunset?.[0]) {
+      sel(td('sunrise'))?.setAttribute('textContent', d.sunrise[0].split('T')[1]);
+      sel(td('sunset'))?.setAttribute('textContent', d.sunset[0].split('T')[1]);
+      sunRow.classList.remove('hidden');
+      sunRow.classList.add('flex');
     }
-    // Hourly forecast (next 8 hours today)
-    const hourlyWrap = document.getElementById('weather-hourly-wrap');
-    const hourlyEl = document.getElementById('weather-hourly');
-    if (hourlyWrap && hourlyEl && h?.time?.length) {
-      const curHour = parseInt(new Intl.DateTimeFormat('en', { timeZone: timezone, hour: '2-digit', hourCycle: 'h23' }).format(new Date()));
-      const todayStr = d.sunrise[0]?.split('T')[0] || new Date().toISOString().slice(0, 10);
-      const idxs = h.time.map((t, i) => ({ t, i }))
-        .filter(({ t }) => t.startsWith(todayStr) && parseInt(t.split('T')[1]) >= curHour)
-        .slice(0, 8).map(({ i }) => i);
-      if (idxs.length) {
-        hourlyEl.innerHTML = idxs.map(i => {
-          const hr = h.time[i].split('T')[1];
-          const temp = Math.round(h.temperature_2m[i]);
-          const rain = h.precipitation_probability[i] ?? 0;
-          const rainColor = rain > 60 ? '#60a5fa' : rain > 30 ? '#fbbf24' : '#64748b';
-          return '<div class="shrink-0 bg-slate-800/60 rounded-xl px-3 py-3 text-center min-w-[54px]">'
-            + '<div class="text-xs text-slate-500 font-mono mb-1">' + hr + '</div>'
-            + '<div class="text-sm font-black text-slate-100">' + temp + '°</div>'
-            + '<div class="text-[10px] font-bold mt-1" style="color:' + rainColor + '">' + rain + '%</div>'
-            + '</div>';
-        }).join('');
-        hourlyWrap.classList.remove('hidden');
-      }
-    }
-    const staleEl = document.getElementById('weather-stale');
+
+    // Stale data indicator
+    const staleEl = sel(td('weather-stale'));
     if (staleEl) {
       if (fromCache && cachedAt) {
-        staleEl.textContent = 'Offline · naposledy ' + localHHMM(cachedAt, timezone);
+        staleEl.textContent = 'Offline · naposledy ' + localHHMM(cachedAt, city.timezone);
         staleEl.className = 'text-[10px] text-amber-400/70 mt-0.5';
       } else {
         staleEl.className = 'hidden';
       }
     }
-    if (manual && !fromCache) showToast('Počasí aktualizováno ✓');
-    if (manual && fromCache) showToast('Offline – zobrazena stará data.');
-  } catch {
-    if (manual) showToast('Nepodařilo se načíst počasí – zkontroluj připojení.');
-  } finally {
-    if (iEl) setTimeout(() => { iEl.style.opacity = '1'; }, 200);
   }
-}
-
-// ===========================
-// LAGOS – WEATHER + MARINE
-// ===========================
-async function fetchLagosWeather(manual = false) {
-  const timezone = 'Europe/Lisbon';
-  const iEl = document.getElementById('lagos-weather-icon');
-  if (manual && iEl) iEl.style.opacity = '0.3';
-  try {
-    const [weatherRes, marineRes] = await Promise.all([
-      apiFetch(
-        'https://api.open-meteo.com/v1/forecast?latitude=37.10&longitude=-8.67&current=temperature_2m,weathercode,uv_index&daily=uv_index_max,sunrise,sunset&forecast_days=1&timezone=Europe%2FLisbon',
-        { _timeout: 8000 }, 'weather_lagos'
-      ),
-      apiFetch(
-        'https://marine-api.open-meteo.com/v1/marine?latitude=37.10&longitude=-8.67&current=wave_height,wave_period&forecast_days=1&timezone=Europe%2FLisbon',
-        { _timeout: 8000 }, 'marine_lagos'
-      ).catch(() => null)
-    ]);
-    if (!document.getElementById('lagos-weather-icon')) return;
-    const { current: c, daily: d } = weatherRes.data;
-    document.getElementById('lagos-weather-icon').textContent = WMO.icons[c.weathercode] ?? '🌡️';
-    document.getElementById('lagos-weather-temp').textContent = Math.round(c.temperature_2m) + '°C';
-    document.getElementById('lagos-weather-desc').textContent = WMO.labels[c.weathercode] ?? 'Počasí';
-    document.getElementById('lagos-uv-badge').textContent = 'UV ' + (c.uv_index != null ? Math.round(c.uv_index) : '–');
-    document.getElementById('lagos-uv-max').textContent = d.uv_index_max?.[0] != null ? Math.round(d.uv_index_max[0]) : '–';
-    if (marineRes) {
-      const mc = marineRes.data.current;
-      document.getElementById('lagos-wave-height').textContent = mc.wave_height != null ? mc.wave_height.toFixed(1) + ' m' : '– m';
-      document.getElementById('lagos-wave-period').textContent = mc.wave_period != null ? Math.round(mc.wave_period) + ' s' : '– s';
-    }
-    const sunRow = document.getElementById('lagos-sun-row');
-    if (sunRow && d.sunrise?.[0] && d.sunset?.[0]) {
-      document.getElementById('lagos-sunrise').textContent = d.sunrise[0].split('T')[1];
-      document.getElementById('lagos-sunset').textContent = d.sunset[0].split('T')[1];
-      sunRow.classList.remove('hidden');
-      sunRow.classList.add('flex');
-    }
-    const staleEl = document.getElementById('lagos-weather-stale');
-    if (staleEl) {
-      if (weatherRes.fromCache && weatherRes.cachedAt) {
-        staleEl.textContent = 'Offline · naposledy ' + localHHMM(weatherRes.cachedAt, timezone);
-        staleEl.className = 'text-[10px] text-amber-400/70 mt-0.5';
-      } else { staleEl.className = 'hidden'; }
-    }
-    if (manual && !weatherRes.fromCache) showToast('Počasí aktualizováno ✓');
-    if (manual && weatherRes.fromCache) showToast('Offline – zobrazena stará data.');
-  } catch {
-    if (manual) showToast('Nepodařilo se načíst – zkontroluj připojení.');
-  } finally {
-    if (iEl) setTimeout(() => { iEl.style.opacity = '1'; }, 200);
-  }
-}
-
-// ===========================
-// LISABON – POČASÍ
-// ===========================
-async function fetchLisbonWeather(manual = false) {
-  const timezone = 'Europe/Lisbon';
-  const iEl = document.getElementById('lisbon-weather-icon');
-  if (manual && iEl) iEl.style.opacity = '0.3';
-  try {
-    const weatherRes = await apiFetch(
-      'https://api.open-meteo.com/v1/forecast?latitude=38.72&longitude=-9.14&current=temperature_2m,weathercode,windspeed_10m,uv_index&daily=temperature_2m_max,temperature_2m_min,weathercode,uv_index_max,sunrise,sunset&forecast_days=2&timezone=Europe%2FLisbon',
-      { _timeout: 8000 }, 'weather_lisbon'
-    );
-    if (!document.getElementById('lisbon-weather-icon')) return;
-    const { current: c, daily: d } = weatherRes.data;
-    document.getElementById('lisbon-weather-icon').textContent = WMO.icons[c.weathercode] ?? '🌡️';
-    document.getElementById('lisbon-weather-temp').textContent = Math.round(c.temperature_2m) + '°C';
-    document.getElementById('lisbon-weather-desc').textContent = WMO.labels[c.weathercode] ?? 'Počasí';
-    document.getElementById('lisbon-uv-badge').textContent = 'UV ' + (c.uv_index != null ? Math.round(c.uv_index) : '–');
-    document.getElementById('lisbon-weather-wind').textContent = Math.round(c.windspeed_10m) + ' km/h';
-    document.getElementById('lisbon-uv-max').textContent = d.uv_index_max?.[0] != null ? Math.round(d.uv_index_max[0]) : '–';
-    const fcIcon = document.getElementById('lisbon-fc-icon');
-    const fcTemp = document.getElementById('lisbon-fc-temp');
-    if (fcIcon && d.weathercode?.[1]) fcIcon.textContent = WMO.icons[d.weathercode[1]] ?? '🌡️';
-    if (fcTemp && d.temperature_2m_min?.[1] != null) fcTemp.textContent = Math.round(d.temperature_2m_min[1]) + '–' + Math.round(d.temperature_2m_max[1]) + '°C';
-    const sunRow = document.getElementById('lisbon-sun-row');
-    if (sunRow && d.sunrise?.[0] && d.sunset?.[0]) {
-      document.getElementById('lisbon-sunrise').textContent = d.sunrise[0].split('T')[1];
-      document.getElementById('lisbon-sunset').textContent = d.sunset[0].split('T')[1];
-      sunRow.classList.remove('hidden');
-      sunRow.classList.add('flex');
-    }
-    const staleEl = document.getElementById('lisbon-weather-stale');
-    if (staleEl) {
-      if (weatherRes.fromCache && weatherRes.cachedAt) {
-        staleEl.textContent = 'Offline · naposledy ' + localHHMM(weatherRes.cachedAt, timezone);
-        staleEl.className = 'text-[10px] text-amber-400/70 mt-0.5';
-      } else { staleEl.className = 'hidden'; }
-    }
-    if (manual && !weatherRes.fromCache) showToast('Počasí aktualizováno ✓');
-    if (manual && weatherRes.fromCache) showToast('Offline – zobrazena stará data.');
-  } catch {
-    if (manual) showToast('Nepodařilo se načíst – zkontroluj připojení.');
-  } finally {
-    if (iEl) setTimeout(() => { iEl.style.opacity = '1'; }, 200);
-  }
-}
-
-// ===========================
-// PORTO – PLACES (ubytování & POI)
-// ===========================
-const DEFAULT_HOME = {
-  name:    'Rua Paulo Gama, 551',
-  address: 'Rua Paulo Gama 551, Lordelo do Ouro, Porto',
-  lat:     41.15468,
-  lng:     -8.65016
 };
 
-function loadHome() {
-  return {
-    name:    localStorage.getItem('porto_home_name')    || DEFAULT_HOME.name,
-    address: localStorage.getItem('porto_home_address') || DEFAULT_HOME.address,
-    lat:     parseFloat(localStorage.getItem('porto_home_lat'))  || DEFAULT_HOME.lat,
-    lng:     parseFloat(localStorage.getItem('porto_home_lng'))  || DEFAULT_HOME.lng
-  };
-}
+// ===========================
+// PLACES MANAGER (generic for all cities)
+// ===========================
+const PlacesManager = {
+  loadHome(cityId) {
+    const city = CITIES.find(c => c.id === cityId);
+    const stored = StorageSchema.load(`app_${cityId}_home`);
+    return { ...city?.defaultHome, ...stored };
+  },
 
-function saveHomeSettings() {
-  const name    = document.getElementById('modal-home-name').value.trim();
-  const address = document.getElementById('modal-home-address').value.trim();
-  const lat     = parseFloat(document.getElementById('modal-home-lat').value)  || DEFAULT_HOME.lat;
-  const lng     = parseFloat(document.getElementById('modal-home-lng').value)  || DEFAULT_HOME.lng;
-  if (!name || !address) return;
-  localStorage.setItem('porto_home_name', name);
-  localStorage.setItem('porto_home_address', address);
-  localStorage.setItem('porto_home_lat', lat);
-  localStorage.setItem('porto_home_lng', lng);
-  applyPlaces();
-  showToast('Ubytování uloženo! 🏠');
-}
+  saveHome(cityId, home) {
+    StorageSchema.save(`app_${cityId}_home`, home);
+    StateManager.set(cityId, 'places.home', home);
+  },
 
-function resetHomeSettings() {
-  ['porto_home_name','porto_home_address','porto_home_lat','porto_home_lng'].forEach(k => localStorage.removeItem(k));
-  applyPlaces();
-  showToast('Ubytování resetováno.');
-}
+  loadPois(cityId) {
+    return StorageSchema.load(`app_${cityId}_pois`, []);
+  },
 
-function loadPois() {
-  try { return JSON.parse(localStorage.getItem('porto_pois') || '[]'); } catch { return []; }
-}
+  savePois(cityId, pois) {
+    StorageSchema.save(`app_${cityId}_pois`, pois);
+    StateManager.set(cityId, 'places.pois', pois);
+  },
 
-function savePois(pois) { localStorage.setItem('porto_pois', JSON.stringify(pois)); }
+  addPoi(cityId, poi) {
+    const pois = this.loadPois(cityId);
+    pois.push(poi);
+    this.savePois(cityId, pois);
+  },
 
-function addPoi() {
-  const emoji   = document.getElementById('modal-poi-emoji').value.trim()   || '📍';
-  const name    = document.getElementById('modal-poi-name').value.trim();
-  const address = document.getElementById('modal-poi-address').value.trim();
-  const lat     = parseFloat(document.getElementById('modal-poi-lat').value)  || null;
-  const lng     = parseFloat(document.getElementById('modal-poi-lng').value)  || null;
-  if (!name || !address) { showToast('Vyplň název a adresu.'); return; }
-  const pois = loadPois();
-  pois.push({ emoji, name, address, lat, lng });
-  savePois(pois);
-  ['modal-poi-emoji','modal-poi-name','modal-poi-address','modal-poi-lat','modal-poi-lng','modal-poi-search']
-    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-  applyPlaces();
-  showToast(emoji + ' ' + name + ' přidáno!');
-}
-
-function deletePoi(index) {
-  const pois = loadPois();
-  pois.splice(index, 1);
-  savePois(pois);
-  applyPlaces();
-}
-
-function applyPlaces() {
-  const h = loadHome();
-  const pois = loadPois();
-
-  // Sync STOPS_GEO home entry
-  const homeStop = STOPS_GEO.find(s => s.id === 'home');
-  if (homeStop) { homeStop.name = '🏠 ' + h.name; homeStop.dir = h.address; homeStop.lat = h.lat; homeStop.lng = h.lng; }
-
-  // Rebuild STOPS_GEO poi entries
-  const base = STOPS_GEO.filter(s => !s.id.startsWith('poi_'));
-  STOPS_GEO.length = 0;
-  base.forEach(s => STOPS_GEO.push(s));
-  pois.filter(p => p.lat && p.lng).forEach((p, i) => {
-    STOPS_GEO.push({ id: 'poi_' + i, name: p.emoji + ' ' + p.name, dir: p.address, lat: p.lat, lng: p.lng, lines: null });
-  });
-
-  // Update nearby custom dropdown
-  const ddOpts = [
-    { val: 'gps',  label: '📍 Moje poloha (GPS)' },
-    { val: 'home', label: '🏠 ' + h.name }
-  ].concat(pois.filter(p => p.lat && p.lng).map((p, i) => ({ val: 'poi_' + i, label: p.emoji + ' ' + p.name })));
-  populateNearbyDd(ddOpts);
-  if (!ddOpts.some(o => o.val === _nearbyDdVal)) {
-    _nearbyDdVal = 'gps';
-    const lbl = document.getElementById('nearby-dd-label');
-    if (lbl) lbl.textContent = '📍 Moje poloha (GPS)';
-  } else {
-    const cur = ddOpts.find(o => o.val === _nearbyDdVal);
-    if (cur) { const lbl = document.getElementById('nearby-dd-label'); if (lbl) lbl.textContent = cur.label; }
+  deletePoi(cityId, index) {
+    const pois = this.loadPois(cityId);
+    pois.splice(index, 1);
+    this.savePois(cityId, pois);
   }
+};
 
-  // Refresh modal UI if open
-  renderPlacesModal();
-}
 
 function renderPlacesModal() {
-  const h = loadHome();
+  if (!currentCity) return;
+  const h = PlacesManager.loadHome(currentCity.id);
   const ni  = document.getElementById('modal-home-name');    if (ni)  ni.value  = h.name;
   const ai  = document.getElementById('modal-home-address'); if (ai)  ai.value  = h.address;
   const lti = document.getElementById('modal-home-lat');     if (lti) lti.value = h.lat;
   const lni = document.getElementById('modal-home-lng');     if (lni) lni.value = h.lng;
 
-  const pois = loadPois();
+  const pois = PlacesManager.loadPois(currentCity.id);
   const list = document.getElementById('modal-poi-list');
   if (!list) return;
   list.innerHTML = pois.length === 0
