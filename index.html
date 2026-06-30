@@ -128,7 +128,7 @@
   </div>
 
   <!-- Bottom nav -->
-  <nav class="fixed bottom-0 left-0 right-0 z-30 bg-slate-900/95 border-t border-slate-800 backdrop-blur pb-safe" style="max-width:448px;margin:0 auto;left:50%;transform:translateX(-50%);width:100%">
+  <nav id="app-nav" class="fixed bottom-0 left-0 right-0 z-30 bg-slate-900/95 border-t border-slate-800 backdrop-blur pb-safe" style="max-width:448px;margin:0 auto;left:50%;transform:translateX(-50%);width:100%">
     <div id="tab-buttons" class="flex items-center justify-around px-1 pt-1.5 pb-1"></div>
   </nav>
 </div>
@@ -1090,6 +1090,8 @@ const _photoPanel = {};  // 'itin_porto_<id>' / 'ps_porto_<id>' → bool
 function showCityPicker() {
   document.getElementById('city-picker').classList.remove('hidden');
   document.getElementById('city-app').classList.add('hidden');
+  document.getElementById('app-header').style.borderColor = '';
+  document.getElementById('app-nav').style.borderColor = '';
   if (clockInterval) { clearInterval(clockInterval); clockInterval = null; }
   if (window._cdInterval) { clearInterval(window._cdInterval); window._cdInterval = null; }
   if (window._weatherInterval) { clearInterval(window._weatherInterval); window._weatherInterval = null; }
@@ -1108,6 +1110,8 @@ function renderCity(cityId) {
 
   document.getElementById('city-picker').classList.add('hidden');
   document.getElementById('city-app').classList.remove('hidden');
+  document.getElementById('app-header').style.borderColor = city.color + '66';
+  document.getElementById('app-nav').style.borderColor = city.color + '66';
 
   // Header
   document.getElementById('city-emoji').textContent = city.emoji;
