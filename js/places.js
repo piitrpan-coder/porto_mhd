@@ -304,6 +304,27 @@ function closePlacesModal() {
 // Nominatim Geocoding
 let _nominatimTimer = null;
 
+function geocodeAddressField(addressId, latId, lngId) {
+  const address = (document.getElementById(addressId) || {}).value?.trim();
+  if (!address) return;
+  const latEl = document.getElementById(latId);
+  const lngEl = document.getElementById(lngId);
+  if (!latEl || !lngEl) return;
+  if (latEl.value && lngEl.value) return;
+
+  fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(address) + '&format=json&limit=1', {
+    headers: { 'Accept-Language': 'cs,en' }
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (!data.length) { showToast('Adresa nenalezena – souřadnice doplň ručně.'); return; }
+      latEl.value = parseFloat(data[0].lat);
+      lngEl.value = parseFloat(data[0].lon);
+      showToast('Souřadnice doplněny ✓');
+    })
+    .catch(() => showToast('Chyba připojení.'));
+}
+
 function nominatimSearch(inputId, resultsId) {
   const query = (document.getElementById(inputId) || {}).value || '';
   const list = document.getElementById(resultsId);

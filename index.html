@@ -246,7 +246,8 @@
         </div>
         <input id="modal-home-name" type="text" placeholder="Název (např. Hotel Douro)"
           class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-slate-600 transition">
-        <input id="modal-home-address" type="text" placeholder="Plná adresa"
+        <input id="modal-home-address" type="text" placeholder="Plná adresa (po zadání doplní souřadnice)"
+          onblur="geocodeAddressField('modal-home-address','modal-home-lat','modal-home-lng')"
           class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-slate-600 transition">
         <div class="grid grid-cols-2 gap-2">
           <input id="modal-home-lat" type="number" step="0.00001" placeholder="Lat (vyplní vyhledávání)"
@@ -275,7 +276,8 @@
           <input id="modal-poi-name" type="text" placeholder="Název místa"
             class="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-slate-600 transition">
         </div>
-        <input id="modal-poi-address" type="text" placeholder="Plná adresa (vyplní vyhledávání)"
+        <input id="modal-poi-address" type="text" placeholder="Plná adresa (po zadání doplní souřadnice)"
+          onblur="geocodeAddressField('modal-poi-address','modal-poi-lat','modal-poi-lng')"
           class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-slate-600 transition">
         <div class="grid grid-cols-2 gap-2">
           <input id="modal-poi-lat" type="number" step="0.00001" placeholder="Lat"
