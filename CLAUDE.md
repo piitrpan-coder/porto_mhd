@@ -124,6 +124,20 @@ Poblíž uživatele najde místa v kategoriích kafe / jídlo / nákupy / co dě
   postupná migrace k jednotné SVG sadě (zatím neurčena).
 - Texty v UI česky, bez anglických zbytků.
 
+## Pravidlo: Peněženka (záložka Wallet) pro nové město
+Záložku **Peněženka** zařaď pouze tehdy, když místní MHD používá systém **individuálních
+jízdenek kupovaných předem** — tzn. uživatel potřebuje vědět, kolik jízdenek mu zbývá
+a/nebo odpočítávat jejich spotřebu ručně.
+
+| Typ systému | Příklad | Peněženka? |
+|---|---|---|
+| Jízdenky předem, odpočet ručně | Porto – Andante (Z2/Z4 jízdy na kartě) | ✅ Ano |
+| Dobíjecí kredit nebo denní pas | Lisabon – Viva Viagem (kredit), Lagos | ❌ Ne |
+| Žádná karta / jen lístky | malá města, autobusy ad hoc | ❌ Ne |
+
+Před přidáním nového města ověř, jak tamní doprava funguje, a podle tabulky výše
+nastav `hasWallet: true/false` v konfiguraci města.
+
 ## Mimo rozsah (dokud to nepadne v zadání)
 Žádné účty / login, žádný vlastní backend (data z třetích stran), žádné placené služby
 bez domluvy, žádné nové obrazovky „protože by to šlo".
