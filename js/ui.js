@@ -402,18 +402,22 @@ function scheduleFetchPhotos(type, cityId, items) {
 }
 
 async function fetchAndStorePhoto(type, cityId, item) {
+  const safeId = item._id.replace(/[^a-z0-9]/gi, '_');
+  const clearPlaceholder = () => {
+    const ph = document.getElementById(`ph-${safeId}`);
+    if (ph) ph.remove();
+  };
   try {
     const imgUrl = await fetchWikipediaThumb(item.photoQuery);
-    if (!imgUrl) return;
+    if (!imgUrl) { clearPlaceholder(); return; }
 
     const resp = await fetch(imgUrl);
-    if (!resp.ok) return;
+    if (!resp.ok) { clearPlaceholder(); return; }
     const blob = await resp.blob();
     const dataUrl = await blobToDataUrl(blob);
     const compressed = await compressImage(dataUrl);
-    if (!savePhoto(item._id, compressed)) return;
+    if (!savePhoto(item._id, compressed)) { clearPlaceholder(); return; }
 
-    const safeId = item._id.replace(/[^a-z0-9]/gi, '_');
     const ph = document.getElementById(`ph-${safeId}`);
     if (!ph) return;
 
@@ -428,9 +432,7 @@ async function fetchAndStorePhoto(type, cityId, item) {
         ${deleteBtn}
       </div>`;
   } catch {
-    const safeId = item._id.replace(/[^a-z0-9]/gi, '_');
-    const ph = document.getElementById(`ph-${safeId}`);
-    if (ph) ph.remove();
+    clearPlaceholder();
   }
 }
 
