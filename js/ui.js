@@ -86,6 +86,7 @@ function initSwipe() {
   el._swipeOk = true;
   let sx, sy, st;
   el.addEventListener('touchstart', e => {
+    if (e.target.closest('.overflow-x-auto')) { sx = null; return; }
     sx = e.touches[0].clientX; sy = e.touches[0].clientY; st = Date.now();
   }, { passive: true });
   el.addEventListener('touchend', e => {
