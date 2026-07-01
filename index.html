@@ -1544,6 +1544,7 @@ function renderOverview(city) {
           <div class="flex items-baseline gap-2">
             <span id="porto-weather-temp" class="text-5xl font-black text-slate-100">–°C</span>
             <span id="porto-weather-wind" class="text-sm text-slate-400 font-mono">– km/h</span>
+            <span id="porto-uv-badge" class="text-sm text-orange-400 font-mono">UV –</span>
           </div>
           <div class="flex items-center gap-2 mt-1">
             <span class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Porto počasí</span>
@@ -1561,10 +1562,7 @@ function renderOverview(city) {
           </div>
         </div>
         <div class="bg-slate-800/60 rounded-xl p-4 flex items-center gap-3">
-          <div class="text-center">
-            <span id="porto-uv-badge" class="text-xl font-black text-orange-400">UV –</span>
-            <span class="text-[10px] text-slate-500 block font-semibold uppercase tracking-wider">Nyní</span>
-          </div>
+          <span class="text-3xl">☀️</span>
           <div>
             <span class="text-xs text-slate-500 uppercase tracking-wider block font-semibold">UV Max</span>
             <span id="porto-uv-max" class="text-xl font-black text-orange-400">–</span>
