@@ -277,6 +277,12 @@ function renderCity(cityId) {
   initMap();
   updateOnlineStatus();
 
+  // Trigger photo fetch for overview sections now that DOM is populated
+  if (typeof _triggerPhotoFetch === 'function') {
+    _triggerPhotoFetch('itin', cityId);
+    _triggerPhotoFetch('ps', cityId);
+  }
+
   // Show first tab
   switchTab(city.tabs[0].id);
   initSwipe();
